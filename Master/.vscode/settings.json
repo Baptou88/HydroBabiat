@@ -1,0 +1,7 @@
+{
+    "liveServer.settings.root": "/data",
+    "files.associations": {
+        "*.cps": "javascript",
+        "*.tcc": "cpp"
+    },
+}

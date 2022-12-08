@@ -1,0 +1,13 @@
+{
+    "name":"DigitalIO",
+"version":"0.0.1",
+"author": "Baptou",
+"maintainer":"Baptou <support@Baptou.fr>",
+"sentence":"Library for control IO" ,
+"paragraph":"paragraph",
+"category":"Device Control",
+"url":"",
+"architectures":"esp32",
+"includes":"DigitalInput"
+
+}

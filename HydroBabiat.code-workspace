@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"name": "Master",
+			"path": "Master"
+		},
+		{
+			"name": "Etang",
+			"path": "Etang"
+		},
+		{
+			"name": "Turbine",
+			"path": "Turbine"
+		},
+		{
+			"name": "testV3",
+			"path": "testV3"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Master"
+	}
+}

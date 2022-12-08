@@ -1,0 +1,6 @@
+#ifndef __CONFIGVARIABLES_H__
+#define __CONFIGVARIABLES_H__
+
+
+
+#endif // __CONFIGVARIABLES_H__
