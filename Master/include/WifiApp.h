@@ -9,9 +9,15 @@
 #include <configVariables.h>
 #include "main.h"
 
+#include <IController.h>
+#include <basicController.h>
+#include <PIDController.h>
+#include <LList.h>
 
 extern int potValue;
 extern bool etatLed;
+extern int modeActuel;
+extern LList<IController*> modes;
 
 // #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 // server.on("#filename" ,HTTP_GET,[](AsyncWebServerRequest *request) { \

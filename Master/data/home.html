@@ -62,7 +62,7 @@
       </nav>
 
     <h1>HelloWorld!</h1>
-    <div class=".container" x-data="{ open: false }">
+    <div class="container" x-data="{ open: false }">
         <button x-on:click="$store.Ws.toggle()">Toggle Dropdown</button>
      
         <div x-show="$store.Ws.etablished">
@@ -72,6 +72,11 @@
     <div class="container mt-2">
         <p id="LED"> Etat </p>
         <input class="btn btn-outline-success" type="button" value="test" id="button">
+    </div>
+    <div class="container">
+        <h3>Modes</h3>
+        <p>%mode%</p>
+        <ul class="list-group">%modes%</ul>
     </div>
     <div class="container border mt-2">
         <p id="POT">potValue</p>

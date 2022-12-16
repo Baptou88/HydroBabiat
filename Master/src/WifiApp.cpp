@@ -53,14 +53,29 @@ String WifiAppClass::templateProcessor(const String& var) {
     return (String) dataTurbine.positionVanne;
   }
   
-  if ("niveauEtang")
+  if (var == "niveauEtang")
   {
     return (String) dataEtang.niveauEtang;
   }
-  if ("ratioNiveauEtang")
+  if (var == "ratioNiveauEtang")
   {
     return (String) (dataEtang.ratioNiveauEtang * 100);
   }
+  if (var == "mode")
+  {
+    //return "test";
+    return (String) modes[modeActuel]->name;
+  }
+  if (var == "modes")
+  {
+    String retour = "";
+    for (size_t i = 0; i < modes.size(); i++)
+    {
+      retour += "<li class=\"list-group-item "+ String((i == modeActuel)? "active" : "") + "\">"+(String) modes.get(i)->name +"</li>";
+    }
+    return retour;
+  }
+  
   
   
  return "templateProcesor default: " + var;

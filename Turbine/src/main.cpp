@@ -6,10 +6,15 @@
 #include "Adafruit_INA260.h"
 #include "Adafruit_INA219.h"
 #include "Preferences.h"
+#include "ESPAsyncWebServer.h"
+#include <AsyncElegantOTA.h>
+#include <WiFi.h>
 
+#include <menu/menunu.h>
 
 #include "digitalInput.h"
 #include "AnalogInput.h"
+
 
 #include "LoRa.h"
 #include "Ecran.h"
@@ -18,29 +23,45 @@
 #include "transmission.h"
 #include "Tachymetre.h"
 #include "main.h"
+#include "wifiCredentials.h"
+
+
+AsyncWebServer server(80);
 
 #define LED_DEBUG true
 
+unsigned long wifiActivation = 0;
 unsigned long receptionMessage = 0;
 unsigned long dernierMessage = 0;
 float msgRSSI = 0;
 float msgSNR = 0;
 
 Ecran Ec = Ecran();
+
 Moteur mot;
 
 Preferences pref;
 
 Tachymetre tachy;
 
+enum displayMode_e{
+  AFFICHAGE_DEFAULT,
+  MENU
+};
 int displayNum = 0;
+displayMode_e displayMode = AFFICHAGE_DEFAULT;
+
+menunu* menuParam;
+menuItemList* menuRoot;
 
 #if defined(LED_BUILTIN)
   #undef LED_BUILTIN
   #define LED_BUILTIN 35
 #endif
 
-
+float moteurKp = 2.2;
+float moteurKi = 0;
+float moteurKd = 0.4;
 
 //Fin de course Fermee
 digitalInput FCF(PIN_FC_F,INPUT_PULLUP);
@@ -49,6 +70,10 @@ digitalInput FCO(PIN_FC_O,INPUT_PULLUP);
 
 digitalInput btnPRG(0,INPUT_PULLUP);
 
+digitalInput encodeurDT(PIN_ROTARY_DT,INPUT_PULLUP);
+digitalInput encodeurCLK(PIN_ROTARY_CLK,INPUT_PULLUP);
+digitalInput encodeurSW(PIN_ROTARY_SW,INPUT_PULLUP);
+
 AnalogInput VoltageOutput(PIN_VOLTAGE_OUTPUT,1,0);
 AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,(0.0245f),-2048);
 
@@ -56,6 +81,7 @@ Adafruit_INA260 ina260 = Adafruit_INA260();
 Adafruit_INA219 ina219 = Adafruit_INA219(); 
 
 float VoltageBattery = 0;
+bool activate = false;
 
 void displayData(){
   Ec.getDisplay()->clearDisplay();
@@ -146,8 +172,24 @@ void LoRaMessage(LoRaPacket header, String msg){
   commandProcess(msg);
 
   //TODO lorsque je recois un message je constate que le mcu perd ces infos
-  pinMode(PIN_FC_O,INPUT_PULLUP);
-  pinMode(PIN_FC_F,INPUT_PULLUP);
+  //pinMode(PIN_FC_O,INPUT_PULLUP);
+  //pinMode(PIN_FC_F,INPUT_PULLUP);
+}
+
+void printWakeUpReason(){
+  esp_sleep_wakeup_cause_t wakeup_reason;
+
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
+    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  }
 }
 
 void commandProcess(String cmd){
@@ -156,6 +198,7 @@ void commandProcess(String cmd){
     cmd.replace("TargetVanne=","");
     mot.setTarget(transmission::ratioToTarget((cmd.toInt() /100.0),mot));
   }
+  
   if (cmd.startsWith("ZV")) //set Zero to Voltage mesure
   {
     VoltageOutput.setZero();
@@ -164,6 +207,18 @@ void commandProcess(String cmd){
   {
     VoltageOutput.setZero();
   }
+  if (cmd.startsWith("DS"))
+  {
+    //TODO
+    esp_sleep_enable_timer_wakeup(10000000);
+    pref.putDouble("positionMoteur",mot._position);
+    Serial.println(mot._position);
+    delay(100);
+    
+    Ec.setSleep();
+    esp_deep_sleep_start();
+  }
+  
 }
 
 void initLoRa()
@@ -194,6 +249,21 @@ bool initPreferences(){
   }
   mot.ouvertureMax = pref.getInt("ouvertureMax",mot.ouvertureMax);
 
+  moteurKp = pref.getFloat("moteurKp",moteurKp);
+  moteurKi = pref.getFloat("moteurKi",moteurKi);
+  moteurKd = pref.getFloat("moteurKd",moteurKd);
+
+  return true;
+}
+
+bool savePreferences(){
+
+  Serial.println("save pref !");
+  pref.putInt("ouvertureMax",mot.ouvertureMax);
+  pref.putFloat("moteurKp",moteurKp);
+  pref.putFloat("moteurKi",moteurKi);
+  pref.putFloat("moteurKd",moteurKd);
+
   return true;
 }
 
@@ -201,17 +271,74 @@ void acquisitionEntree(){
   FCF.loop();
   FCO.loop();
   btnPRG.loop();
+  encodeurCLK.loop();
+  encodeurDT.loop();
+  encodeurSW.loop();
+
   mot.updateIntensiteMoteur(ina260.readCurrent());
   VoltageOutput.loop();
   CurrentOutput.loop();
   VoltageBattery = ina260.readBusVoltage();
   
 }
+
+void menuSaveCalleback(Adafruit_SSD1306* display,bool firstTime){
+  if (firstTime)
+  {
+    savePreferences();
+  }
+  
+  
+  display->clearDisplay();
+  display->setCursor(0,0);
+  display->println("Save ok !");
+  display->display();
+  
+  
+  
+}
+
+void menuWifiServerCalleback(Adafruit_SSD1306* display,bool firstTime)
+{
+  if (firstTime)
+  {
+    wifiActivation = millis();
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID,PASSWORD);
+
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! I am ESP32.");
+  });
+
+  AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+  server.begin();
+  }
+  display->setCursor(0,0);
+  display->println(SSID);
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    display->println(WiFi.localIP().toString());
+  } else
+  {
+    display->println("Not Connected");
+    
+  }
+  
+  
+
+}
 // put your setup code here, to run once:
 void setup() {
   Serial.begin(115200);
   Wire.begin(SDA_OLED,SCL_OLED);
   
+  FCO.begin();
+  FCF.begin();
+  btnPRG.begin();
+  encodeurCLK.begin();
+  encodeurDT.begin();
+  encodeurSW.begin();
+
   pinMode(LED_BUILTIN,OUTPUT);
 
   VoltageOutput.begin();
@@ -236,6 +363,16 @@ void setup() {
   mot.setPID(2.2,0,0.4);
   mot.setSpeedLimit(30,100);
   mot.setEndstop(&FCF,&FCO);
+
+  if (esp_sleep_get_wakeup_cause() != esp_sleep_wakeup_cause_t::ESP_SLEEP_WAKEUP_UNDEFINED)
+  {
+    Serial.println("TODO: ignorer init");
+    mot.setState(MotorState::IDLE);
+    Serial.println("au reveil : " + String(pref.getDouble("positionMoteur",0)));
+    mot._position = pref.getDouble("positionMoteur",0);
+  }
+  
+  printWakeUpReason();
 
 #ifdef PIN_TACHY
 tachy.setTimeout(2E6);
@@ -289,11 +426,22 @@ tachy.setTimeout(2E6);
   Ec.getDisplay()->println("ok init Ina219");
   Ec.getDisplay()->display();
 
+  menuParam = new menunu(Ec.getDisplay());
+
+  menuRoot = new menuItemList((char*)"Param",menuParam);
+  menuRoot->addItem(menuParam, new menuItembool((char*)"LED",&activate));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kp ",&moteurKp,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Ki ",&moteurKi,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kd ",&moteurKd,0,100));
+  menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Save",menuSaveCalleback));
+  menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Wifi",menuWifiServerCalleback));
+  menuParam->actual=menuRoot;
+  delay(1000);
+
   Serial.println("CPU  Freq: " + (String)getCpuFrequencyMhz());
   Serial.println("XTAL Freq: " + (String)getXtalFrequencyMhz());
   //setCpuFrequencyMhz(80);
   Serial.println("CPU Freq: " + (String)getCpuFrequencyMhz());
-  delay(1000);
   
 }
 
@@ -303,7 +451,7 @@ void loop() {
   Ec.loop();
   acquisitionEntree();
 
-  if (btnPRG.frontDesceandant())
+  if (btnPRG.frontMontant())
   {
     if (Ec.getState()== EcranState::EcranState_Sleep)
     {
@@ -317,10 +465,25 @@ void loop() {
       }
       
     }
+   
+  }
+  static unsigned long lastprgmillis = 0;
+
+  if (btnPRG.pressedTime()> 2000 && millis() > lastprgmillis +1000)
+  {
+    lastprgmillis = millis();
+    if (displayMode == AFFICHAGE_DEFAULT)
+    {
+      displayMode = MENU;
+    } else
+    {
+      displayMode = AFFICHAGE_DEFAULT;
+    }
     
     
     
   }
+  
   
   if (millis()> receptionMessage + 200 && receptionMessage != 0)
   {
@@ -338,5 +501,53 @@ void loop() {
   }
   mot.loop();
 
-  displayData();
+  if (millis()> wifiActivation + 60000 && wifiActivation != 0)
+  {
+    Serial.println("desactivation wifi");
+    wifiActivation = 0;
+    WiFi.mode(WIFI_OFF);
+    server.end();
+    
+
+  }
+  
+
+  switch ( displayMode)
+  {
+  case AFFICHAGE_DEFAULT:
+    displayData();
+    break;
+  case MENU:
+
+    if (encodeurCLK.frontDesceandant() && encodeurDT.isReleased())
+    {
+      Serial.println("Encod ok");
+      menuParam->next();
+    }
+    if (encodeurCLK.isReleased() && encodeurDT.frontDesceandant())
+    {
+      Serial.println("Encod ok");
+      menuParam->prev();
+    }
+    if (encodeurSW.frontDesceandant())
+    {
+      Serial.println("sw");
+      menuParam->select();
+    }
+    
+    if (menuParam == NULL)
+    {
+      Serial.println("null");
+      return;
+    }
+    //Serial.println("menuloop");
+    Ec.getDisplay()->clearDisplay();
+    menuParam->loop();
+    Ec.getDisplay()->display();
+  
+    break;
+  default:
+    break;
+  }
+  
 }

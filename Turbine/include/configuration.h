@@ -5,7 +5,7 @@
 
 #define NODEID TURBINE
 
-//Encodeur
+//Encodeur Moteur
 
 #define PIN_ENCODEUR_CW 26//5
 #define PIN_ENCODEUR_CCW 20//4
@@ -28,5 +28,12 @@
 
 //Intensite de sortie
 #define PIN_CURRENT_OUTPUT 2
+
+// Encodeur 
+#define PIN_ROTARY_CLK 4
+#define PIN_ROTARY_DT 5
+#define PIN_ROTARY_SW 6
+
+
 
 #endif // __CONFIGURATION_H__

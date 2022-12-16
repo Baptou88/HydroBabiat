@@ -16,14 +16,20 @@
 #include "Ecran.h"
 #include "LoRa.h"
 #include "Timer.h"
+#include <LList.h>
 
 #include <digitalInput.h>
 #include <parser.h>
+
+#include "basicController.h"
+#include "PIDController.h"
+
 
 #define LED 7
 #define POT  6
 
 #define LEDNOTIF 35
+#define PINTONE 5
 
 SPIClass spitft;
 #define TFT_CS        26
@@ -35,8 +41,7 @@ SPIClass spitft;
 Adafruit_ST7735 tft = Adafruit_ST7735 (TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
 
 
-bool etatLed = false;
-bool PrevEtatLed = false;
+
 //Adafruit_SSD1306* display;
 int potRaw = 0;
 int potValue = 0;
@@ -62,6 +67,15 @@ Timer timerEnvoiWS(1000);
 Ecran Ec(&Wire);
 
 Timer TftTimer (2500);
+
+basicController *bC = new basicController();
+PIDController *pidC = new PIDController();
+int modeActuel = 0;;
+//IController *modes[] = {bC,pidC};
+LList<IController*> modes = LList<IController*>();
+
+const int pinAnalogTest = 6;
+
 int i = 0;
 
 bool OtaUpdate = false;
@@ -292,11 +306,20 @@ void displayData(){
     Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne * 100) + " %");
 
     Ec.drawBVProgressBar(114,4,5,50,(dataEtang.ratioNiveauEtang * 100));
+
+    int posxTargetVanne;
+    posxTargetVanne = 4 + 106 * pidC->vanne / 100;
+    Ec.getDisplay()->setCursor(posxTargetVanne,45);
+    Ec.getDisplay()->println("v");
     Ec.drawProgressBar(4,55,106,5,(dataTurbine.positionVanne * 100));
     break;
   default:
-    Ec.drawVProgressBar(30,4,10,40,(50));
-    Ec.drawBVProgressBar(60,4,10,40,(50));
+    //Ec.drawVProgressBar(30,4,10,40,(50));
+    //Ec.drawBVProgressBar(60,4,10,40,(50));
+    Ec.getDisplay()->setCursor(0,0);
+    Ec.getDisplay()->println(pidC->niveau);
+    Ec.getDisplay()->println(pidC->vanne);
+    
     break;
   }
 
@@ -311,10 +334,13 @@ void setup() {
   Serial.println("RSTOLED " + String(RST_OLED));
   //scanI2C(&Wire);
   pinMode(LEDNOTIF,OUTPUT);
-  pinMode(LED,OUTPUT);
+
   pinMode(POT,INPUT);
 
   digitalWrite(LED,LOW);
+
+  modes.add(bC);
+  modes.add(pidC);
   
   if (!Ec.begin())
   {
@@ -340,6 +366,15 @@ void setup() {
     }
     
   }
+
+#ifdef PINTONE
+  pinMode(PINTONE, OUTPUT);
+#endif
+
+  pinMode(pinAnalogTest,INPUT);
+  ledcSetup(1,1000,8);
+  ledcAttachPin(LED,1);
+
 
  tft.initR();
  
@@ -385,6 +420,8 @@ void loop() {
   LoRa.loop();
   Ec.loop();
 
+  pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
+  pidC->loop();
   if (bufferActionToSend != "")
   {
     if (bufferActionToSend.indexOf(";") != -1)
@@ -419,7 +456,13 @@ void loop() {
 
   if (btnPRG.frontDesceandant())
   {
-    
+    #ifdef PINTONE
+      tone (PINTONE, 600); // allume le buzzer actif arduino
+      delay(100);
+      tone(PINTONE, 900); // allume le buzzer actif arduino
+      delay(100);
+      noTone(PINTONE);  // désactiver le buzzer actif arduino
+    #endif
     if (Ec.getState() == EcranState::EcranState_IDLE)
     {
       displayNum = (displayNum+1)%maxDisplay;
@@ -438,13 +481,7 @@ void loop() {
     WifiApp.notifyClients();
   }
   
-  if (etatLed != PrevEtatLed)
-  {
-
-    PrevEtatLed = etatLed;
-    
-    digitalWrite(LED,etatLed);
-  }
+  
   
   if (TftTimer.isOver())
   {
