@@ -74,6 +74,10 @@ int Moteur::getTarget()
 {
     return _target;
 }
+float Moteur::getTargetP()
+{
+    return (_target / (float)ouvertureMax) *100;
+}
 void Moteur::setTarget(int Target)
 {
     _target = Target;

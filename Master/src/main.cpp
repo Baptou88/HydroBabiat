@@ -24,6 +24,19 @@
 #include "basicController.h"
 #include "PIDController.h"
 
+struct LoRaNode_t
+{
+  String name;
+  byte addr;
+  nodeStatus_t status;
+  bool send = true;
+};
+
+
+LList<LoRaNode_t*> Nodes ;
+  
+
+
 
 #define LED 7
 #define POT  6
@@ -60,6 +73,9 @@ dataEtang_t dataEtang;
 nodeStatus_t EtangStatus;
 
 nodeStatus_t nodeTest;
+
+LoRaNode_t* Etang ;
+LoRaNode_t* Turbine ;
 
 digitalInput btnPRG(0,INPUT_PULLUP);
 Timer timerEnvoi(10000);
@@ -302,16 +318,16 @@ void displayData(){
     break;
   case 1:
     Ec.getDisplay()->setCursor(0,0);
-    Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang * 100) + " %");
-    Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne * 100) + " %");
+    Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang ) + " %");
+    Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne) + " %");
 
-    Ec.drawBVProgressBar(114,4,5,50,(dataEtang.ratioNiveauEtang * 100));
+    Ec.drawBVProgressBar(114,4,5,50,(dataEtang.ratioNiveauEtang ));
 
     int posxTargetVanne;
     posxTargetVanne = 4 + 106 * pidC->vanne / 100;
     Ec.getDisplay()->setCursor(posxTargetVanne,45);
     Ec.getDisplay()->println("v");
-    Ec.drawProgressBar(4,55,106,5,(dataTurbine.positionVanne * 100));
+    Ec.drawProgressBar(4,55,106,5,(dataTurbine.positionVanne ));
     break;
   default:
     //Ec.drawVProgressBar(30,4,10,40,(50));
@@ -327,6 +343,16 @@ void displayData(){
 
   
 }
+
+void initNodes(){
+  
+  Etang->addr = ETANG;
+  Etang->name = "Etang";
+  Etang->status = EtangStatus;
+
+  Nodes.add(Etang);
+}
+
 // put your setup code here, to run once:
 void setup() {
   Serial.begin(115200);
@@ -337,10 +363,14 @@ void setup() {
 
   pinMode(POT,INPUT);
 
+  pinMode(LED,OUTPUT);
   digitalWrite(LED,LOW);
 
   modes.add(bC);
   modes.add(pidC);
+
+
+  initNodes();
   
   if (!Ec.begin())
   {

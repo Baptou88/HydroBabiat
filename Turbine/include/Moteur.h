@@ -39,6 +39,7 @@ public:
     int ouvertureMax = 5000;
     float IntensiteMoteur = 0;
     double _target = 0;
+    
     Moteur(/* args */);
     ~Moteur();
     void begin(byte pinCW, byte pinCCW);
@@ -46,6 +47,7 @@ public:
     void setSpeedLimit(int vmin, int vmax);
     void loop();
     int getTarget();
+    float getTargetP();
     void setTarget(int Target);
     void setPosition(int Position);
     void updateIntensiteMoteur(float intensite);
@@ -54,6 +56,8 @@ public:
     MotorState getState(void);
     void setState(MotorState state);
 };
+
+
 
 
 

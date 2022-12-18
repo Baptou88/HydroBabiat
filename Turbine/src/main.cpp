@@ -25,10 +25,12 @@
 #include "main.h"
 #include "wifiCredentials.h"
 
+#define ms_to_s_factor 1000
+#define us_to_s_factor 1000000
 
 AsyncWebServer server(80);
 
-#define LED_DEBUG true
+
 
 unsigned long wifiActivation = 0;
 unsigned long receptionMessage = 0;
@@ -63,6 +65,12 @@ float moteurKp = 2.2;
 float moteurKi = 0;
 float moteurKd = 0.4;
 
+float voltage_coefA = 1;
+float voltage_base = 0;
+
+float current_coefA = 0.0245f;
+float current_base = -2048;
+
 //Fin de course Fermee
 digitalInput FCF(PIN_FC_F,INPUT_PULLUP);
 //Fin de course Ouvert
@@ -74,14 +82,16 @@ digitalInput encodeurDT(PIN_ROTARY_DT,INPUT_PULLUP);
 digitalInput encodeurCLK(PIN_ROTARY_CLK,INPUT_PULLUP);
 digitalInput encodeurSW(PIN_ROTARY_SW,INPUT_PULLUP);
 
-AnalogInput VoltageOutput(PIN_VOLTAGE_OUTPUT,1,0);
-AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,(0.0245f),-2048);
+AnalogInput VoltageOutput(PIN_VOLTAGE_OUTPUT,voltage_coefA,voltage_base);
+AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,current_coefA,current_base);
 
 Adafruit_INA260 ina260 = Adafruit_INA260(); 
 Adafruit_INA219 ina219 = Adafruit_INA219(); 
 
+bool ledNotif = true;
+
 float VoltageBattery = 0;
-bool activate = false;
+
 
 void displayData(){
   Ec.getDisplay()->clearDisplay();
@@ -147,7 +157,7 @@ String LoRaMesageStatut(){
   String toSend = "";
   toSend += "PM:" + (String) EncoderVanne::getPos() + ",";
   toSend += "PV:" + (String) transmission::ratiOuverture(mot) + ",";
-  toSend += "target:" + (String) mot.getTarget() + ",";
+  toSend += "target:" + (String) mot.getTargetP() + ",";
   toSend += "U:" + (String) VoltageOutput.getValue() + ",";
   toSend += "I:" + (String) CurrentOutput.getValue() + ",";
   toSend += "tachy:" + (String) tachy.getRPM() + ",";
@@ -165,9 +175,12 @@ void LoRaMessage(LoRaPacket header, String msg){
   Serial.println(msg);
   
   
-  #if defined(LED_DEBUG) && LED_DEBUG == true
+  if (ledNotif)
+  {
     digitalWrite(LED_BUILTIN,HIGH);
-  #endif
+  }
+  
+
 
   commandProcess(msg);
 
@@ -196,7 +209,9 @@ void commandProcess(String cmd){
   if (cmd.startsWith("TargetVanne="))
   {
     cmd.replace("TargetVanne=","");
-    mot.setTarget(transmission::ratioToTarget((cmd.toInt() /100.0),mot));
+    int consigne = transmission::ratioToTarget((cmd.toInt()),mot);
+    Serial.printf("consigne %i\n",consigne);
+    mot.setTarget(transmission::ratioToTarget((cmd.toInt() ),mot));
   }
   
   if (cmd.startsWith("ZV")) //set Zero to Voltage mesure
@@ -210,7 +225,7 @@ void commandProcess(String cmd){
   if (cmd.startsWith("DS"))
   {
     //TODO
-    esp_sleep_enable_timer_wakeup(10000000);
+    esp_sleep_enable_timer_wakeup(10 * us_to_s_factor);
     pref.putDouble("positionMoteur",mot._position);
     Serial.println(mot._position);
     delay(100);
@@ -253,6 +268,12 @@ bool initPreferences(){
   moteurKi = pref.getFloat("moteurKi",moteurKi);
   moteurKd = pref.getFloat("moteurKd",moteurKd);
 
+  voltage_coefA = pref.getFloat("voltage_coefA",voltage_coefA);
+  voltage_base = pref.getFloat("voltage_base",voltage_base);
+  current_coefA = pref.getFloat("current_coefA",current_coefA);
+  current_base = pref.getFloat("current_base",current_base);
+
+
   return true;
 }
 
@@ -263,6 +284,11 @@ bool savePreferences(){
   pref.putFloat("moteurKp",moteurKp);
   pref.putFloat("moteurKi",moteurKi);
   pref.putFloat("moteurKd",moteurKd);
+
+  pref.putFloat("voltage_coefA",voltage_coefA);
+  pref.putFloat("voltage_base",voltage_base);
+  pref.putFloat("current_coefA",current_coefA);
+  pref.putFloat("current_base",current_base);
 
   return true;
 }
@@ -294,8 +320,32 @@ void menuSaveCalleback(Adafruit_SSD1306* display,bool firstTime){
   display->println("Save ok !");
   display->display();
   
+}
+
+void menuVZCalleback(Adafruit_SSD1306* display,bool firstTime){
+  if (firstTime)
+  {
+    VoltageOutput.setZero();
+  }
   
+  display->clearDisplay();
+  display->setCursor(0,0);
+  display->println("Voltage set Zero ok !");
+  display->display();
+
+}
+
+void menuCZCalleback(Adafruit_SSD1306* display,bool firstTime){
+  if (firstTime)
+  {
+    CurrentOutput.setZero();
+  }
   
+  display->clearDisplay();
+  display->setCursor(0,0);
+  display->println("current set Zero ok !");
+  display->display();
+
 }
 
 void menuWifiServerCalleback(Adafruit_SSD1306* display,bool firstTime)
@@ -327,6 +377,7 @@ void menuWifiServerCalleback(Adafruit_SSD1306* display,bool firstTime)
   
 
 }
+
 // put your setup code here, to run once:
 void setup() {
   Serial.begin(115200);
@@ -429,10 +480,16 @@ tachy.setTimeout(2E6);
   menuParam = new menunu(Ec.getDisplay());
 
   menuRoot = new menuItemList((char*)"Param",menuParam);
-  menuRoot->addItem(menuParam, new menuItembool((char*)"LED",&activate));
+  menuRoot->addItem(menuParam, new menuItembool((char*)"LED notif",&ledNotif));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kp ",&moteurKp,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Ki ",&moteurKi,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kd ",&moteurKd,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage ka ",&voltage_coefA,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage z ",&voltage_base,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current ka ",&current_coefA,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current z ",&current_base,0,100));
+  menuRoot->addItem(menuParam,new menuItemCalleback((char*)"voltage set z",menuVZCalleback));
+  menuRoot->addItem(menuParam,new menuItemCalleback((char*)"current set z",menuCZCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Save",menuSaveCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Wifi",menuWifiServerCalleback));
   menuParam->actual=menuRoot;
@@ -501,6 +558,7 @@ void loop() {
   }
   mot.loop();
 
+//gestion wifi
   if (millis()> wifiActivation + 60000 && wifiActivation != 0)
   {
     Serial.println("desactivation wifi");
@@ -510,7 +568,7 @@ void loop() {
     
 
   }
-  
+
 
   switch ( displayMode)
   {
@@ -521,17 +579,17 @@ void loop() {
 
     if (encodeurCLK.frontDesceandant() && encodeurDT.isReleased())
     {
-      Serial.println("Encod ok");
+      
       menuParam->next();
     }
     if (encodeurCLK.isReleased() && encodeurDT.frontDesceandant())
     {
-      Serial.println("Encod ok");
+      
       menuParam->prev();
     }
     if (encodeurSW.frontDesceandant())
     {
-      Serial.println("sw");
+      
       menuParam->select();
     }
     

@@ -20,7 +20,7 @@ void menunu::next(){
         actual->right();
         return;
     }
-    Serial.println("erreur");
+    
     
     
 }
@@ -39,16 +39,12 @@ void menunu::prev(){
 void menunu::loop(){
     if (_display == NULL)
     {
-        Serial.println("NULL");
         return;
     }
     if (actual == NULL)
     {
-        Serial.println("NULL");
         return;        
     }
     
    actual->draw(_display);
- 
-    
 }

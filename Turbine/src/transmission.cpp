@@ -18,13 +18,13 @@ namespace transmission
 
     float ratiOuverture(Moteur mot)
     {
-        return mot._position / mot.ouvertureMax;
+        return mot._position / mot.ouvertureMax *100;
     }
 
     
     int ratioToTarget(float ratio,Moteur mot)
     {
-        return ratio * mot.ouvertureMax;
+        return ratio * mot.ouvertureMax /100;
     }
 
 } // namespace transmission

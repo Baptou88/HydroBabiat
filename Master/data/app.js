@@ -9,7 +9,7 @@ document.addEventListener('alpine:init', () => {
 })
 document.addEventListener('DOMContentLoaded',function (){
   var graphNiveauOption = {
-    title: { text: 'Niveau VL53L1X' },
+    title: { text: 'Etang' },
     // subtitle: {text: 'Using I2C Interface'},
     // chart: {
     //     type: 'area'
@@ -94,8 +94,95 @@ document.addEventListener('DOMContentLoaded',function (){
     //   }
     ]
   };
+  var graphTurbineOption = {
+    title: { text: 'Turbine' },
+    // subtitle: {text: 'Using I2C Interface'},
+    // chart: {
+    //     type: 'area'
+    // },
+    time: {
+      useUTC: false
+    },
+    legend: {
+      enabled: true
+    },
+    rangeSelector: {
+        buttons: [{
+            count: 1,
+            type: 'minute',
+            text: '1M'
+        }, {
+            count: 5,
+            type: 'minute',
+            text: '5M'
+        }, {
+            count: 30,
+            type: 'minute',
+            text: '30M'
+        }, {
+            type: 'all',
+            text: 'All'
+        }],
+        inputEnabled: false,
+        selected: 0
+    },
+    title: {
+        text: 'Ouverture (%)'
+    },
+    plotOptions: {
+      series: {
+        
+        showInNavigator: true
+      },
+      line: { 
+        animation: false,
+        dataLabels: { enabled: true }
+      },
+      // series: [
+      //   { 
+      //     color: '#059e8a',
+      //     name: "Niveau" 
+      //   },
+      //   { 
+      //     color: '#05918a',
+      //     name: "Ouverture" 
+      //   }
+      // ]
+    },
+    xAxis: {
+        //categories: [],
+      type: 'datetime',
+      dateTimeLabelFormats: { second: '%H:%M:%S' }
+    },
+    yAxis: {
+        title: {
+            text: '(%)'
+        }
+    },
+    series: [ {
+      name: 'Ouverture (%)',
+      data: [],
+      color: '#05918a',
+      
+      },
+      { 
+        data:[],
+        name: 'Cible (%)',
+        color: '#FFAA8a' 
+      },
+      { 
+        data:[],
+        name: 'Cible (%)',
+        color: '#FFC78A' 
+      }//, {
+    //       name: 'John',
+    //       data: [5, 7, 3]
+    //   }
+    ]
+  };
   chartNiveau = Highcharts.stockChart('chartNiveau',graphNiveauOption)
-  chartNiveau.series[0].addPoint([(new Date()).getTime(), 10],true ,false,true);
+  //chartNiveau.series[0].addPoint([(new Date()).getTime(), 10],true ,false,true);
+  chartTurbine = Highcharts.stockChart('chartTurbine',graphTurbineOption)
 })
 var gateway = `ws://${window.location.hostname}/ws`;
 //var gateway = `ws://192.168.1.24/ws`;
@@ -107,8 +194,16 @@ function initWebSocket() {
   websocket.onopen    = onOpen;
   websocket.onclose   = onClose;
   websocket.onmessage = onMessage; // <-- add this line
-  
+  // websocket.addEventListener("message", (event) => {
+  //   console.log("dacc" , event);
+  // })
+  // websocket.addEventListener("message", (event) => {
+  //   console.log("dacc2" , event);
+  // })
 }
+
+
+
 function onOpen(event) {
   console.log('Connection opened');
   Alpine.store("Ws.etablished",true);
@@ -123,6 +218,8 @@ function onMessage(event) {
   //console.log(event.data);
   var data = JSON.parse(event.data);
   var keys = Object.keys(data);
+
+  var dt = new Date()
   for (let i = 0; i < keys.length; i++) {
     const element = keys[i];
     //console.log(element);
@@ -133,6 +230,19 @@ function onMessage(event) {
       console.log("element: " + element + " not exist");
     }
     
+    if (element == "ratioNiveauEtang") {
+      chartNiveau.series[0].addPoint([dt.getTime(), data[element]],true ,false,true);
+    }
+    if (element == "targetNiveauEtang") {
+      chartNiveau.series[2].addPoint([dt.getTime(), data[element]],true ,false,true);
+    }
+    if (element == "positionVanne") {
+      chartTurbine.series[0].addPoint([dt.getTime(), data[element]],true ,false,true);
+    }
+    if (element == "RangePosVanneTarget") {
+      chartTurbine.series[1].addPoint([dt.getTime(), data[element]],true ,false,true);
+      el.value = data[element]
+    }
   }
 }
 function onLoad(event) {

@@ -41,6 +41,7 @@ menuItembool::~menuItembool()
 void  menuItembool::draw(Adafruit_SSD1306* display)  {
     display->setCursor(0,0);
     display->println("Boolean");
+    display->println(m_title);
     display->drawRect(10,20,110,20,SSD1306_WHITE);
     
     if (*_param == true)
@@ -78,7 +79,7 @@ void menuItembool::select()
 
 void menuItembool::menuItembool::right()
 {
-    Serial.println("bjr bool");
+
   *_param = !*_param ;  
 }
 
@@ -109,9 +110,9 @@ void menuItemInt::select()
 
 void menuItemInt::right()
 {
-    Serial.println(*m_param);
+
     *m_param = *m_param+1;
-    Serial.println(*m_param);
+
 }
 
 void menuItemInt::left()
@@ -160,12 +161,12 @@ int menuItemFloat::countDigit(float num)
 
 void menuItemFloat::draw(Adafruit_SSD1306* display)
 {
-    display->setCursor(20,20);
-    display->print(*m_param);
-    display->setCursor(20,40);
-    display->print(countDigit(*m_param));
-    display->setCursor(60,20);
-    display->print(multiplicateur);
+    display->setCursor(0,15);
+    display->printf("Valeur: %f",*m_param);
+    display->setCursor(0,30);
+    display->printf("count digit: %i",countDigit(*m_param));
+    display->setCursor(0,45);
+    display->printf("mul: %f",multiplicateur);
     
 }
 
@@ -203,13 +204,12 @@ menuItemList::menuItemList(char* title,menunu *m){
     _m = m;
 }
 void menuItemList::select(){
-    Serial.println("selected from list");
-    Serial.println(selected);
-    Serial.println(items.get(selected)->m_title);
+
+
     
     if (_m == NULL)
     {
-        Serial.println("NULL");
+
     }else
     {
         _m->actual = items.get(selected);
@@ -234,11 +234,11 @@ void menuItemList::right(){
     if (selected < items.size()-1)
     {
         selected++;
-        Serial.printf("par là %i %i %i %i \n",maxItems,first_el,items.size(),selected);
+
         if (selected - first_el >= maxItems)
         {
             first_el++;
-            Serial.println("qfeffdf");
+
         }
         
     }
@@ -289,7 +289,7 @@ void menuItemList::addItem(menunu *m,menuItemBase* item){
 void menuItemList::draw(Adafruit_SSD1306* display){
    if (display == NULL)
    {
-    Serial.println("display null");
+
     return;
    }
    

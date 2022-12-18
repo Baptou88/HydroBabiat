@@ -28,8 +28,8 @@ void WifiAppClass::notifyClients(){
   
   String message = "{";
   message += "\"LED\":" +  (String)LED +",";
-  message += "\"positionVanne\":" +  (String)(dataTurbine.positionVanne * 100)+",";
-  message += "\"RangePosVanneTarget\":" +  (String)dataTurbine.targetPositionVanne +",";
+  message += "\"positionVanne\":" +  (String)(dataTurbine.positionVanne )+",";
+  message += "\"RangePosVanneTarget\":" +  (String)(dataTurbine.targetPositionVanne )+",";
   message += "\"TurbineRSSI\":" +  (String)TurbineStatus.RSSI +",";
   message += "\"TurbineSNR\":" +  (String)TurbineStatus.SNR +",";
   message += "\"EtangRSSI\":" +  (String)EtangStatus.RSSI +",";
