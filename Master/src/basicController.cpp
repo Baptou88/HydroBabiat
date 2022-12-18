@@ -3,6 +3,7 @@
 
 basicController::basicController(/* args */)
 {
+    type = typeController::basic;
     name = "Basic";
 }
 
@@ -12,6 +13,7 @@ basicController::~basicController()
 
 void basicController::loop(void)
 {
+    
     switch (etat)
     {
     case VIDER:

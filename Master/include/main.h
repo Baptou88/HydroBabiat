@@ -16,6 +16,9 @@ struct nodeStatus_t
   float RSSI = 0;
   float SNR = 0;
   unsigned long dernierMessage = 0;
+  byte addr = 0;
+  String Name = "";
+  bool active = true;
 };
 
 struct dataEtang_t
