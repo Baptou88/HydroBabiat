@@ -11,5 +11,6 @@ IController::~IController()
 
 void IController::output()
 {
-    ledcWrite(1,vanne);
+    int out = map(vanne,0,100,0,255);
+    ledcWrite(1,out);
 }

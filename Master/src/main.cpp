@@ -23,20 +23,8 @@
 
 #include "basicController.h"
 #include "PIDController.h"
-
-struct LoRaNode_t
-{
-  String name;
-  byte addr;
-  nodeStatus_t status;
-  bool send = true;
-};
-
-
-LList<LoRaNode_t*> Nodes ;
+#include "manuelController.h"
   
-
-
 
 #define LED 7
 #define POT  6
@@ -74,19 +62,21 @@ nodeStatus_t EtangStatus;
 
 nodeStatus_t nodeTest;
 
-LoRaNode_t* Etang ;
-LoRaNode_t* Turbine ;
+
 
 digitalInput btnPRG(0,INPUT_PULLUP);
+
 Timer timerEnvoi(10000);
 Timer timerEnvoiWS(1000);
 Ecran Ec(&Wire);
 
 Timer TftTimer (2500);
 
+manuelController *manuelC = new manuelController();
 basicController *bC = new basicController();
 PIDController *pidC = new PIDController();
-int modeActuel = 0;;
+
+int modeActuel = 0;
 //IController *modes[] = {bC,pidC};
 LList<IController*> modes = LList<IController*>();
 
@@ -307,11 +297,11 @@ void displayData(){
     // Ec.getDisplay()->print("target: ");
     // Ec.getDisplay()->println(dataTurbine.targetPositionVanne);
 
-    Ec.getDisplay()->println("Etang  : " + (String)EtangStatus.RSSI);
+    Ec.getDisplay()->println("[" + String(EtangStatus.active?"x":" ") +"] Etang  : " + (String)EtangStatus.RSSI);
     Ec.getDisplay()->println("  : " + (String)((millis() - EtangStatus.dernierMessage)/1000));
-    Ec.getDisplay()->println("Turbine: " + (String)TurbineStatus.RSSI);
+    Ec.getDisplay()->println("[" + String(TurbineStatus.active?"x":" ") +"] Turbine: " + (String)TurbineStatus.RSSI);
     Ec.getDisplay()->println("  : " + (String)((millis() - TurbineStatus.dernierMessage)/1000));
-    Ec.getDisplay()->println("Node Test: " + (String)nodeTest.RSSI);
+    Ec.getDisplay()->println("[" + String(nodeTest.active?"x":" ") +"] Node Test: " + (String)nodeTest.RSSI);
     Ec.getDisplay()->println("  : " + (String)((millis() - nodeTest.dernierMessage)/1000));
     
     
@@ -333,8 +323,13 @@ void displayData(){
     //Ec.drawVProgressBar(30,4,10,40,(50));
     //Ec.drawBVProgressBar(60,4,10,40,(50));
     Ec.getDisplay()->setCursor(0,0);
-    Ec.getDisplay()->println(pidC->niveau);
-    Ec.getDisplay()->println(pidC->vanne);
+    Ec.getDisplay()->println(modes.get(modeActuel)->name);
+    for (size_t i = 0; i < modes.size(); i++)
+    {
+      Ec.getDisplay()->print("[" + String(i==modeActuel?"x":" ") + "] ");
+      Ec.getDisplay()->println(modes.get(i)->name);
+    }
+   
     
     break;
   }
@@ -346,11 +341,15 @@ void displayData(){
 
 void initNodes(){
   
-  Etang->addr = ETANG;
-  Etang->name = "Etang";
-  Etang->status = EtangStatus;
+  EtangStatus.addr = ETANG;
+  EtangStatus.Name = "ETANG";
 
-  Nodes.add(Etang);
+
+  TurbineStatus.addr = TURBINE;
+  TurbineStatus.Name = "Turbine";
+
+  nodeTest.addr = 0x04;
+  nodeTest.Name = "NodeTest";
 }
 
 // put your setup code here, to run once:
@@ -366,6 +365,7 @@ void setup() {
   pinMode(LED,OUTPUT);
   digitalWrite(LED,LOW);
 
+  modes.add(manuelC);
   modes.add(bC);
   modes.add(pidC);
 
@@ -452,6 +452,7 @@ void loop() {
 
   pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
   pidC->loop();
+
   if (bufferActionToSend != "")
   {
     if (bufferActionToSend.indexOf(";") != -1)

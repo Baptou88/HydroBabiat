@@ -3,6 +3,7 @@
 PIDController::PIDController(/* args */)
 {
     name = "PID";
+    type = typeController::PID;
 }
 
 PIDController::~PIDController()

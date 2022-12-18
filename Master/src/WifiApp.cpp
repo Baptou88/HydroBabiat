@@ -2,6 +2,7 @@
 
 extern const char* WIFISSID ;
 extern const char* WIFIPASSWORD ;
+extern int modeActuel ;
 
 #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 Serial.println(#filename);\
@@ -71,7 +72,21 @@ String WifiAppClass::templateProcessor(const String& var) {
     String retour = "";
     for (size_t i = 0; i < modes.size(); i++)
     {
-      retour += "<li class=\"list-group-item "+ String((i == modeActuel)? "active" : "") + "\">"+(String) modes.get(i)->name +"</li>";
+      retour += "<li class=\"list-group-item "+ String((i == modeActuel)? "active" : "") + "\" data-num=\"" + String(i) + "\">"+(String) modes.get(i)->name ;
+      if (modes.get(i)->type == typeController::PID)
+      {
+        PIDController* c ;
+        c = reinterpret_cast<PIDController*> (modes.get(i));
+        retour += "<p>" + (String)c->targetEtang + "</p>";
+        retour += +"</li>";
+      } else if (modes.get(i)->type == typeController::basic)
+      {
+        basicController* c;
+        c = reinterpret_cast<basicController*> (modes.get(i));
+        retour += "<p>" + String(c->niveauMin) +" " + String(c->niveauMax) + "</p>";
+      }
+      
+      
     }
     return retour;
   }
@@ -106,6 +121,16 @@ bool WifiAppClass::begin()
       request->send(SPIFFS,"/icons/favicon.ico");
     });
 
+    server.on("/mode",HTTP_GET,[](AsyncWebServerRequest * request){
+      if(request->hasParam("modeNum")){
+        
+        AsyncWebParameter* p = request->getParam("modeNum");
+        Serial.println("mode num : "+ (String) p->value().toInt());
+        modeActuel=p->value().toInt();
+
+      }
+      request->send(200, "text/plain", "mode ok");
+    });
     SPIFFS_provide_file("/app.js");
 
     ws.onEvent(WifiApp.onEvent);

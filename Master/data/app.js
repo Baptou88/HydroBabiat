@@ -1,3 +1,12 @@
+var modes_li
+function desactivateModes() {
+  modes_li.forEach(el => {
+    el.classList.remove('active')
+  })
+}
+function activeMode(el) {
+  el.classList.add('active')
+}
 document.addEventListener('alpine:init', () => {
   Alpine.store('Ws', {
       etablished: false,
@@ -7,7 +16,24 @@ document.addEventListener('alpine:init', () => {
       }
   })
 })
+
 document.addEventListener('DOMContentLoaded',function (){
+  var modes = document.querySelector("#modes")
+  modes_li =  modes.querySelectorAll("li")
+  
+  modes_li.forEach(el => {
+    el.addEventListener('click', el => {
+      
+      console.log(el);
+      let url = "/mode?modeNum="+ el.target.dataset.num
+      console.log(url);
+      fetch(url).then(response => {
+        desactivateModes();
+        activeMode(el.target)
+      }).catch(console.error("erreur"))
+    })
+  })
+
   var graphNiveauOption = {
     title: { text: 'Etang' },
     // subtitle: {text: 'Using I2C Interface'},
@@ -184,10 +210,19 @@ document.addEventListener('DOMContentLoaded',function (){
   //chartNiveau.series[0].addPoint([(new Date()).getTime(), 10],true ,false,true);
   chartTurbine = Highcharts.stockChart('chartTurbine',graphTurbineOption)
 })
+
 var gateway = `ws://${window.location.hostname}/ws`;
 //var gateway = `ws://192.168.1.24/ws`;
 var websocket;
+
+
+
+
+
+
+
 window.addEventListener('load', onLoad);
+
 function initWebSocket() {
   console.log('Trying to open a WebSocket connection...');
   websocket = new WebSocket(gateway);

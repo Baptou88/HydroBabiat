@@ -11,11 +11,11 @@ enum etangState{
 class basicController: public IController
 {
 private:
-    int niveauMin = 20;
-    int niveauMax = 80;
     etangState etat = REMPLIR;
     bool doChange = false;
 public:
+    int niveauMin = 20;
+    int niveauMax = 80;
     
     basicController(/* args */);
     ~basicController();
