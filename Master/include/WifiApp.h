@@ -11,6 +11,7 @@
 
 #include <IController.h>
 #include <basicController.h>
+#include <manuelController.h>
 #include <PIDController.h>
 #include <LList.h>
 

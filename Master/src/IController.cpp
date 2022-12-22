@@ -11,6 +11,12 @@ IController::~IController()
 
 void IController::output()
 {
-    int out = map(vanne,0,100,0,255);
-    ledcWrite(1,out);
+    if (vanne != previousVanne)
+    {
+        previousVanne = vanne;
+
+        int out = map(vanne,0,100,0,255);
+        ledcWrite(1,out);
+    }
+    
 }

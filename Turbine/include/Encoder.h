@@ -16,6 +16,7 @@ namespace EncoderVanne
     IRAM_ATTR void  isr();
     int getPos();
     void setZeroPos();
+    void setPosition(int pos);
 } // namespace EncoderVanne
 
 

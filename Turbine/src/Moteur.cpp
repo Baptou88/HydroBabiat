@@ -93,6 +93,11 @@ void Moteur::updateIntensiteMoteur(float Intensite){
     IntensiteMoteur = Intensite;
 }
 void Moteur::loop(){
+    if (IntensiteMoteur > maxItensiteMoteur)
+    {
+        _state = MotorState::OVERLOAD;
+    }
+    
     switch (_state)
     {
     case IDLE:

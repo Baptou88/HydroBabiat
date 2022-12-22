@@ -1,10 +1,46 @@
+class modes_C {
+  constructor(name,id){
+      this.name = name;
+      this.id = id;
+  }
+  active(){
+      console.log(`active function ${this.name} `);
+      // document.querySelectorAll(`[data-moded="${this.id}"]`).forEach(el => {
+      //     console.log(el);
+      //     el.removeAttribute("disabled")
+      // })
+      document.querySelectorAll(`[data-modee="${this.id}"]`).forEach(el => {
+          el.classList.remove('visually-hidden')
+      })
+  }
+  desactive(){
+
+      // document.querySelectorAll(`[data-moded="${this.id}"]`).forEach(el => {
+      //     el.setAttribute("disabled",true)
+      // })
+
+      document.querySelectorAll(`[data-modee="${this.id}"]`).forEach(el => {
+          el.classList.add('visually-hidden')
+      })
+  }
+}
+let mode1 = new modes_C("mode0",0);
+let mode2 = new modes_C("mode1",1);
+let mode3 = new modes_C("mode2",2);
+let activeMode = 0;
 var modes_li
+var modes
+var param
+var modesArray = [mode1,mode2,mode3];
+
+
+
 function desactivateModes() {
   modes_li.forEach(el => {
     el.classList.remove('active')
   })
 }
-function activeMode(el) {
+function activateMode(el) {
   el.classList.add('active')
 }
 document.addEventListener('alpine:init', () => {
@@ -18,19 +54,29 @@ document.addEventListener('alpine:init', () => {
 })
 
 document.addEventListener('DOMContentLoaded',function (){
-  var modes = document.querySelector("#modes")
+  modes = document.querySelector("#modes")
   modes_li =  modes.querySelectorAll("li")
   
+  modesArray.forEach(el => {
+    el.desactive()
+  })
+  modesArray[activeMode].active();
+
   modes_li.forEach(el => {
     el.addEventListener('click', el => {
       
-      console.log(el);
+      
       let url = "/mode?modeNum="+ el.target.dataset.num
-      console.log(url);
+
       fetch(url).then(response => {
         desactivateModes();
-        activeMode(el.target)
-      }).catch(console.error("erreur"))
+
+        modesArray[activeMode].desactive()
+
+        activateMode(el.target)
+        activeMode = el.target.dataset.num
+        modesArray[activeMode].active()
+      })//.catch(console.error("erreur"))
     })
   })
 
@@ -262,9 +308,14 @@ function onMessage(event) {
     if(typeof(el) != 'undefined' && el != null){
       el.innerHTML = data[element];
     }else{
-      console.log("element: " + element + " not exist");
+      //console.log("element: " + element + " not exist");
     }
-    
+    if (element == "Mode") {
+      desactivateModes();
+      var el = modes.querySelector(`[data-num="${data[element]}"]`)
+
+      activateMode(el);
+    }
     if (element == "ratioNiveauEtang") {
       chartNiveau.series[0].addPoint([dt.getTime(), data[element]],true ,false,true);
     }
@@ -286,7 +337,7 @@ function onLoad(event) {
 
   var rangePosVanne = document.querySelector("#RangePosVanneTarget")
 
-  //console.log(rangePosVanne);
+
   rangePosVanne.addEventListener('change',(e) => {
     console.log(e);
     websocket.send(e.target.id + " " + e.target.value)
@@ -295,12 +346,26 @@ function onLoad(event) {
   var computedbtn = document.querySelectorAll(".computed")
   computedbtn.forEach(element => {
     element.addEventListener('click',(e) =>{
-      console.log(e);
       websocket.send("Action:" + e.target.dataset.node + ":" + e.target.dataset.action +";")
     });
   
   })
-  console.log("computed ", computedbtn);
+
+param = document.querySelectorAll(".param")
+  param.forEach(element =>{
+    if (element.type == "text" || element.type == "number") {
+      element.addEventListener('change',  el =>{
+        console.log("param onchange");
+        websocket.send(`kp=${el.target.value}`)
+      })
+      
+    } else if (element.type == "button") {
+      
+    } else if (element.type == "range") {
+      
+    }
+  })
+  
 }
 function initButton() {
   document.getElementById('button').addEventListener('click', toggle);

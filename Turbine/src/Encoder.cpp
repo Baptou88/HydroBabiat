@@ -50,6 +50,11 @@ namespace EncoderVanne
         return position;
     }
 
+    void setPosition(int pos)
+    {
+        position = pos;
+    }
+    
     void setZeroPos(){
         position = 0;
     }

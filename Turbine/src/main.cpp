@@ -38,6 +38,8 @@ unsigned long dernierMessage = 0;
 float msgRSSI = 0;
 float msgSNR = 0;
 
+int timeDeepSleeping = 0;
+
 Ecran Ec = Ecran();
 
 Moteur mot;
@@ -48,7 +50,8 @@ Tachymetre tachy;
 
 enum displayMode_e{
   AFFICHAGE_DEFAULT,
-  MENU
+  MENU,
+  InitPos
 };
 int displayNum = 0;
 displayMode_e displayMode = AFFICHAGE_DEFAULT;
@@ -206,6 +209,20 @@ void printWakeUpReason(){
 }
 
 void commandProcess(String cmd){
+  if (cmd.startsWith("DeepSleep"))
+  {
+    // delai avant de dormir default 10 secondes
+    int delayUs = 10e6; 
+    cmd.replace("DeepSleep","");
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      delayUs = cmd.toInt();
+    }
+    timeDeepSleeping = delayUs;
+    
+  }
+  
   if (cmd.startsWith("TargetVanne="))
   {
     cmd.replace("TargetVanne=","");
@@ -226,7 +243,7 @@ void commandProcess(String cmd){
   {
     //TODO
     esp_sleep_enable_timer_wakeup(10 * us_to_s_factor);
-    pref.putDouble("positionMoteur",mot._position);
+    pref.putDouble("posMot",mot._position);
     Serial.println(mot._position);
     delay(100);
     
@@ -318,6 +335,20 @@ void menuSaveCalleback(Adafruit_SSD1306* display,bool firstTime){
   display->clearDisplay();
   display->setCursor(0,0);
   display->println("Save ok !");
+  display->display();
+  
+}
+
+void menuSavePosMotCalleback(Adafruit_SSD1306* display,bool firstTime){
+  if (firstTime)
+  {
+    pref.putDouble("posMot",mot._position);
+  }
+  
+  
+  display->clearDisplay();
+  display->setCursor(0,0);
+  display->println("Save Pos Mot ok !");
   display->display();
   
 }
@@ -415,13 +446,7 @@ void setup() {
   mot.setSpeedLimit(30,100);
   mot.setEndstop(&FCF,&FCO);
 
-  if (esp_sleep_get_wakeup_cause() != esp_sleep_wakeup_cause_t::ESP_SLEEP_WAKEUP_UNDEFINED)
-  {
-    Serial.println("TODO: ignorer init");
-    mot.setState(MotorState::IDLE);
-    Serial.println("au reveil : " + String(pref.getDouble("positionMoteur",0)));
-    mot._position = pref.getDouble("positionMoteur",0);
-  }
+  
   
   printWakeUpReason();
 
@@ -449,6 +474,15 @@ tachy.setTimeout(2E6);
 
     }
     
+  }
+
+  if (esp_sleep_get_wakeup_cause() != esp_sleep_wakeup_cause_t::ESP_SLEEP_WAKEUP_UNDEFINED)
+  {
+    Serial.println("TODO: ignorer init");
+    mot.setState(MotorState::IDLE);
+    Serial.println("au reveil : " + String(pref.getDouble("posMot",0)));
+    mot._position = pref.getDouble("posMot",0);
+    EncoderVanne::setPosition(pref.getDouble("posMot",0));
   }
   
 
@@ -491,6 +525,7 @@ tachy.setTimeout(2E6);
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"voltage set z",menuVZCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"current set z",menuCZCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Save",menuSaveCalleback));
+  menuRoot->addItem(menuParam,new menuItemCalleback((char*)"SavePosMot",menuSavePosMotCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Wifi",menuWifiServerCalleback));
   menuParam->actual=menuRoot;
   delay(1000);
@@ -540,6 +575,11 @@ void loop() {
     
     
   }
+  // if (mot.getState() == MotorState::WAIT_INIT)
+  // {
+  //   displayMode = displayMode_e::InitPos;
+  // }
+  
   
   
   if (millis()> receptionMessage + 200 && receptionMessage != 0)
@@ -568,6 +608,35 @@ void loop() {
     
 
   }
+
+
+  //gestion deep sleep
+  if (timeDeepSleeping != 0)
+  {
+    unsigned long _millis = millis();
+
+    while (millis() < _millis + 5000)
+    {
+      Ec.getDisplay()->clearDisplay();
+      Ec.getDisplay()->setCursor(0,0);
+      Ec.getDisplay()->println("ça va etre tout noir !");
+      Ec.getDisplay()->printf("%i \n",(_millis + 5000)- millis());
+      Ec.getDisplay()->display();
+      delay(100);
+    }
+    Ec.setSleep();
+    double positionMoteur;
+    positionMoteur = mot._position;
+    pref.putDouble("posMot",positionMoteur);
+    esp_sleep_enable_timer_wakeup(timeDeepSleeping);
+
+    esp_deep_sleep_start();
+
+
+  }
+  
+
+
 
 
   switch ( displayMode)
@@ -603,6 +672,11 @@ void loop() {
     menuParam->loop();
     Ec.getDisplay()->display();
   
+    break;
+  case displayMode_e::InitPos:
+    Ec.getDisplay()->clearDisplay();
+    Ec.getDisplay()->println("Init Moteur");
+    Ec.getDisplay()->display();
     break;
   default:
     break;

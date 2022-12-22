@@ -18,6 +18,7 @@ private:
 public:
     int niveau = 0;
     int vanne = 0;
+    int previousVanne = 0;
     typeController type;
     IController(/* args */);
     ~IController();

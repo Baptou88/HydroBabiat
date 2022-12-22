@@ -61,7 +61,7 @@
         </div>
       </nav>
 
-    <h1>HelloWorld!</h1>
+
     <div class="container" x-data="{ open: false }">
         <button x-on:click="$store.Ws.toggle()">Toggle Dropdown</button>
      
@@ -77,11 +77,53 @@
         <h3>Temps d'envoi</h3>
         <input type="number" name="TempsEnvoi" id="TempsEnvoi" value="10">
     </div>
-    <div class="container">
-        <h3>Modes</h3>
-        <p>%mode%</p>
-        <ul class="list-group" id="modes">%modes%</ul>
+    <div class="row">
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">Modes
+                    <div class="card-subtitle">%mode%</div>
+                </div>
+                
+                
+                <ul class="list-group" id="modes">%modes%</ul>
+            </div>
+        </div>
+        <div class="col-8" data-modee="">
+            <div class="container mt-2 border" data-modee="0">m0
+                
+                <label for="RangePosVanneTarget" class="form-label">Cible Vanne</label>
+                <input type="range" class="form-range" id="RangePosVanneTarget" value="%RangePosVanneTarget%">
+            </div>
+            <div class="container mt-2 border" data-modee="1">m1
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">min</span>
+                    <input type="number" class="form-control" name="bcmin" id="bc.min" value="%bc.min%" data-param="bc.min">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">max</span>
+                    <input type="number" class="form-control" name="bcmax" id="bc.max" value="%bc.max%" data-param="bc.max">
+                </div>
+            </div>
+            <div class="container mt-2 border" data-modee="2">m2
+                <div class="input-group mb-3" >
+                    <span class="input-group-text" id="basic-addon1">kp</span>
+                    <input type="number" class="form-control param" name="pidcKp" id="pidcKp" value="%pidc.kp%" data-param="pidc.kp">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">ki</span>
+                    <input type="number" class="form-control" name="pidcKi" id="pidcKi" value="%pidc.ki%" data-param="pidc.ki">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">kd</span>
+                    <input type="number" class="form-control" name="pidcKd" id="pidcKd" value="%pidc.kd%" data-param="pidc.kd">
+                </div>
+                <div class="input-group mb3">
+                    <input type="button"  class="btn param" value="a">
+                </div>
+            </div>
+        </div>
     </div>
+    
     <div class="container border mt-2">
         <p id="POT">potValue</p>
     </div>
@@ -93,12 +135,14 @@
             <p>Turbine RSSI: <span id="TurbineRSSI"></span> dBm</p>
             <p>Turbine SNR: <span id="TurbineSNR"></span> dB</p>
             <p>position Vanne <span id="positionVanne">%positionVanne% </span> %%</p>
-            <label for="RangePosVanneTarget" class="form-label">Cible Vanne</label>
-            <input type="range" class="form-range" id="RangePosVanneTarget" value="%RangePosVanneTarget%">
+            
             <div class="btn-group" role="group" aria-label="Basic example">
                 <button type="button" class="btn btn-secondary">Fermeture Totale</button>
                 <!-- <button type="button" class="btn btn-secondary">Middle</button> -->
                 <button type="button" class="btn btn-secondary">Ouverture Totale</button>
+            </div>
+            <div class="btn-group" role="group" aria-label="Sommeil">
+                <button class="computed btn btn-secondary" data-node="TURBINE" data-action="DeepSleep">DeepSleep</button>
             </div>
 
         </div>

@@ -3,6 +3,9 @@
 extern const char* WIFISSID ;
 extern const char* WIFIPASSWORD ;
 extern int modeActuel ;
+extern PIDController* pidC;
+extern manuelController* manuelC;
+extern basicController* bC;
 
 #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 Serial.println(#filename);\
@@ -29,6 +32,7 @@ void WifiAppClass::notifyClients(){
   
   String message = "{";
   message += "\"LED\":" +  (String)LED +",";
+  message += "\"Mode\":" +  (String)modeActuel +",";
   message += "\"positionVanne\":" +  (String)(dataTurbine.positionVanne )+",";
   message += "\"RangePosVanneTarget\":" +  (String)(dataTurbine.targetPositionVanne )+",";
   message += "\"TurbineRSSI\":" +  (String)TurbineStatus.RSSI +",";
@@ -78,18 +82,42 @@ String WifiAppClass::templateProcessor(const String& var) {
         PIDController* c ;
         c = reinterpret_cast<PIDController*> (modes.get(i));
         retour += "<p>" + (String)c->targetEtang + "</p>";
-        retour += +"</li>";
+        retour += "<img src=\"icons/PID.svg\" alt=\"\"";
+        
       } else if (modes.get(i)->type == typeController::basic)
       {
         basicController* c;
         c = reinterpret_cast<basicController*> (modes.get(i));
         retour += "<p>" + String(c->niveauMin) +" " + String(c->niveauMax) + "</p>";
+        retour += "<img src=\"icons/Basic.svg\" alt=\"\"";
       }
-      
+      retour += +"</li>";
       
     }
     return retour;
   }
+  if (var == "pidc.kp") 
+  {
+    return (String)pidC->kp; 
+  }
+  if (var == "pidc.ki") 
+  {
+    return (String)pidC->ki; 
+  }
+  if (var == "pidc.kd") 
+  {
+    return (String)pidC->kd; 
+  }
+  if (var == "bc.min")
+  {
+    return (String)bC->niveauMin;
+  }
+  if (var == "bc.max")
+  {
+    return (String)bC->niveauMax;
+  }
+  
+  
   
   
   
@@ -131,7 +159,11 @@ bool WifiAppClass::begin()
       }
       request->send(200, "text/plain", "mode ok");
     });
+
     SPIFFS_provide_file("/app.js");
+
+    SPIFFS_provide_file("/icons/Basic.svg");
+    SPIFFS_provide_file("/icons/PID.svg");
 
     ws.onEvent(WifiApp.onEvent);
     server.addHandler(&ws);
@@ -161,35 +193,67 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) 
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-   Serial.print("[WiFiApp] WS received: ");
-   Serial.print((char*)data);
-   Serial.println(".");
-   String dataStr = (char*) data;
-   if ((char*)data == "toggle")
-   {
-    Serial.println("ws changement led");
-    etatLed != etatLed;
-   } else if (dataStr.startsWith("RangePosVanneTarget"))
-   {
-    dataStr.replace("RangePosVanneTarget ","");
-    Serial.println("niveu vanne: "+ (String)dataStr.toInt());
-    dataTurbine.targetPositionVanne = dataStr.toInt();
-    bufferActionToSend += "TURBINE:TargetVanne=" + (String)dataStr.toInt()+";";
-   } else if (dataStr.startsWith("Action:"))
-   {
-    dataStr.replace("Action:","");
-    Serial.println("Action: "+ dataStr);
-    bufferActionToSend += dataStr;
-   }
-   
+    Serial.print("[WiFiApp] WS received: ");
+    Serial.print((char*)data);
+    Serial.println(".");
+    String dataStr = (char*) data;
+    if ((char*)data == "toggle")
+    {
+      Serial.println("ws changement led");
+      etatLed != etatLed;
+    } else if (dataStr.startsWith("RangePosVanneTarget"))
+    {
+      dataStr.replace("RangePosVanneTarget ","");
+      Serial.println("niveu vanne: "+ (String)dataStr.toInt());
+      dataTurbine.targetPositionVanne = dataStr.toInt();
+      bufferActionToSend += "TURBINE:TargetVanne=" + (String)dataStr.toInt()+";";
+    } else if (dataStr.startsWith("Action:"))
+    {
+      dataStr.replace("Action:","");
+      Serial.println("Action: "+ dataStr);
+      bufferActionToSend += dataStr;
+    } else if (dataStr.startsWith("pidc."))
+    {
+    dataStr.replace("pidc.","");
+    if (dataStr.startsWith("kp="))
+    {
+      dataStr.replace("kp=","");
+      pidC->kp = dataStr.toFloat();
+    }
+    if (dataStr.startsWith("ki="))
+    {
+      dataStr.replace("ki=","");
+      pidC->ki = dataStr.toFloat();
+    }
+    if (dataStr.startsWith("kd="))
+    {
+      dataStr.replace("kd=","");
+      pidC->kd = dataStr.toFloat();
+    }
     
-   else
-   {
+    } else if (dataStr.startsWith("bc."))
+    {
+    dataStr.replace("bc.","");
+    if (dataStr.startsWith("min="))
+    {
+      dataStr.replace("min=" , "");
+      bC->niveauMin = dataStr.toInt();
+    }
+    if (dataStr.startsWith("max="))
+    {
+      dataStr.replace("max=" , "");
+      bC->niveauMin = dataStr.toInt();
+    }
+   
+  }
+    
+  else
+  {
     Serial.println("ah bon ??");
-   }
+  }
    
    
-   WifiApp.notifyClients();
+    WifiApp.notifyClients();
   }
 }
 

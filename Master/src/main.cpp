@@ -329,7 +329,35 @@ void displayData(){
       Ec.getDisplay()->print("[" + String(i==modeActuel?"x":" ") + "] ");
       Ec.getDisplay()->println(modes.get(i)->name);
     }
-   
+    
+    switch (modes.get(modeActuel)->type)
+    {
+    case typeController::manuel :
+      
+      break;
+    case typeController::basic :
+      Ec.getDisplay()->setCursor(70,10);
+      Ec.getDisplay()->printf("min: %i", bC->niveauMin);
+      Ec.getDisplay()->setCursor(70,22);
+      Ec.getDisplay()->printf("max: %i", bC->niveauMax);
+      break;
+    case typeController::PID :
+      Ec.getDisplay()->setCursor(70,10);
+      Ec.getDisplay()->printf("kp: %.3f", pidC->kp);
+      Ec.getDisplay()->setCursor(70,22);
+      Ec.getDisplay()->printf("ki: %.3f", pidC->ki);
+      Ec.getDisplay()->setCursor(70,34);
+      Ec.getDisplay()->printf("kd: %.3f", pidC->kd);
+      break;
+    
+    default:
+      break;
+    }
+    
+
+    Ec.getDisplay()->setCursor(0,40);
+    Ec.getDisplay()->println("Niveau " + (String)modes.get(modeActuel)->niveau);
+    Ec.getDisplay()->println("Vanne " + (String)modes.get(modeActuel)->vanne);
     
     break;
   }
@@ -385,7 +413,11 @@ void setup() {
 
   delay(100);
 
+  Ec.getDisplay()->clearDisplay();
 
+
+  Ec.getDisplay()->setCursor(0,0);
+  Ec.getDisplay()->printf("Node Id %i \n", NODE_ID);
   LoRa.setNodeID(NODE_ID);
   LoRa.onMessage(LoRaMessage);
   if (LoRa.begin()!= RADIOLIB_ERR_NONE)
@@ -396,6 +428,8 @@ void setup() {
     }
     
   }
+  Ec.getDisplay()->println("LoRa init Ok !");
+  Ec.getDisplay()->display();
 
 #ifdef PINTONE
   pinMode(PINTONE, OUTPUT);
@@ -450,8 +484,11 @@ void loop() {
   LoRa.loop();
   Ec.loop();
 
-  pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
-  pidC->loop();
+  // pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
+  // pidC->loop();
+
+  modes.get(modeActuel)->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
+  modes.get(modeActuel)->loop();
 
   if (bufferActionToSend != "")
   {

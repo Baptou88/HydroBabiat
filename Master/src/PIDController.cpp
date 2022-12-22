@@ -17,6 +17,9 @@ void PIDController::calculPid()
     sommeErreurs += erreur;
     float variationErreur = erreur - erreurPrecedente;
     vanne = kp * erreur + ki * sommeErreurs + kd * variationErreur;
+
+    vanne = 100 - vanne;
+    
     if (vanne > 100)
     {
         vanne = 100;

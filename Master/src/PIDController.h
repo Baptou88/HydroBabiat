@@ -11,16 +11,20 @@ private:
     // intervalle en ms
     int intervallCalcul = 10000;
 
-    //pourcentage cible du niveau de l'etang
-    float  kp = 1;
-    float  ki = .1f;
-    float kd = .1f;
+    
+    
 
     float sommeErreurs = 0;
     float erreurPrecedente = 0;
 
     void calculPid(void);
 public:
+
+    float  kp = 3;
+    float  ki = .01f;
+    float kd = .01f;
+
+//pourcentage cible du niveau de l'etang
     int targetEtang = 75;
     
     PIDController(/* args */);
