@@ -123,6 +123,10 @@ String WifiAppClass::templateProcessor(const String& var) {
   
  return "templateProcesor default: " + var;
 }
+void WifiAppClass::onNotFound(AsyncWebServerRequest *request){
+  //Handle Unknown Request
+  request->send(404);
+}
 
 bool WifiAppClass::begin()
 {
@@ -164,6 +168,11 @@ bool WifiAppClass::begin()
 
     SPIFFS_provide_file("/icons/Basic.svg");
     SPIFFS_provide_file("/icons/PID.svg");
+
+
+    server.onNotFound([](AsyncWebServerRequest *request){
+      return request->send(404);
+    });
 
     ws.onEvent(WifiApp.onEvent);
     server.addHandler(&ws);

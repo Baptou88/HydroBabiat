@@ -41,6 +41,8 @@ public:
     bool begin();
     void notifyClients();
 
+    void onNotFound(AsyncWebServerRequest *request);
+
     static String templateProcessor(const String& var);
 };
 
