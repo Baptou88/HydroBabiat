@@ -63,6 +63,8 @@ void LoRaClass::loop()
         
     //     LoRa.sendData(0x01,LoRaMessageCode::Data,toSend);
     // }
+
+    checkReply();
     
     if (operationDone)
     {
@@ -96,6 +98,14 @@ void LoRaClass::loop()
                 packet.SNR = radio.getSNR();
                 int p = str.indexOf(",");
                 packet.Emetteur = str.substring(0,p).toInt();
+
+                if (packet.Emetteur == lastSend.id)
+                {
+                    lastSend.id= 0;
+                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse")
+                }
+                
+
                 //LORACLASS_DEBUG_PRINTLN("[LoRa] Emetteur: " + (String)packet.Emetteur);
                 str.remove(0,p+1);
 
@@ -173,8 +183,10 @@ SXClass LoRaClass::getRadio(void)
 int LoRaClass::sendData(byte address,LoRaMessageCode code, String Data)
 {
     transmitFlag = true;
-
     String msg = String(nodeID) + "," + String(address)+"," + String(code)+",|"+String(Data);
+    lastSend.id = address;
+    lastSend.sendingTime = millis();
+
     LORACLASS_DEBUG_PRINTLN("[LORA] send msg " + (String)msg)
     return radio.startTransmit(msg);
 }
@@ -187,9 +199,27 @@ void LoRaClass::onMessageStatut(String(*cb)())
 {
     MessageStatut = cb;
 }
+
+void LoRaClass::onNoReply(void(*cb)(byte address)){
+    noReplyCalleback = cb;
+}
+
 void LoRaClass::setNodeID(byte id)
 {
     nodeID = id;
 }
 
+void LoRaClass::checkReply(){
+    if (lastSend.id != 0 && millis()>lastSend.sendingTime + REPLY_TIMEOUT)
+    {
+        LORACLASS_DEBUG_PRINTLN("[LORA] pas eu de reponse de: " + (String)lastSend.id)
+        if (noReplyCalleback != NULL)
+        {
+            noReplyCalleback(lastSend.id);
+        }
+        lastSend.id = 0;
+        
+    }
+    
+}
 LoRaClass LoRa;

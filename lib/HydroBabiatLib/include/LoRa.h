@@ -7,6 +7,7 @@
 #include <SPI.h>
 
 #define WAIT_TO_RESPONSE 80
+#define REPLY_TIMEOUT 3000
 
 #define LORACLASS_DEBUG_STREAM Serial
 #ifdef LORACLASS_DEBUG_STREAM
@@ -56,6 +57,12 @@ struct LoRaPacket{
     //Signal to Noise Ratio in dB
     float SNR = 0;
 };
+struct lastSend_t{
+    byte id;
+    unsigned long sendingTime =0;
+
+};
+
 class LoRaClass
 {
 private:
@@ -77,6 +84,7 @@ private:
 
     SPIClass LoRaSpi;
 
+    
 
     unsigned long _millis = 0;
     unsigned long _millisReponseStatut = 0;
@@ -84,6 +92,9 @@ private:
 
     void(*messageCalleBack)(LoRaPacket header, String Message);
     String(*MessageStatut)();
+    void(*noReplyCalleback)(byte address);
+
+    void checkReply();
 public:
     LoRaClass(/* args */);
     ~LoRaClass();
@@ -99,8 +110,11 @@ public:
 
     void onMessage(void(*cb)(LoRaPacket header, String message));
     void onMessageStatut(String(*cb)());
+    void onNoReply(void(*cb)(byte address));
 
     void setNodeID(byte id);
+
+    lastSend_t lastSend;
 };
 
 
