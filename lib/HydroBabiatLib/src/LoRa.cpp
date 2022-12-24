@@ -23,24 +23,8 @@ int LoRaClass::begin(){
 
     SPI.begin(LoRa_SCK,LoRa_MISO,LoRa_MOSI,LoRa_SS);
     
-  
-    radio.setSyncWord(0x12);
-    delay(10);
-    radio.setBandwidth(125);
-    delay(10);
-    radio.setFrequency(868);
-    delay(10);
-    radio.setCodingRate(7);
-    delay(10);
 
-    
-#ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
-    radio.setOutputPower(15);
-#elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
-    radio.setOutputPower(22);
-#else
-    
-#endif
+
 
     #ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
         radio.setDio0Action(LoRaClass::setFlag);
@@ -50,7 +34,7 @@ int LoRaClass::begin(){
         #error UnImplemented
     #endif
 
-    return radio.begin(868.0,125,9,7,18);
+    return radio.begin(868.0,125,9,7,18,20);
     
 }
 

@@ -30,7 +30,7 @@ private:
     void ouvrirVanne(int speed = 100);
     void fermeeVanne(int speed = 100);
     void stopMoteur();
-    float maxItensiteMoteur = 4000;
+    float maxItensiteMoteur = 9000;
     MotorState _state = MotorState::WAIT_INIT;
     PID PIDMoteur = PID(&_position,&_speed,&_target,0,0,0,DIRECT);
 
@@ -55,7 +55,10 @@ public:
     void setEndstop(digitalInput *fcf, digitalInput *fco);
     MotorState getState(void);
     void setState(MotorState state);
+    String stateToString();
 };
+
+
 
 
 

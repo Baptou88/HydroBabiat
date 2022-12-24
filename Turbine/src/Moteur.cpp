@@ -166,6 +166,33 @@ void Moteur::setState(MotorState state)
     _state = state;
 }
 
+String Moteur::stateToString()
+{
+    String retour;
+    switch (_state)
+    {
+    case IDLE:
+        retour = "IDLE";
+        break;
+    case OVERLOAD:
+        retour = "OVERLOAD";
+        break;
+    case INIT_POS_MIN:
+        retour = "Init Min";
+        break;
+    case INIT_POS_MAX:
+        retour = "Init Max";
+        break;
+    case WAIT_INIT:
+        retour = "Wait init";
+        break;
+    
+    default:
+        retour = "unkown " + String(_state);
+        break;
+    }
+    return retour;
+}
 
 void Moteur::ouvrirVanne(int speed)
 {

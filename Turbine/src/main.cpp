@@ -5,6 +5,7 @@
 
 #include "Adafruit_INA260.h"
 #include "Adafruit_INA219.h"
+#include "Adafruit_ADS1X15.h"
 #include "Preferences.h"
 #include "ESPAsyncWebServer.h"
 #include <AsyncElegantOTA.h>
@@ -39,6 +40,8 @@ float msgRSSI = 0;
 float msgSNR = 0;
 
 int timeDeepSleeping = 0;
+
+Adafruit_ADS1115 ads;
 
 Ecran Ec = Ecran();
 
@@ -95,6 +98,7 @@ bool ledNotif = true;
 
 float VoltageBattery = 0;
 
+int16_t currentSCT = 0;
 
 void displayData(){
   Ec.getDisplay()->clearDisplay();
@@ -123,11 +127,12 @@ void displayData(){
     Ec.getDisplay()->print((String)mot.ouvertureMax);
     
     
+    Ec.getDisplay()->setCursor(20,50);
+    Ec.getDisplay()->print(mot.stateToString());
 
-
-    Ec.getDisplay()->setCursor(10,50);
+    Ec.getDisplay()->setCursor(5,50);
     Ec.getDisplay()->print(FCF.getState());
-    Ec.getDisplay()->setCursor(110,50);
+    Ec.getDisplay()->setCursor(115,50);
     Ec.getDisplay()->print(FCO.getState());
     break;
   case 1:
@@ -141,7 +146,7 @@ void displayData(){
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getRPM() + " rpm");
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getHz() + " hz");
 
-    Ec.getDisplay()->println("U: " + (String)VoltageOutput.getVoltage() + " V");
+    Ec.getDisplay()->println("U: " + (String)VoltageOutput.getValue() + " V");
     Ec.getDisplay()->println("I: " + (String)CurrentOutput.getValue() + " A");
     Ec.getDisplay()->println("UB: " + (String)VoltageBattery + " mV");
     
@@ -164,6 +169,7 @@ String LoRaMesageStatut(){
   toSend += "U:" + (String) VoltageOutput.getValue() + ",";
   toSend += "I:" + (String) CurrentOutput.getValue() + ",";
   toSend += "tachy:" + (String) tachy.getRPM() + ",";
+  toSend += "UB:" + (String) VoltageBattery + ",";
 
   return toSend;
 }
@@ -290,6 +296,9 @@ bool initPreferences(){
   current_coefA = pref.getFloat("current_coefA",current_coefA);
   current_base = pref.getFloat("current_base",current_base);
 
+  VoltageOutput.setAffineParam(voltage_coefA,voltage_base);
+  CurrentOutput.setAffineParam(current_coefA,current_base);
+  
 
   return true;
 }
@@ -318,6 +327,7 @@ void acquisitionEntree(){
   encodeurDT.loop();
   encodeurSW.loop();
 
+  currentSCT = ads.readADC_Differential_2_3();
   mot.updateIntensiteMoteur(ina260.readCurrent());
   VoltageOutput.loop();
   CurrentOutput.loop();
@@ -411,6 +421,7 @@ void menuWifiServerCalleback(Adafruit_SSD1306* display,bool firstTime)
 
 // put your setup code here, to run once:
 void setup() {
+
   Serial.begin(115200);
   Wire.begin(SDA_OLED,SCL_OLED);
   
@@ -458,9 +469,7 @@ tachy.setTimeout(2E6);
     tachy.Tick();
   },RISING);
   
-  #ifdef PIN_TEST_ANALOG
 
-  #endif
 #endif
 
 
@@ -475,6 +484,7 @@ tachy.setTimeout(2E6);
     }
     
   }
+  Ec.getDisplay()->println("Pref Ok!");
 
   if (esp_sleep_get_wakeup_cause() != esp_sleep_wakeup_cause_t::ESP_SLEEP_WAKEUP_UNDEFINED)
   {
@@ -486,7 +496,6 @@ tachy.setTimeout(2E6);
   }
   
 
-  Ec.getDisplay()->setCursor(0,12);
   if (!ina260.begin())
   {
     Ec.getDisplay()->println("failed init Ina260");
@@ -510,6 +519,14 @@ tachy.setTimeout(2E6);
   }
   Ec.getDisplay()->println("ok init Ina219");
   Ec.getDisplay()->display();
+
+  if (!ads.begin()) {
+    Serial.println("Failed to initialize ADS.");
+    while (1);
+  }
+  Ec.getDisplay()->println("ok init ads");
+  Ec.getDisplay()->display();
+
 
   menuParam = new menunu(Ec.getDisplay());
 
