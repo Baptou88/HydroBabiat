@@ -1,6 +1,9 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include "UniversalTelegramBot.h"
+
+
 struct dataTurbine_t
 {
   float positionVanne = 0;
@@ -36,4 +39,9 @@ extern dataTurbine_t dataTurbine;
 extern nodeStatus_t TurbineStatus;
 extern dataEtang_t dataEtang;
 extern nodeStatus_t EtangStatus;
+
+extern UniversalTelegramBot TelegramBot;
+
+
+
 #endif // __MAIN_H__

@@ -2,7 +2,9 @@
 #define __BASICCONTROLLER_H__
 
 #include <Arduino.h>
+#include "main.h"
 #include <IController.h>
+#include "TelegramCredentials.h"
 
 enum etangState{
     VIDER,

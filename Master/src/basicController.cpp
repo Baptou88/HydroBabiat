@@ -1,6 +1,21 @@
 #include <Arduino.h>
 #include <basicController.h>
 
+String etangStateToString(etangState st){
+    switch (st)
+    {
+    case VIDER:
+        return "Vider";
+        break;
+    case REMPLIR:
+        return "Remplir";
+    default:
+        return "etangState default";
+        break;
+    }
+}
+
+
 basicController::basicController(/* args */)
 {
     type = typeController::basic;
@@ -37,6 +52,7 @@ void basicController::loop(void)
     if (doChange)
     {
         doChange = false;
+        TelegramBot.sendMessage(CHAT_ID,"Basic Controller: changement mode:" + etangStateToString(etat),"");
         
        switch (etat)
        {

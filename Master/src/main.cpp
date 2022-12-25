@@ -2,15 +2,18 @@
 #include <configuration.h>
 #include <configGeneral.h>
 #include <configVariables.h>
+#include <UniversalTelegramBot.h>
 #include "main.h"
 
 
 #include <FS.h>
-#include <wifiCredentials.h>
+#include <TelegramCredentials.h>
+
 #include <WifiApp.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_ST7735.h>
 #include <ArduinoOTA.h>
+#include <WiFiClientSecure.h>
 
 #include <RadioLib.h>
 #include "Ecran.h"
@@ -62,6 +65,8 @@ nodeStatus_t EtangStatus;
 
 nodeStatus_t nodeTest;
 
+WiFiClientSecure telegramClient;
+UniversalTelegramBot TelegramBot(BOTtoken,telegramClient);
 
 
 digitalInput btnPRG(0,INPUT_PULLUP);
@@ -474,6 +479,8 @@ void setup() {
   WifiApp.begin();
 
   arduinoOtaSetup();
+
+  telegramClient.setCACert(TELEGRAM_CERTIFICATE_ROOT);
 
   timerEnvoi.reset();
 

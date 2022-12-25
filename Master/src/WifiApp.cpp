@@ -1,11 +1,11 @@
 #include <WifiApp.h>
+#include "wifiCredentials.h"
 
-extern const char* WIFISSID ;
-extern const char* WIFIPASSWORD ;
 extern int modeActuel ;
 extern PIDController* pidC;
 extern manuelController* manuelC;
 extern basicController* bC;
+extern UniversalTelegramBot TelegramBot;
 
 #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 Serial.println(#filename);\
@@ -165,6 +165,7 @@ bool WifiAppClass::begin()
         
         AsyncWebParameter* p = request->getParam("modeNum");
         Serial.println("mode num : "+ (String) p->value().toInt());
+        TelegramBot.sendMessage(CHAT_ID,"Changement de Mode","");
         modeActuel=p->value().toInt();
 
       }
