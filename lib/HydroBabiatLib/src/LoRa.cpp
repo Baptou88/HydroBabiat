@@ -102,7 +102,7 @@ void LoRaClass::loop()
                 if (packet.Emetteur == lastSend.id)
                 {
                     lastSend.id= 0;
-                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse")
+                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse" + String(float((millis() - lastSend.sendingTime) /1000.0)))
                 }
                 
 

@@ -170,6 +170,7 @@ String LoRaMesageStatut(){
   toSend += "I:" + (String) CurrentOutput.getValue() + ",";
   toSend += "tachy:" + (String) tachy.getRPM() + ",";
   toSend += "UB:" + (String) VoltageBattery + ",";
+  toSend += "motorState:" + (String) mot.getState() + ",";
 
   return toSend;
 }
@@ -291,13 +292,14 @@ bool initPreferences(){
   moteurKi = pref.getFloat("moteurKi",moteurKi);
   moteurKd = pref.getFloat("moteurKd",moteurKd);
 
-  voltage_coefA = pref.getFloat("voltage_coefA",voltage_coefA);
-  voltage_base = pref.getFloat("voltage_base",voltage_base);
-  current_coefA = pref.getFloat("current_coefA",current_coefA);
-  current_base = pref.getFloat("current_base",current_base);
+  VoltageOutput._a = pref.getFloat("voltage_coefA",voltage_coefA);
+  VoltageOutput._b = pref.getFloat("voltage_base",voltage_base);
+  CurrentOutput._a = pref.getFloat("current_coefA",current_coefA);
+  CurrentOutput._b = pref.getFloat("current_base",current_base);
 
-  VoltageOutput.setAffineParam(voltage_coefA,voltage_base);
-  CurrentOutput.setAffineParam(current_coefA,current_base);
+
+
+  mot.maxItensiteMoteur = pref.getFloat("MaxIMot",mot.maxItensiteMoteur);
   
 
   return true;
@@ -311,10 +313,12 @@ bool savePreferences(){
   pref.putFloat("moteurKi",moteurKi);
   pref.putFloat("moteurKd",moteurKd);
 
-  pref.putFloat("voltage_coefA",voltage_coefA);
-  pref.putFloat("voltage_base",voltage_base);
-  pref.putFloat("current_coefA",current_coefA);
-  pref.putFloat("current_base",current_base);
+  pref.putFloat("voltage_coefA",VoltageOutput._a);
+  pref.putFloat("voltage_base",VoltageOutput._b);
+  pref.putFloat("current_coefA",CurrentOutput._a);
+  pref.putFloat("current_base",CurrentOutput._b);
+
+  pref.putFloat("MaxIMot",mot.maxItensiteMoteur);
 
   return true;
 }
@@ -535,10 +539,11 @@ tachy.setTimeout(2E6);
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kp ",&moteurKp,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Ki ",&moteurKi,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kd ",&moteurKd,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage ka ",&voltage_coefA,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage z ",&voltage_base,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current ka ",&current_coefA,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current z ",&current_base,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage ka ",&VoltageOutput._a,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage z ",&VoltageOutput._b,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current ka ",&CurrentOutput._a,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current z ",&CurrentOutput._b,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"Max It Mot ",&mot.maxItensiteMoteur,0,100));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"voltage set z",menuVZCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"current set z",menuCZCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"Save",menuSaveCalleback));

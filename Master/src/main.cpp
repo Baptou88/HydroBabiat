@@ -49,7 +49,7 @@ int potValue = 0;
 unsigned long receptionMessage = 0;
 
 int displayNum = 0;
-int maxDisplay = 3;
+int maxDisplay = 4;
 
 String bufferActionToSend;
 
@@ -318,6 +318,13 @@ void displayData(){
     Ec.getDisplay()->setCursor(posxTargetVanne,45);
     Ec.getDisplay()->println("v");
     Ec.drawProgressBar(4,55,106,5,(dataTurbine.positionVanne ));
+    break;
+  case 2:
+    Ec.getDisplay()->setCursor(0,0);
+    Ec.getDisplay()->println(WiFi.status());
+    Ec.getDisplay()->println(WiFi.localIP().toString());
+    //Ec.getDisplay()->println(WifiApp.server.);
+
     break;
   default:
     //Ec.drawVProgressBar(30,4,10,40,(50));

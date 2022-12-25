@@ -41,6 +41,8 @@ void WifiAppClass::notifyClients(){
   message += "\"EtangSNR\":" +  (String)EtangStatus.SNR +",";
   message += "\"niveauEtang\":" +  (String)dataEtang.niveauEtang +",";
   message += "\"ratioNiveauEtang\":" +  (String)dataEtang.ratioNiveauEtang +",";
+  message += "\"tacky\":" +  (String)dataTurbine.tacky +",";
+  message += "\"tension\":" +  (String)dataTurbine.U +",";
   message += "\"POT\":" +  (String)potValue;
   message += "}";
   //Serial.print("[WiFiAPP] notif: ");
@@ -116,6 +118,10 @@ String WifiAppClass::templateProcessor(const String& var) {
   {
     return (String)bC->niveauMax;
   }
+  if (var == "tacky")
+  {
+    return (String)dataTurbine.tacky;
+  }
   
   
   
@@ -144,6 +150,7 @@ bool WifiAppClass::begin()
     }
     Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
     server.on("/" ,HTTP_GET,[](AsyncWebServerRequest *request) {
+      Serial.println("[SERVER] get root");
       request->send(SPIFFS,"/home.html","text/html",false,WifiApp.templateProcessor);
     });
     server.on("/icons/hydro-elec-512.svg" ,HTTP_GET,[](AsyncWebServerRequest *request) {
