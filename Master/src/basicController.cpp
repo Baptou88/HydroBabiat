@@ -52,7 +52,7 @@ void basicController::loop(void)
     if (doChange)
     {
         doChange = false;
-        TelegramBot.sendMessage(CHAT_ID,"Basic Controller: changement mode:" + etangStateToString(etat),"");
+        TelegramBot.sendTo((int64_t)CHAT_ID,"Basic Controller: changement mode:" + etangStateToString(etat));
         
        switch (etat)
        {

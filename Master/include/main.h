@@ -1,7 +1,7 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include "UniversalTelegramBot.h"
+#include "AsyncTelegram2.h"
 
 
 struct dataTurbine_t
@@ -40,7 +40,7 @@ extern nodeStatus_t TurbineStatus;
 extern dataEtang_t dataEtang;
 extern nodeStatus_t EtangStatus;
 
-extern UniversalTelegramBot TelegramBot;
+extern AsyncTelegram2 TelegramBot;
 
 
 

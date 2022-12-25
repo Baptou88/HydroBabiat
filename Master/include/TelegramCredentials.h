@@ -8,7 +8,7 @@
 // message you
 
 //hydrobabiat id
-//#define CHAT_ID "5666722054"
-#define CHAT_ID "-656433968"
+#define CHAT_ID 5666722054
+//#define CHAT_ID "-656433968"
 
 #endif // __TELEGRAMCREDENTIALS_H__

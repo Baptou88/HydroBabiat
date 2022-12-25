@@ -2,7 +2,7 @@
 #include <configuration.h>
 #include <configGeneral.h>
 #include <configVariables.h>
-#include <UniversalTelegramBot.h>
+#include <AsyncTelegram2.h>
 #include "main.h"
 
 
@@ -66,8 +66,11 @@ nodeStatus_t EtangStatus;
 nodeStatus_t nodeTest;
 
 WiFiClientSecure telegramClient;
-UniversalTelegramBot TelegramBot(BOTtoken,telegramClient);
+AsyncTelegram2 TelegramBot(telegramClient);
 unsigned long telegramBot_lastTime = 0;
+ReplyKeyboard myreplykbd;
+InlineKeyboard myinlinekbd;
+bool iskeyboardactive = false;
 
 
 digitalInput btnPRG(0,INPUT_PULLUP);
@@ -136,32 +139,7 @@ void arduinoOtaSetup(void){
 }
 
 void handleTelegramMessage(int numNewMessages){
-  for (int i = 0; i < numNewMessages; i++)
-  {
-    String chat_id = TelegramBot.messages[i].chat_id;
-    String text = TelegramBot.messages[i].text;
-
-    String from_name = TelegramBot.messages[i].from_name;
-    if (from_name == "")
-      from_name = "Guest";
-
-    if (text == "/open")
-    {
-      String keyboardJson = "[[{ \"text\" : \"Go to App\", \"url\" : \"http://hydro.hydro-babiat.ovh\" }],[{ \"text\" : \"Send\", \"callback_data\" : \"This was sent by inline\" }]]";
-      TelegramBot.sendMessageWithInlineKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson);
-    }
-
-    if (text == "/start")
-    {
-      String welcome = "Welcome to Universal Arduino Telegram Bot library, " + from_name + ".\n";
-      welcome += "This is Flash Led Bot example.\n\n";
-      welcome += "/ledon : to switch the Led ON\n";
-      welcome += "/ledoff : to switch the Led OFF\n";
-      welcome += "/status : Returns current status of LED\n";
-      TelegramBot.sendMessage(chat_id, welcome, "Markdown");
-    }
-
-  }
+  
 }
 
 String LoRaOnMsgStatut(){
@@ -511,7 +489,30 @@ void setup() {
 
   arduinoOtaSetup();
 
-  telegramClient.setCACert(TELEGRAM_CERTIFICATE_ROOT);
+  telegramClient.setCACert(telegram_cert);
+  TelegramBot.setTelegramToken(BOTtoken);
+  TelegramBot.setUpdateTime(2000);
+  TelegramBot.begin() ? Serial.println("[Telegram] begin OK") : Serial.println("[Telegram] begin NOK");
+
+  myreplykbd.addButton("Button1");
+  myreplykbd.addButton("Button2");
+  myreplykbd.addRow();
+  myreplykbd.addButton("/hide_keyboard");
+  myreplykbd.enableResize();
+
+  myinlinekbd.addButton("ON","test", KeyboardButtonQuery);
+  myinlinekbd.addButton("GitHub", "https://github.com/cotestatnt/AsyncTelegram2/", KeyboardButtonURL);
+
+  // Send a welcome message to user when ready
+  char welcome_msg[128];
+  snprintf(welcome_msg, sizeof(welcome_msg),
+          "BOT @%s online.\n/help for command list.\n/inline_keyboard",
+          TelegramBot.getBotName());
+
+  // Check the userid with the help of bot @JsonDumpBot or @getidsbot (work also with groups)
+  // https://t.me/JsonDumpBot  or  https://t.me/getidsbot
+  TelegramBot.sendTo(CHAT_ID, welcome_msg);
+
 
   timerEnvoi.reset();
 
@@ -594,23 +595,53 @@ void loop() {
     WifiApp.notifyClients();
   }
   
-  if (millis()> telegramBot_lastTime + 1000)
-  {
+  TBMessage msg;
 
-    Serial.printf("%i [Telegram] debut\n",millis());
-    int numNewMessages = TelegramBot.getUpdates(TelegramBot.last_message_received + 1);
-    Serial.printf("%i [Telegram] %i\n",millis(),numNewMessages);
-    while (numNewMessages)
+  if (TelegramBot.getNewMessage(msg)) {
+    Serial.printf("[telegram] %s\n",msg.text);
+    switch (msg.messageType)
     {
-      handleTelegramMessage(numNewMessages);
-      numNewMessages = TelegramBot.getUpdates(TelegramBot.last_message_received+1);
+      case MessageText:
+        if (msg.text.equalsIgnoreCase("/html"))
+        {
+          TelegramBot.setFormattingStyle(AsyncTelegram2::FormatStyle::HTML);
+          TelegramBot.sendMessage(msg,"<a href=\"http://www.example.com/\">inline URL</a>");
+        }
+        // check if is show keyboard command
+        if (msg.text.equalsIgnoreCase("/reply_keyboard")) {
+          // the user is asking to show the reply keyboard --> show it
+          TelegramBot.sendMessage(msg, "This is reply keyboard:", myreplykbd);
+          iskeyboardactive = true;
+        }
+        else if (msg.text.equalsIgnoreCase("/inline_keyboard")) {
+          TelegramBot.sendMessage(msg, "This is inline keyboard:", myinlinekbd);
+        }
 
+        // check if the reply keyboard is active
+        else if (iskeyboardactive) {
+          // is active -> manage the text messages sent by pressing the reply keyboard buttons
+          if (msg.text.equalsIgnoreCase("/hide_keyboard")) {
+            // sent the "hide keyboard" message --> hide the reply keyboard
+            TelegramBot.removeReplyKeyboard(msg, "Reply keyboard removed");
+            iskeyboardactive = false;
+          } else {
+            // print every others messages received
+            TelegramBot.sendMessage(msg, msg.text);
+          }
+        }
+      break;
+
+      case MessageQuery:
+        if (msg.callbackQueryData.equalsIgnoreCase("test"))
+        {
+          TelegramBot.endQuery(msg,"test,true");
+        }
+        
+        
+      break;
     }
     
-    
-    telegramBot_lastTime = millis();
   }
-  
   
   if (TftTimer.isOver())
   {

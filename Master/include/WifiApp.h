@@ -8,7 +8,7 @@
 #include <SPIFFS.h>
 #include <configVariables.h>
 #include "main.h"
-#include "UniversalTelegramBot.h"
+#include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
 
 

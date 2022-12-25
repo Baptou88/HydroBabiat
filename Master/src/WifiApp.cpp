@@ -5,7 +5,7 @@ extern int modeActuel ;
 extern PIDController* pidC;
 extern manuelController* manuelC;
 extern basicController* bC;
-extern UniversalTelegramBot TelegramBot;
+extern AsyncTelegram2 TelegramBot;
 
 #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 Serial.println(#filename);\
@@ -170,7 +170,7 @@ bool WifiAppClass::begin()
         
         AsyncWebParameter* p = request->getParam("modeNum");
         Serial.println("mode num : "+ (String) p->value().toInt());
-        TelegramBot.sendMessage(CHAT_ID,"Changement de Mode","");
+        TelegramBot.sendTo(CHAT_ID,"Changement de Mode");
         modeActuel=p->value().toInt();
 
       }
