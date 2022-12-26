@@ -333,7 +333,7 @@ function onMessage(event) {
 }
 function onLoad(event) {
   initWebSocket();
-  initButton();
+  
 
   var rangePosVanne = document.querySelector("#RangePosVanneTarget")
 
@@ -366,14 +366,4 @@ param = document.querySelectorAll(".param")
     }
   })
   
-}
-function initButton() {
-  document.getElementById('button').addEventListener('click', toggle);
-}
-function toggle(){
-  // let message;
-  // message["LED"] = document.querySelector("#LED").innerHTML;
-  // message["POT"] = document.querySelector("#POT").innerHTML;
-  // websocket.send(JSON.stringify(message));
-  websocket.send("toggle");
 }

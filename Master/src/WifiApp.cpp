@@ -31,7 +31,7 @@ void WifiAppClass::notifyClients(){
   // }
   
   String message = "{";
-  message += "\"LED\":" +  (String)LED +",";
+
   message += "\"Mode\":" +  (String)modeActuel +",";
   message += "\"positionVanne\":" +  (String)(dataTurbine.positionVanne )+",";
   message += "\"RangePosVanneTarget\":" +  (String)(dataTurbine.targetPositionVanne )+",";
@@ -42,8 +42,8 @@ void WifiAppClass::notifyClients(){
   message += "\"niveauEtang\":" +  (String)dataEtang.niveauEtang +",";
   message += "\"ratioNiveauEtang\":" +  (String)dataEtang.ratioNiveauEtang +",";
   message += "\"tacky\":" +  (String)dataTurbine.tacky +",";
-  message += "\"tension\":" +  (String)dataTurbine.U +",";
-  message += "\"POT\":" +  (String)potValue;
+  message += "\"tension\":" +  (String)dataTurbine.U;
+ 
   message += "}";
   //Serial.print("[WiFiAPP] notif: ");
   //Serial.println(message);
@@ -93,7 +93,7 @@ String WifiAppClass::templateProcessor(const String& var) {
         retour += "<p>" + String(c->niveauMin) +" " + String(c->niveauMax) + "</p>";
         retour += "<img src=\"icons/Basic.svg\" alt=\"\"";
       }
-      retour += +"</li>";
+      retour += +"</li>\n";
       
     }
     return retour;
@@ -161,6 +161,11 @@ bool WifiAppClass::begin()
     });
 
     server.on("/mode",HTTP_GET,[](AsyncWebServerRequest * request){
+      if (!request->authenticate("admin","admin"))
+      {
+        return request->requestAuthentication();
+      }
+      
       if(request->hasParam("modeNum")){
         
         AsyncWebParameter* p = request->getParam("modeNum");

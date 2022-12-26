@@ -67,6 +67,7 @@ nodeStatus_t nodeTest;
 
 WiFiClientSecure telegramClient;
 UniversalTelegramBot TelegramBot(BOTtoken,telegramClient);
+unsigned long telegramBot_lastTime = 0;
 
 
 digitalInput btnPRG(0,INPUT_PULLUP);
@@ -132,6 +133,35 @@ void arduinoOtaSetup(void){
     });
 
   ArduinoOTA.begin();
+}
+
+void handleTelegramMessage(int numNewMessages){
+  for (int i = 0; i < numNewMessages; i++)
+  {
+    String chat_id = TelegramBot.messages[i].chat_id;
+    String text = TelegramBot.messages[i].text;
+
+    String from_name = TelegramBot.messages[i].from_name;
+    if (from_name == "")
+      from_name = "Guest";
+
+    if (text == "/open")
+    {
+      String keyboardJson = "[[{ \"text\" : \"Go to App\", \"url\" : \"http://hydro.hydro-babiat.ovh\" }],[{ \"text\" : \"Send\", \"callback_data\" : \"This was sent by inline\" }]]";
+      TelegramBot.sendMessageWithInlineKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson);
+    }
+
+    if (text == "/start")
+    {
+      String welcome = "Welcome to Universal Arduino Telegram Bot library, " + from_name + ".\n";
+      welcome += "This is Flash Led Bot example.\n\n";
+      welcome += "/ledon : to switch the Led ON\n";
+      welcome += "/ledoff : to switch the Led OFF\n";
+      welcome += "/status : Returns current status of LED\n";
+      TelegramBot.sendMessage(chat_id, welcome, "Markdown");
+    }
+
+  }
 }
 
 String LoRaOnMsgStatut(){
@@ -315,6 +345,7 @@ void displayData(){
     Ec.getDisplay()->setCursor(0,0);
     Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang ) + " %");
     Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne) + " %");
+    Ec.getDisplay()->println("Cible Vanne: " + (String)(dataTurbine.targetPositionVanne) + " %");
 
     Ec.drawBVProgressBar(114,4,5,50,(dataEtang.ratioNiveauEtang ));
 
@@ -563,6 +594,22 @@ void loop() {
     WifiApp.notifyClients();
   }
   
+  if (millis()> telegramBot_lastTime + 1000)
+  {
+
+    Serial.printf("%i [Telegram] debut\n",millis());
+    int numNewMessages = TelegramBot.getUpdates(TelegramBot.last_message_received + 1);
+    Serial.printf("%i [Telegram] %i\n",millis(),numNewMessages);
+    while (numNewMessages)
+    {
+      handleTelegramMessage(numNewMessages);
+      numNewMessages = TelegramBot.getUpdates(TelegramBot.last_message_received+1);
+
+    }
+    
+    
+    telegramBot_lastTime = millis();
+  }
   
   
   if (TftTimer.isOver())
