@@ -80,12 +80,12 @@
         </div>
 
         <div class="col-8" >
-            <div class="container border radius" data-modee="0">m0
+            <div class="container border rounded" data-modee="0">m0
                 
                 <label for="RangePosVanneTarget" class="form-label">Cible Vanne</label>
                 <input type="range" class="form-range" id="RangePosVanneTarget" value="%RangePosVanneTarget%">
             </div>
-            <div class="container  border radius" data-modee="1">m1
+            <div class="container  border rounded" data-modee="1">m1
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">min</span>
                     <input type="number" class="form-control" name="bcmin" id="bc.min" value="%bc.min%" data-param="bc.min">
@@ -95,7 +95,7 @@
                     <input type="number" class="form-control" name="bcmax" id="bc.max" value="%bc.max%" data-param="bc.max">
                 </div>
             </div>
-            <div class="container border radius" data-modee="2">m2
+            <div class="container border rounded" data-modee="2">m2
                 <div class="input-group mb-3" >
                     <span class="input-group-text" id="basic-addon1">kp</span>
                     <input type="number" class="form-control param" name="pidcKp" id="pidcKp" value="%pidc.kp%" data-param="pidc.kp">
@@ -112,6 +112,23 @@
                     <input type="button"  class="btn param" value="a">
                 </div>
             </div>
+
+            <div class="container border rounded mb-3">
+                
+                <div class="form-check form-switch">
+                    <label class="form-check-label" for="flexSwitchCheckDefault">Alert</label>
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Alert Min</span>
+                    <input type="number" class="form-control" name="AlertMin" id="AlertMin" value="20" data-param="alertMin">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Alert Max</span>
+                    <input type="number" class="form-control" name="AlertMax" id="AlertMax" value="100" data-param="alertMax">
+                </div>
+            </div>
+
         </div>
     </div>
     
@@ -176,7 +193,7 @@
         }
         function updateNodeTimer() {
             var nodes = document.querySelectorAll('.nodeTimer');
-            console.log("nodes",nodes);
+            //console.log("nodes",nodes);
             nodes.forEach(el => {
                 var it = parseInt(el.innerHTML)
                 if (it != -1) {

@@ -31,6 +31,7 @@
 #include "PIDController.h"
 #include "manuelController.h"
   
+#include <NTPClient.h>
 
 #define LED 7
 #define POT  6
@@ -89,9 +90,19 @@ Ecran Ec(&Wire);
 
 Timer TftTimer (2500);
 
+//sauvegarde des données
+unsigned long lastSaveData = 0;
+
+
 manuelController *manuelC = new manuelController();
 basicController *bC = new basicController();
 PIDController *pidC = new PIDController();
+
+
+WiFiUDP ntpUDP;
+const char* ntpServer = "europe.pool.ntp.org";
+NTPClient timeClient(ntpUDP,ntpServer,3600,3600);
+
 
 int modeActuel = 0;
 //IController *modes[] = {bC,pidC};
@@ -174,6 +185,27 @@ void arduinoOtaSetup(void){
 void handleTelegramMessage(int numNewMessages){
   
 }
+
+
+
+bool saveDataCsV(void){
+	File myFile;
+	if (!SPIFFS.exists("/data.csv"))
+	{
+		
+		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
+		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne");
+		myFile.close();
+		
+	}
+	myFile = SPIFFS.open("/data.csv",FILE_APPEND);
+	
+
+	myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne));
+	myFile.close();
+	return true;
+}
+
 
 String LoRaOnMsgStatut(){
   return "";
@@ -532,12 +564,21 @@ void setup() {
   Ec.getDisplay()->setCursor(0,10);
   Ec.getDisplay()->print("LoRa Ok");
   Ec.getDisplay()->setCursor(60,10);
-  Ec.getDisplay()->print("!");
-  delay(1000);
+  Ec.getDisplay()->println("!");
+  
   Ec.getDisplay()->display();
   
+  if (!SPIFFS.begin(false))
+  {
+    Serial.println("Spiffs begin failed");
+    Ec.getDisplay()->println("Spiffs failed");
+  }
+  
+
   Ec.getDisplay()->clearDisplay();
   Ec.getDisplay()->display();
+
+
   Serial.println("fin setup");
 
   WifiApp.begin();
@@ -711,6 +752,14 @@ void loop() {
   #endif
 
   WifiApp.loop();
+
+  //Sauvegarde des données
+	if (millis() > lastSaveData + 30000)
+	{
+		lastSaveData = millis();
+		saveDataCsV();
+	}
+
 
   displayData();
   delay(10);

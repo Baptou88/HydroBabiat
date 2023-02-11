@@ -24,8 +24,31 @@ class modes_C {
       })
   }
 }
+class modeBasic extends modes_C{
+  constructor(name,id){
+    super(name,id)
+  }
+  active(){
+    super.active();
+    try {
+      chartNiveau.yAxis[0].addPlotBand({from: 20, to: 80, color: '#AAFFC5', id: 'plot-band-1' })
+      
+    } catch (error) {
+      
+    }
+  }
+  desactive(){
+    super.desactive();
+    try {
+      chartNiveau.yAxis[0].removePlotBand('plot-band-1')
+      
+    } catch (error) {
+      
+    }
+  }
+}
 let mode1 = new modes_C("mode0",0);
-let mode2 = new modes_C("mode1",1);
+let mode2 = new modeBasic("mode1",1);
 let mode3 = new modes_C("mode2",2);
 let activeMode = 0;
 var modes_li
@@ -33,7 +56,11 @@ var modes
 var param
 var modesArray = [mode1,mode2,mode3];
 
-
+/**
+ * 
+ * @param {number} timeS Temps en secondes
+ * @returns String
+ */
 function timeElapsedToString(timeS) {
   if (timeS<60) {
     return timeS + "s"
@@ -152,7 +179,9 @@ document.addEventListener('DOMContentLoaded',function (){
     yAxis: {
         title: {
             text: '(%)'
-        }
+        },
+        min: -10,
+        max: 110
     },
     series: [ {
       name: 'niveau (%)',

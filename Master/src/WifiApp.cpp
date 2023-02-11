@@ -2,12 +2,15 @@
 #include "wifiCredentials.h"
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
+#include <NTPClient.h>
 
 extern int modeActuel ;
 extern PIDController* pidC;
 extern manuelController* manuelC;
 extern basicController* bC;
 extern AsyncTelegram2 TelegramBot;
+
+extern NTPClient timeClient;
 
 #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 Serial.println(#filename);\
@@ -170,6 +173,12 @@ bool WifiAppClass::begin()
       Serial.println("[WiFiApp] Wifi begin failed");
       return false;
     }
+    timeClient.begin();
+		if(!timeClient.update()) {
+			timeClient.forceUpdate();
+		}
+	  Serial.println("Time: " + (String)timeClient.getFormattedTime());
+	  
     Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
     server.on("/" ,HTTP_GET,[](AsyncWebServerRequest *request) {
       //Serial.println("[SERVER] get root");
@@ -212,7 +221,7 @@ bool WifiAppClass::begin()
     });
 
     SPIFFS_provide_file("/app.js");
-
+    SPIFFS_provide_file("/data.csv");
     SPIFFS_provide_file("/icons/Basic.svg");
     SPIFFS_provide_file("/icons/PID.svg");
 
@@ -322,6 +331,9 @@ void WifiAppClass::SPIFFS_provide_file(const char* filename)
 }
 
 void WifiAppClass::loop(){
+  if (WiFi.status() == WL_CONNECTED){
+		timeClient.update();
+	}
   ws.cleanupClients();
 }
 
