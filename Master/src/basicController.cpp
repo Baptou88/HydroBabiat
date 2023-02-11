@@ -26,6 +26,14 @@ basicController::~basicController()
 {
 }
 
+void basicController::startMode() {
+
+}
+
+void basicController::endMode() 
+{
+}
+
 void basicController::loop(void)
 {
     
@@ -52,13 +60,13 @@ void basicController::loop(void)
     if (doChange)
     {
         doChange = false;
-        TelegramBot.sendTo((int64_t)CHAT_ID,"Basic Controller: changement mode:" + etangStateToString(etat));
+        
         
        switch (etat)
        {
        case VIDER:
         //digitalWrite(7, HIGH);
-        vanne = 100;
+        vanne = vanneMax;
         tempsRemplissage = millis() - _millis;
         Serial.println("je change , j'allume");
         Serial.println((tempsRemplissage / 1000));
@@ -66,7 +74,7 @@ void basicController::loop(void)
        case REMPLIR:
         tempsvidage = millis() - _millis;
         //digitalWrite(7, LOW);
-        vanne = 0;
+        vanne = vanneMin;
         Serial.println("je change , j etaind");
         Serial.println((tempsvidage / 1000));
         break;
@@ -74,6 +82,8 @@ void basicController::loop(void)
        default:
         break;
        }
+       TelegramBot.sendTo((int64_t)CHAT_ID,"Basic Controller: changement mode:" + etangStateToString(etat) + "\n ratio vanne Appliqué: " + String(vanne) + " %");
+       bufferActionToSend += "TURBINE:TargetVanne=" + (String)vanne;
        _millis = millis();
         output();
     }

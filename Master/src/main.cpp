@@ -4,14 +4,17 @@
 #include <configVariables.h>
 #include <AsyncTelegram2.h>
 #include "main.h"
-
+#include "motorState.h"
 
 #include <FS.h>
 #include <TelegramCredentials.h>
 
 #include <WifiApp.h>
 #include <Adafruit_SSD1306.h>
+
+#ifdef USE_TFT
 #include <Adafruit_ST7735.h>
+#endif
 #include <ArduinoOTA.h>
 #include <WiFiClientSecure.h>
 
@@ -35,6 +38,7 @@
 #define LEDNOTIF 35
 #define PINTONE 5
 
+#ifdef USE_TFT
 SPIClass spitft;
 #define TFT_CS        26
 #define TFT_RST       16 // Or set to -1 and connect to Arduino RESET pin
@@ -43,8 +47,10 @@ SPIClass spitft;
 #define TFT_MOSI      33  // Data out
 #define TFT_SCLK      34  // Clock out
 Adafruit_ST7735 tft = Adafruit_ST7735 (TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
+#endif
 
-
+#define pinBattery 1
+float batteryReadings ;
 
 //Adafruit_SSD1306* display;
 int potRaw = 0;
@@ -53,6 +59,8 @@ unsigned long receptionMessage = 0;
 
 int displayNum = 0;
 int maxDisplay = 4;
+
+bool ledNotif = false;
 
 String bufferActionToSend;
 
@@ -95,6 +103,30 @@ int i = 0;
 
 bool OtaUpdate = false;
 
+String timeElapsedToString(unsigned long timeS){
+  
+
+  //temps inferieur à 1 min
+  if (timeS < 60  )
+  {
+    return (String)timeS + "s";
+  }
+  //temps inferieur à 1 h
+  if (timeS < 60 * 60  )
+  {
+    return (String)(timeS / 60) + "min" + (String)(timeS%60);
+  }
+
+  //temps inferieur à 1 jour
+  // if (timeS < 24 * 3600)
+  // {
+    return (String)(timeS/3600) + "h" +(String)((timeS%3600) / 60) + "min" + (String)((timeS%3600)%60);
+  //}
+  
+  
+
+}
+
 void arduinoOtaSetup(void){
   ArduinoOTA
     .onStart([]() {
@@ -111,6 +143,7 @@ void arduinoOtaSetup(void){
     .onEnd([]() {
       Serial.println("\nEnd");
       OtaUpdate = false;
+      ESP.restart();
     })
     .onProgress([](unsigned int progress, unsigned int total) {
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
@@ -149,7 +182,12 @@ String LoRaOnMsgStatut(){
 void LoRaMessage(LoRaPacket header, String msg)
 {
   receptionMessage = millis();
-  digitalWrite(LEDNOTIF,HIGH);
+  if (ledNotif)
+  {
+    digitalWrite(LEDNOTIF,HIGH);
+    
+  }
+  
   Serial.print("cb: ");
   Serial.println(msg);
   if (header.Emetteur == TURBINE)
@@ -188,6 +226,12 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "I"){
         dataTurbine.I = val.toFloat();
+      }
+      if (key == "UB"){
+        dataTurbine.UB = val.toFloat()  / 1000;
+      }
+      if (key == "motorState"){
+        dataTurbine.motorState = (MotorState)val.toInt();
       }
     }
 
@@ -228,7 +272,7 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "ratio")
       {
-        dataEtang.ratioNiveauEtang = val.toFloat();;
+        dataEtang.ratioNiveauEtang = (val.toFloat())*100; //TODO 
       }
       
     }
@@ -243,7 +287,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     nodeTest.SNR = header.SNR;
   }
   
-  
+  WifiApp.notifyClients();
   
 }
 
@@ -311,11 +355,12 @@ void displayData(){
     // Ec.getDisplay()->println(dataTurbine.targetPositionVanne);
 
     Ec.getDisplay()->println("[" + String(EtangStatus.active?"x":" ") +"] Etang  : " + (String)EtangStatus.RSSI);
-    Ec.getDisplay()->println("  : " + (String)((millis() - EtangStatus.dernierMessage)/1000));
+    //Ec.getDisplay()->println("  : " + (String)((millis() - EtangStatus.dernierMessage)/1000));
+    Ec.getDisplay()->println("  : " + timeElapsedToString((millis() - EtangStatus.dernierMessage)/1000));
     Ec.getDisplay()->println("[" + String(TurbineStatus.active?"x":" ") +"] Turbine: " + (String)TurbineStatus.RSSI);
-    Ec.getDisplay()->println("  : " + (String)((millis() - TurbineStatus.dernierMessage)/1000));
+    Ec.getDisplay()->println("  : " + timeElapsedToString((millis() - TurbineStatus.dernierMessage)/1000));
     Ec.getDisplay()->println("[" + String(nodeTest.active?"x":" ") +"] Node Test: " + (String)nodeTest.RSSI);
-    Ec.getDisplay()->println("  : " + (String)((millis() - nodeTest.dernierMessage)/1000));
+    Ec.getDisplay()->println("  : " + timeElapsedToString((millis() - nodeTest.dernierMessage)/1000));
     
     
     break;
@@ -335,8 +380,13 @@ void displayData(){
     break;
   case 2:
     Ec.getDisplay()->setCursor(0,0);
-    Ec.getDisplay()->println(WiFi.status());
+    Ec.getDisplay()->println("WifiStatus: " + (String)WiFi.status());
     Ec.getDisplay()->println(WiFi.localIP().toString());
+    
+    
+    Ec.getDisplay()->println("Battery: " + (String) batteryReadings);
+    Ec.getDisplay()->println("Battery: " + (String) (batteryReadings * 0.025));
+    
     //Ec.getDisplay()->println(WifiApp.server.);
 
     break;
@@ -391,7 +441,7 @@ void displayData(){
 void initNodes(){
   
   EtangStatus.addr = ETANG;
-  EtangStatus.Name = "ETANG";
+  EtangStatus.Name = "Etang";
 
 
   TurbineStatus.addr = TURBINE;
@@ -410,6 +460,7 @@ void setup() {
   pinMode(LEDNOTIF,OUTPUT);
 
   pinMode(POT,INPUT);
+
 
   pinMode(LED,OUTPUT);
   digitalWrite(LED,LOW);
@@ -456,11 +507,15 @@ void setup() {
   pinMode(PINTONE, OUTPUT);
 #endif
 
+#ifdef pinBattery
+  pinMode(pinBattery, INPUT);
+#endif
+
   pinMode(pinAnalogTest,INPUT);
   ledcSetup(1,1000,8);
   ledcAttachPin(LED,1);
 
-
+#ifdef USE_TFT
  tft.initR();
  
  //tft.drawCircle(60,60,10,ST77XX_RED);
@@ -472,7 +527,7 @@ void setup() {
  //tft.drawCircle(-20,20,10,ST7735_BLUE);
 
   
-  
+#endif
   
   Ec.getDisplay()->setCursor(0,10);
   Ec.getDisplay()->print("LoRa Ok");
@@ -504,14 +559,14 @@ void setup() {
   myinlinekbd.addButton("GitHub", "https://github.com/cotestatnt/AsyncTelegram2/", KeyboardButtonURL);
 
   // Send a welcome message to user when ready
-  char welcome_msg[128];
-  snprintf(welcome_msg, sizeof(welcome_msg),
-          "BOT @%s online.\n/help for command list.\n/inline_keyboard",
-          TelegramBot.getBotName());
+  // char welcome_msg[128];
+  // snprintf(welcome_msg, sizeof(welcome_msg),
+  //         "BOT @%s online.\n/help for command list.\n/inline_keyboard",
+  //         TelegramBot.getBotName());
 
-  // Check the userid with the help of bot @JsonDumpBot or @getidsbot (work also with groups)
-  // https://t.me/JsonDumpBot  or  https://t.me/getidsbot
-  TelegramBot.sendTo(CHAT_ID, welcome_msg);
+  // // Check the userid with the help of bot @JsonDumpBot or @getidsbot (work also with groups)
+  // // https://t.me/JsonDumpBot  or  https://t.me/getidsbot
+  // TelegramBot.sendTo(CHAT_ID, welcome_msg);
 
 
   timerEnvoi.reset();
@@ -526,6 +581,7 @@ void loop() {
 
   ArduinoOTA.handle();
 
+  batteryReadings = analogRead(pinBattery);
   btnPRG.loop();
   LoRa.loop();
   Ec.loop();
@@ -533,7 +589,9 @@ void loop() {
   // pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
   // pidC->loop();
 
-  modes.get(modeActuel)->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
+  //modes.get(modeActuel)->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
+
+  modes.get(modeActuel)->niveau = dataEtang.ratioNiveauEtang;
   modes.get(modeActuel)->loop();
 
   if (bufferActionToSend != "")
@@ -590,13 +648,12 @@ void loop() {
     LoRa.sendData((i++%3)+2,LoRaMessageCode::DemandeStatut,"bonjour" + (String)random(0,100));
   }
 
-  if (timerEnvoiWS.isOver())
-  {
-    WifiApp.notifyClients();
-  }
+  // if (timerEnvoiWS.isOver())
+  // {
+  //   WifiApp.notifyClients();
+  // }
   
   TBMessage msg;
-
   if (TelegramBot.getNewMessage(msg)) {
     Serial.printf("[telegram] %s\n",msg.text);
     switch (msg.messageType)
@@ -643,6 +700,7 @@ void loop() {
     
   }
   
+  #ifdef USE_TFT
   if (TftTimer.isOver())
   {
     tft.fillScreen(ST7735_BLACK);
@@ -650,7 +708,9 @@ void loop() {
     tft.println("Etang  : " + (String)EtangStatus.RSSI);
     tft.println("Turbine: " + (String)TurbineStatus.RSSI);
   }
-  
+  #endif
+
+  WifiApp.loop();
 
   displayData();
   delay(10);

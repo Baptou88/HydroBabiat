@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "main.h"
 
+extern String bufferActionToSend;
 
 enum typeController{
     manuel,
@@ -26,6 +27,9 @@ public:
     virtual void loop(void) = 0;
     void output();
 
+    virtual void startMode(){};
+    virtual void endMode() {};
+     
     String name = "default";
 };
 

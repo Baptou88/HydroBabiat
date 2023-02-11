@@ -6,13 +6,7 @@
 #include "digitalInput.h"
 #include "Encoder.h"
 
-enum MotorState{
-    IDLE,
-    OVERLOAD,
-    INIT_POS_MIN,
-    INIT_POS_MAX,
-    WAIT_INIT,
-};
+#include "motorState.h"
 
 class Moteur
 {
@@ -56,7 +50,7 @@ public:
     void setEndstop(digitalInput *fcf, digitalInput *fco);
     MotorState getState(void);
     void setState(MotorState state);
-    String stateToString();
+    
 };
 
 

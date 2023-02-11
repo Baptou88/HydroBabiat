@@ -5,4 +5,6 @@
 
 #define INTEGRATED_OLED 1
 
+//#define USE_TFT
+
 #endif // __CONFIGURATION_H__

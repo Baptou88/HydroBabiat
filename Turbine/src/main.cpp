@@ -93,6 +93,7 @@ AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,current_coefA,current_base);
 
 Adafruit_INA260 ina260 = Adafruit_INA260(); 
 Adafruit_INA219 ina219 = Adafruit_INA219(); 
+float currentSysteme = 0;
 
 bool ledNotif = true;
 
@@ -128,7 +129,7 @@ void displayData(){
     
     
     Ec.getDisplay()->setCursor(20,50);
-    Ec.getDisplay()->print(mot.stateToString());
+    Ec.getDisplay()->print(MotorStateToString( mot.getState()));
 
     Ec.getDisplay()->setCursor(5,50);
     Ec.getDisplay()->print(FCF.getState());
@@ -149,6 +150,7 @@ void displayData(){
     Ec.getDisplay()->println("U: " + (String)VoltageOutput.getValue() + " V");
     Ec.getDisplay()->println("I: " + (String)CurrentOutput.getValue() + " A");
     Ec.getDisplay()->println("UB: " + (String)VoltageBattery + " mV");
+    Ec.getDisplay()->println("Isysteme: " + (String)currentSysteme + " mA");
     
     
     break;
@@ -181,7 +183,7 @@ void LoRaMessage(LoRaPacket header, String msg){
   msgRSSI= header.RSSI;
   msgSNR= header.SNR;
   //message = msg;
-  digitalWrite(LED_BUILTIN,HIGH);
+  //digitalWrite(LED_BUILTIN,HIGH);
   Serial.println(msg);
   
   
@@ -257,6 +259,24 @@ void commandProcess(String cmd){
     Ec.setSleep();
     esp_deep_sleep_start();
   }
+  if (cmd.startsWith("OM"))
+  {
+    int om = 5000;
+    cmd.replace("OM","");
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      om = cmd.toInt();
+    }
+    mot.ouvertureMax = om;
+    
+  }
+  if (cmd.startsWith("FT"))
+  {
+    cmd.replace("FT","");
+    mot.setState(MotorState::FERMETURE_TOTALE);
+  }
+  
   
 }
 
@@ -291,6 +311,7 @@ bool initPreferences(){
   moteurKp = pref.getFloat("moteurKp",moteurKp);
   moteurKi = pref.getFloat("moteurKi",moteurKi);
   moteurKd = pref.getFloat("moteurKd",moteurKd);
+  ledNotif = pref.getBool("ledNotif", ledNotif);
 
   VoltageOutput._a = pref.getFloat("voltage_coefA",voltage_coefA);
   VoltageOutput._b = pref.getFloat("voltage_base",voltage_base);
@@ -312,6 +333,7 @@ bool savePreferences(){
   pref.putFloat("moteurKp",moteurKp);
   pref.putFloat("moteurKi",moteurKi);
   pref.putFloat("moteurKd",moteurKd);
+  pref.putBool("ledNotif", ledNotif);
 
   pref.putFloat("voltage_coefA",VoltageOutput._a);
   pref.putFloat("voltage_base",VoltageOutput._b);
@@ -336,6 +358,7 @@ void acquisitionEntree(){
   VoltageOutput.loop();
   CurrentOutput.loop();
   VoltageBattery = ina260.readBusVoltage();
+  currentSysteme = ina219.getCurrent_mA();
   
 }
 

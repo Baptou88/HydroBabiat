@@ -1,5 +1,7 @@
 #include <WifiApp.h>
 #include "wifiCredentials.h"
+#include <ArduinoJson.h>
+#include <AsyncJson.h>
 
 extern int modeActuel ;
 extern PIDController* pidC;
@@ -25,29 +27,34 @@ WifiAppClass::~WifiAppClass()
 {
 }
 void WifiAppClass::notifyClients(){
-  // if (WifiApp.ws.count())
-  // {
-  //   /* code */
-  // }
-  
+
   String message = "{";
 
   message += "\"Mode\":" +  (String)modeActuel +",";
-  message += "\"positionVanne\":" +  (String)(dataTurbine.positionVanne )+",";
-  message += "\"RangePosVanneTarget\":" +  (String)(dataTurbine.targetPositionVanne )+",";
-  message += "\"TurbineRSSI\":" +  (String)TurbineStatus.RSSI +",";
-  message += "\"TurbineSNR\":" +  (String)TurbineStatus.SNR +",";
-  message += "\"EtangRSSI\":" +  (String)EtangStatus.RSSI +",";
-  message += "\"EtangSNR\":" +  (String)EtangStatus.SNR +",";
-  message += "\"niveauEtang\":" +  (String)dataEtang.niveauEtang +",";
-  message += "\"ratioNiveauEtang\":" +  (String)dataEtang.ratioNiveauEtang +",";
-  message += "\"tacky\":" +  (String)dataTurbine.tacky +",";
-  message += "\"tension\":" +  (String)dataTurbine.U;
+  message += dataTurbine.toJson()+",";
+  message += TurbineStatus.toJson()+",";
+  message += dataEtang.toJson()+",";
+  message += EtangStatus.toJson();
  
   message += "}";
   //Serial.print("[WiFiAPP] notif: ");
   //Serial.println(message);
   WifiApp.ws.textAll(String(message));
+}
+void WifiAppClass::notifyClient(uint32_t clientId){
+
+  String message = "{";
+
+  message += "\"Mode\":" +  (String)modeActuel +",";
+  message += dataTurbine.toJson()+",";
+  message += TurbineStatus.toJson()+",";
+  message += dataEtang.toJson()+",";
+  message += EtangStatus.toJson();
+ 
+  message += "}";
+  //Serial.print("[WiFiAPP] notif: ");
+  //Serial.println(message);
+  WifiApp.ws.text(clientId,message);
 }
 
 String WifiAppClass::templateProcessor(const String& var) {
@@ -66,7 +73,7 @@ String WifiAppClass::templateProcessor(const String& var) {
   }
   if (var == "ratioNiveauEtang")
   {
-    return (String) (dataEtang.ratioNiveauEtang * 100);
+    return (String) (dataEtang.ratioNiveauEtang );
   }
   if (var == "mode")
   {
@@ -87,12 +94,14 @@ String WifiAppClass::templateProcessor(const String& var) {
         retour += "<img src=\"icons/PID.svg\" alt=\"\"";
         
       } else if (modes.get(i)->type == typeController::basic)
-      {
-        basicController* c;
-        c = reinterpret_cast<basicController*> (modes.get(i));
-        retour += "<p>" + String(c->niveauMin) +" " + String(c->niveauMax) + "</p>";
-        retour += "<img src=\"icons/Basic.svg\" alt=\"\"";
-      }
+
+        
+        {
+            basicController *c;
+            c = reinterpret_cast<basicController *>(modes.get(i));
+            retour += "<p>" + String(c->niveauMin) + " " + String(c->niveauMax) + "</p>";
+            retour += "<img src=\"icons/Basic.svg\" alt=\"\"";
+        }
       retour += +"</li>\n";
       
     }
@@ -122,6 +131,18 @@ String WifiAppClass::templateProcessor(const String& var) {
   {
     return (String)dataTurbine.tacky;
   }
+  if (var == "tensionBatterie")
+  {
+    return (String)dataTurbine.UB;
+  }
+  if (var == "tension")
+  {
+    return (String)dataTurbine.U;
+  }
+  if (var == "motorState")
+  {
+    return (String)MotorStateToString(dataTurbine.motorState);
+  }
   
   
   
@@ -129,6 +150,7 @@ String WifiAppClass::templateProcessor(const String& var) {
   
  return "templateProcesor default: " + var;
 }
+
 void WifiAppClass::onNotFound(AsyncWebServerRequest *request){
   //Handle Unknown Request
   request->send(404);
@@ -150,7 +172,7 @@ bool WifiAppClass::begin()
     }
     Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
     server.on("/" ,HTTP_GET,[](AsyncWebServerRequest *request) {
-      Serial.println("[SERVER] get root");
+      //Serial.println("[SERVER] get root");
       request->send(SPIFFS,"/home.html","text/html",false,WifiApp.templateProcessor);
     });
     server.on("/icons/hydro-elec-512.svg" ,HTTP_GET,[](AsyncWebServerRequest *request) {
@@ -171,10 +193,22 @@ bool WifiAppClass::begin()
         AsyncWebParameter* p = request->getParam("modeNum");
         Serial.println("mode num : "+ (String) p->value().toInt());
         TelegramBot.sendTo(CHAT_ID,"Changement de Mode");
+
+        modes.get(modeActuel)->endMode();
         modeActuel=p->value().toInt();
+        modes.get(modeActuel)->startMode();
 
       }
       request->send(200, "text/plain", "mode ok");
+    });
+
+    server.on("/dataEtang",HTTP_GET,[](AsyncWebServerRequest *request){
+      String Response = "{"; 
+      Response += "\"niveauEtang\":" + (String)dataEtang.niveauEtang + ",";
+      Response += "\"niveauEtangP\":" + (String)dataEtang.ratioNiveauEtang;
+      Response += "}";
+      request->send(200,"application/json",Response);
+
     });
 
     SPIFFS_provide_file("/app.js");
@@ -199,6 +233,7 @@ void WifiAppClass::onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     switch (type) {
     case WS_EVT_CONNECT:
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      WifiApp.notifyClient(client->id());
       break;
     case WS_EVT_DISCONNECT:
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
@@ -222,7 +257,7 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) 
     if ((char*)data == "toggle")
     {
       Serial.println("ws changement led");
-      etatLed != etatLed;
+      ledNotif != ledNotif;
     } else if (dataStr.startsWith("RangePosVanneTarget"))
     {
       dataStr.replace("RangePosVanneTarget ","");
@@ -286,5 +321,8 @@ void WifiAppClass::SPIFFS_provide_file(const char* filename)
   });
 }
 
+void WifiAppClass::loop(){
+  ws.cleanupClients();
+}
 
 WifiAppClass WifiApp;

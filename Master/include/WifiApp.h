@@ -19,7 +19,7 @@
 #include <LList.h>
 
 extern int potValue;
-extern bool etatLed;
+extern bool ledNotif;
 extern int modeActuel;
 extern LList<IController*> modes;
 
@@ -43,10 +43,14 @@ public:
     ~WifiAppClass();
     bool begin();
     void notifyClients();
+    void notifyClient(uint32_t clientId);
 
     void onNotFound(AsyncWebServerRequest *request);
 
     static String templateProcessor(const String& var);
+
+    /// @brief main loop
+    void loop();
 };
 
 

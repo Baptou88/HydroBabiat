@@ -34,6 +34,15 @@ var param
 var modesArray = [mode1,mode2,mode3];
 
 
+function timeElapsedToString(timeS) {
+  if (timeS<60) {
+    return timeS + "s"
+  }
+  if (timeS < 60*60) {
+    return timeS/60 + "min" + timeS%60;
+  }
+  return timeS/3600 + "h" + (timeS%3600)/60 + "min" + (timeS%3600)%60 + "s"
+}
 
 function desactivateModes() {
   modes_li.forEach(el => {
@@ -367,3 +376,5 @@ param = document.querySelectorAll(".param")
   })
   
 }
+
+

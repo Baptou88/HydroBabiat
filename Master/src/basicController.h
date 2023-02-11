@@ -18,11 +18,19 @@ private:
 public:
     int niveauMin = 20;
     int niveauMax = 80;
+
+    int vanneMin = 0;
+    int vanneMax = 80;
+
     
     basicController(/* args */);
     ~basicController();
-    
+
+    void startMode() override;
+    void endMode() override ;
+
     void loop(void);
+
     unsigned long tempsRemplissage = 0;
     unsigned long tempsvidage = 0;
     unsigned long _millis = 0;

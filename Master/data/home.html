@@ -122,9 +122,12 @@
         <div class="card-body">
             <p>Turbine RSSI: <span id="TurbineRSSI"></span> dBm</p>
             <p>Turbine SNR: <span id="TurbineSNR"></span> dB</p>
+            <p>Dernière MAJ: <span class="nodeTimer" id="TurbineDernierMessage">-1</span> s</p>
             <p>position Vanne <span id="positionVanne">%positionVanne% </span> %%</p>
             <p>tacky <span id="tacky">%tacky% </span> rpm</p>
             <p>Tension <span id="tension">%tension% </span> V</p>
+            <p>Tension Batterie <span id="tensionBatterie">%tensionBatterie% </span> V</p>
+            <p>motorState <span id="motorState">%motorState% </span> V</p>
             
             <div class="btn-group" role="group" aria-label="Basic example">
                 <button type="button" class="btn btn-secondary">Fermeture Totale</button>
@@ -144,6 +147,7 @@
         <div class="card-body">
             <p data-bs-toggle="tooltip" data-bs-placement="top" title="Recorded Signal Strength Indicator in dBm">Etang RSSI: <span id="EtangRSSI"></span> dBm</p>
             <p>Etang SNR: <span id="EtangSNR"></span> dB</p>
+            <p>Dernière MAJ: <span class="nodeTimer" id="EtangDernierMessage">-1</span> s</p>
             <p>Niveau Etang: <span id="niveauEtang">%niveauEtang% </span> </p>
             <p>Niveau Etang: <span id="ratioNiveauEtang">%ratioNiveauEtang% </span> %%</p>
             
@@ -170,6 +174,19 @@
         document.querySelector("#darkmode").onclick = function(e){
           darkmode.toggleDarkMode();
         }
+        function updateNodeTimer() {
+            var nodes = document.querySelectorAll('.nodeTimer');
+            console.log("nodes",nodes);
+            nodes.forEach(el => {
+                var it = parseInt(el.innerHTML)
+                if (it != -1) {
+                    el.innerHTML = it+2
+                }
+            })
+        }
+        var nodeTimerIntervall = window.setInterval(function(){
+            updateNodeTimer(2000)
+        }, 2000);
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/js/darkmode.min.js"></script>
 
