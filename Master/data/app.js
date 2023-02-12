@@ -47,6 +47,9 @@ class modeBasic extends modes_C{
     }
   }
 }
+
+let graphDataLoaded = false;
+
 let mode1 = new modes_C("mode0",0);
 let mode2 = new modeBasic("mode1",1);
 let mode3 = new modes_C("mode2",2);
@@ -55,6 +58,10 @@ var modes_li
 var modes
 var param
 var modesArray = [mode1,mode2,mode3];
+
+
+let chartNiveau 
+let chartTurbine 
 
 /**
  * 
@@ -160,16 +167,7 @@ document.addEventListener('DOMContentLoaded',function (){
         animation: false,
         dataLabels: { enabled: true }
       },
-      // series: [
-      //   { 
-      //     color: '#059e8a',
-      //     name: "Niveau" 
-      //   },
-      //   { 
-      //     color: '#05918a',
-      //     name: "Ouverture" 
-      //   }
-      // ]
+      
     },
     xAxis: {
         //categories: [],
@@ -183,25 +181,22 @@ document.addEventListener('DOMContentLoaded',function (){
         min: -10,
         max: 110
     },
-    series: [ {
-      name: 'niveau (%)',
-      data: [],
-      color: '#05918a',
-      
+    series: [ 
+      {
+        data: [],
+        name: 'Niveau (%)',
+        color: '#007acc',
       },
-      { 
-        data:[],
-        name: 'Ouverture (%)',
-        color: '#FFAA8a' 
-      },
-      { 
-        data:[],
-        name: 'Cible (%)',
-        color: '#FFC78A' 
-      }//, {
-    //       name: 'John',
-    //       data: [5, 7, 3]
-    //   }
+      // { 
+      //   data:[],
+      //   name: 'Ouverture (%)',
+      //   color: '#FFAA8a' 
+      // },
+      // { 
+      //   data:[],
+      //   name: 'Cible (%)',
+      //   color: '#FFC78A' 
+      // }
     ]
   };
   var graphTurbineOption = {
@@ -290,9 +285,50 @@ document.addEventListener('DOMContentLoaded',function (){
     //   }
     ]
   };
-  chartNiveau = Highcharts.stockChart('chartNiveau',graphNiveauOption)
-  //chartNiveau.series[0].addPoint([(new Date()).getTime(), 10],true ,false,true);
-  chartTurbine = Highcharts.stockChart('chartTurbine',graphTurbineOption)
+
+  Highcharts.ajax({
+    url: 'data.csv',
+    dataType: 'text',
+    success: function (data) {
+      var lines = data.split('\n');
+      lines.forEach(function(line,lineNo) {
+        var items = line.split(',');
+        // header line containes categories  
+        if (lineNo == 0) {  
+          items.forEach(function(item, itemNo) {  
+              //if (itemNo > 0) options.xAxis.categories.push(item);  
+          });  
+
+        } 
+        // the rest of the lines contain data with their name in the first position  
+        else {
+          var seriesNiveau = {
+            data:[]
+          }
+          var seriesTurbine = {
+            data: []
+          }
+          var dt = new Date(((items[0]-3600)) * 1000).getTime();
+          console.log("ajax: " , dt);
+          graphNiveauOption.series[0].data.push([dt,parseFloat(items[2])]);
+          graphTurbineOption.series[0].data.push([dt,parseFloat(items[4])]);
+          console.log(graphTurbineOption.series[0].data);
+        }
+      })
+      chartNiveau = Highcharts.stockChart('chartNiveau',graphNiveauOption)
+      chartTurbine = Highcharts.stockChart('chartTurbine',graphTurbineOption)
+    }
+  })
+  //console.log("fini" , graphNiveauOption.series[0].data);
+  
+  initWebSocket();
+
+  document.querySelector('#test').addEventListener('click', (e)=>{
+    console.log("test");
+    chartNiveau.series[0].addPoint([new Date().getTime(),10])
+  })
+
+  
 })
 
 var gateway = `ws://${window.location.hostname}/ws`;
@@ -313,12 +349,7 @@ function initWebSocket() {
   websocket.onopen    = onOpen;
   websocket.onclose   = onClose;
   websocket.onmessage = onMessage; // <-- add this line
-  // websocket.addEventListener("message", (event) => {
-  //   console.log("dacc" , event);
-  // })
-  // websocket.addEventListener("message", (event) => {
-  //   console.log("dacc2" , event);
-  // })
+
 }
 
 
@@ -338,7 +369,7 @@ function onMessage(event) {
   var data = JSON.parse(event.data);
   var keys = Object.keys(data);
 
-  var dt = new Date()
+  var dt =  Date.now();
   for (let i = 0; i < keys.length; i++) {
     const element = keys[i];
     //console.log(element);
@@ -355,22 +386,25 @@ function onMessage(event) {
       activateMode(el);
     }
     if (element == "ratioNiveauEtang") {
-      chartNiveau.series[0].addPoint([dt.getTime(), data[element]],true ,false,true);
+      //console.log("av " , chartNiveau.series[0].data);
+      chartNiveau.series[0].addPoint([dt, data[element]],true ,false,true);
+      //console.log("ap " ,chartNiveau.series[0].data);
     }
     if (element == "targetNiveauEtang") {
-      chartNiveau.series[2].addPoint([dt.getTime(), data[element]],true ,false,true);
+      //chartNiveau.series[2].addPoint([dt, data[element]],true ,false,true);
     }
     if (element == "positionVanne") {
-      chartTurbine.series[0].addPoint([dt.getTime(), data[element]],true ,false,true);
+      //chartTurbine.series[0].addPoint([dt, data[element]],true ,false,true);
     }
     if (element == "RangePosVanneTarget") {
-      chartTurbine.series[1].addPoint([dt.getTime(), data[element]],true ,false,true);
+      //chartTurbine.series[1].addPoint([dt, data[element]],true ,false,true);
       el.value = data[element]
     }
+    
   }
 }
 function onLoad(event) {
-  initWebSocket();
+  //initWebSocket();
   
 
   var rangePosVanne = document.querySelector("#RangePosVanneTarget")

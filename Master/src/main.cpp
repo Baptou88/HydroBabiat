@@ -573,6 +573,14 @@ void setup() {
     Serial.println("Spiffs begin failed");
     Ec.getDisplay()->println("Spiffs failed");
   }
+  if (!SPIFFS.exists("/data.csv"))
+	{
+		
+		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
+		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne");
+		myFile.close();
+		
+	}
   
 
   Ec.getDisplay()->clearDisplay();
