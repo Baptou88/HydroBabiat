@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded',function (){
             data: []
           }
           var dt = new Date(((items[0]-3600)) * 1000).getTime();
-          console.log("ajax: " , dt);
+          //console.log("ajax: " , dt);
           graphNiveauOption.series[0].data.push([dt,parseFloat(items[2])]);
           graphTurbineOption.series[0].data.push([dt,parseFloat(items[4])]);
           console.log(graphTurbineOption.series[0].data);
@@ -323,10 +323,7 @@ document.addEventListener('DOMContentLoaded',function (){
   
   initWebSocket();
 
-  document.querySelector('#test').addEventListener('click', (e)=>{
-    console.log("test");
-    chartNiveau.series[0].addPoint([new Date().getTime(),10])
-  })
+ 
 
   
 })
@@ -334,10 +331,6 @@ document.addEventListener('DOMContentLoaded',function (){
 var gateway = `ws://${window.location.hostname}/ws`;
 //var gateway = `ws://192.168.1.24/ws`;
 var websocket;
-
-
-
-
 
 
 
@@ -391,13 +384,13 @@ function onMessage(event) {
       //console.log("ap " ,chartNiveau.series[0].data);
     }
     if (element == "targetNiveauEtang") {
-      //chartNiveau.series[2].addPoint([dt, data[element]],true ,false,true);
+      chartNiveau.series[2].addPoint([dt, data[element]],true ,false,true);
     }
     if (element == "positionVanne") {
-      //chartTurbine.series[0].addPoint([dt, data[element]],true ,false,true);
+      chartTurbine.series[0].addPoint([dt, data[element]],true ,false,true);
     }
     if (element == "RangePosVanneTarget") {
-      //chartTurbine.series[1].addPoint([dt, data[element]],true ,false,true);
+      chartTurbine.series[1].addPoint([dt, data[element]],true ,false,true);
       el.value = data[element]
     }
     

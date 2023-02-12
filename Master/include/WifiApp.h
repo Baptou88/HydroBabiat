@@ -48,6 +48,7 @@ public:
     void onNotFound(AsyncWebServerRequest *request);
 
     static String templateProcessor(const String& var);
+    static String templateProcessorTask(const String& var);
 
     /// @brief main loop
     void loop();
