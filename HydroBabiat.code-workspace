@@ -18,6 +18,16 @@
 		}
 	],
 	"settings": {
-		"liveServer.settings.multiRootWorkspaceName": "Master"
+		"liveServer.settings.multiRootWorkspaceName": "Master",
+		"files.associations": {
+			"*.cps": "javascript",
+			"array": "cpp",
+			"*.tcc": "cpp",
+			"memory": "cpp",
+			"istream": "cpp",
+			"functional": "cpp",
+			"tuple": "cpp",
+			"utility": "cpp"
+		}
 	}
 }

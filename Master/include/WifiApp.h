@@ -10,7 +10,7 @@
 #include "main.h"
 #include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
-
+#include "ProgrammatedTasks.h"
 
 #include <IController.h>
 #include <basicController.h>
@@ -48,7 +48,7 @@ public:
     void onNotFound(AsyncWebServerRequest *request);
 
     static String templateProcessor(const String& var);
-    static String templateProcessorTask(const String& var);
+
 
     /// @brief main loop
     void loop();

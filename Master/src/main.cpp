@@ -32,7 +32,7 @@
 #include "manuelController.h"
   
 #include <NTPClient.h>
-#include <ProgrammatedTask.h>
+#include <ProgrammatedTasks.h>
 
 
 #define LED 7
@@ -83,8 +83,6 @@ ReplyKeyboard myreplykbd;
 InlineKeyboard myinlinekbd;
 bool iskeyboardactive = false;
 
-LList<ProgrammatedTask*> *ProgrammatedTasks = new LList<ProgrammatedTask*>();
-const String ProgrammatedTaskFile = "/Programmated";
 
 digitalInput btnPRG(0,INPUT_PULLUP);
 
@@ -142,79 +140,7 @@ String timeElapsedToString(unsigned long timeS){
 
 }
 
-void lireTacheProgrammer(void){
-	if (!SPIFFS.exists(ProgrammatedTaskFile))
-	{
-		return;
-	}
-	
-	File fichier = SPIFFS.open(ProgrammatedTaskFile,"r");
-	while (fichier.available()) {
-		String a =fichier.readStringUntil('\n');
-		if (a!="")
-		{
-			
-			String name = "";
-			byte h = 0;
-			byte m = 0;
-			bool activ = false;
-			int targetVanne = 0;
-			double deepsleep = 0;
 
-			while (a.indexOf(";") !=-1)
-			{
-				String part1 = a.substring(0,a.indexOf("="));
-    			String part2 = a.substring(a.indexOf("=")+1 , a.indexOf(";"));
-				
-				a.remove(0,a.indexOf(";")+1);
-
-				if (part1 == "name")
-				{
-					name = part2;
-				}
-				if (part1 == "h")
-				{
-					h = part2.toInt();
-				}
-				if (part1 == "m")
-				{
-					m = part2.toInt();
-				}
-				if (part1 == "activate")
-				{
-					activ = part2.toInt();
-				}
-				if (part1 == "targetVanne")
-				{
-					targetVanne = part2.toInt();
-				}
-				
-				if (part1 == "deepsleep")
-				{
-					deepsleep = part2.toDouble();
-				}
-				
-			}
-			
-			ProgrammatedTask *ajout = new ProgrammatedTask(h,m,name);
-			if (activ)
-			{
-				ajout->activate();
-			} else
-			{
-				ajout->deactivate();
-			}
-			ajout->deepsleep = deepsleep;
-			ajout->targetVanne = targetVanne;
-			
-			ProgrammatedTasks->add(ajout);
-			
-		}
-		
-		
-	}
-	fichier.close();
-}
 
 
 void arduinoOtaSetup(void){
@@ -696,7 +622,9 @@ void setup() {
   // // https://t.me/JsonDumpBot  or  https://t.me/getidsbot
   // TelegramBot.sendTo(CHAT_ID, welcome_msg);
 
-  lireTacheProgrammer();
+  //lireTacheProgrammer();
+  ProgTasks.begin(&timeClient);
+  ProgTasks.initTask();
 
   timerEnvoi.reset();
 
@@ -848,7 +776,8 @@ void loop() {
 		saveDataCsV();
 	}
 
-
+  ProgTasks.loop();
+  
   displayData();
   delay(10);
 }

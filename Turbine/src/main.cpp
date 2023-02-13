@@ -276,6 +276,11 @@ void commandProcess(String cmd){
     cmd.replace("FT","");
     mot.setState(MotorState::FERMETURE_TOTALE);
   }
+  if (cmd.startsWith("reboot"))
+  {
+    cmd.replace("reboot","");
+    ESP.restart();
+  }
   
   
 }

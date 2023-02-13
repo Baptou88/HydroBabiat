@@ -152,89 +152,7 @@ String WifiAppClass::templateProcessor(const String &var)
   return "templateProcesor default: " + var;
 }
 
-String WifiAppClass::templateProcessorTask(const String &var)
-{
-  String retour = "";
 
-  if (var == "ListeProgram")
-  {
-
-    for (size_t i = 0; i < ProgrammatedTasks->size(); i++)
-    {
-      // retour += (String)ProgrammatedTasks->get(i)->name;
-      retour += "<div x-data=\"{edit:false, name:'" + (String)ProgrammatedTasks->get(i)->name + "'}\" class=\"card border my-2 \" style=\"width: auto\">\n";
-      retour += "<form  action =\"/updateprogrammateur\" method=\"post\">\n";
-      // retour += "<h3>" + (String)ProgrammatedTasks->get(i)->name + "</h3>";
-      retour += "<div class=\"card-header\">\n";
-      retour += "<div class=\"form-check form-switch\" >\n";
-      retour += "<input class=\"form-check-input\" type=\"checkbox\" name=\"active\" role=\"switch\" id=\"flexSwitchCheckChecked\" " + String("\%ProgrammatedTasks" + String(i) + ":isActive\%") + " onclick=\"update(this)\">";
-      // retour += "<label class=\"form-check-label\" for=\"flexSwitchCheckChecked\">Checked switch checkbox input</label>";
-      retour += "<button class=\"btn btn-outline-success\" x-show=\"!edit\" @click.prevent=\"edit = ! edit\">Toggle</button>\n";
-      retour += "<div x-show=\"!edit\" >\n<h5  class=\"card-title\" x-text=\"name\"></h5>\n</div>\n";
-      retour += "<input x-show=\"edit\" @click.outside=\"edit = false\" type=\"text\" name=\"name\" id=\"\" x-model=\"name\">\n";
-
-      retour += "</div>\n";
-      retour += "</div>\n";
-      retour += "<div class=\"form-group\" hidden>\n";
-      retour += "<label for=\"exampleFormControlInput1\">ID</label>\n";
-      retour += "<input type=\"number\" class=\"form-control\" name=\"id\" id=\"exampleFormControlInput1\" placeholder=\"id\" value=\"" + (String)i + "\" hidden>\n";
-      retour += "</div>\n";
-      retour += "<label for=\"appt\">Heure du déclanchement:</label>\n";
-      retour += "<input type=\"time\" id=\"appt\" name=\"appt\"  value= \"\%ProgrammatedTasks" + String(i) + ":getHours\%" + ":" + "\%ProgrammatedTasks" + String(i) + ":getMinutes\%" + "\"  required>\n";
-      retour += "<label for=\"customRange1\" class=\"form-label\">Example range</label>";
-      retour += "<input type=\"range\" value=\"\%ProgrammatedTasks" + String(i) + ":targetVanne\%" + "\" name=\"targetVanne\" class=\"form-range\" id=\"customRange1\">";
-      retour += "<label for=\"deepsleep\">DeepSleep (ms) :</label>\n";
-      retour += "<input type=\"number\" id=\"appte\" name=\"deepsleep\"  value= \"\%ProgrammatedTasks" + String(i) + ":deepsleep\%" + "\"  required>\n";
-      retour += "<button class=\"btn btn-primary\" type=\"submit\">Mettre a jour</button>";
-      retour += "<a href=\"/programmateur/?delete=" + (String)i + "\" class=\"btn btn-danger\">";
-      retour += "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"white\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">";
-      retour += "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>";
-      retour += "<path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>";
-      retour += "</svg>";
-      retour += "</a>";
-      retour += "</form>";
-      retour += "</div>\n";
-    }
-
-    return retour;
-  }
-  else if (var.startsWith("ProgrammatedTasks"))
-  {
-    String temp = var;
-    temp.replace("ProgrammatedTasks", "");
-    int separateur = temp.indexOf(":");
-    int num_tache = temp.substring(0, separateur).toInt();
-    String methode = temp.substring(separateur + 1, 64);
-    if (methode == "getHours")
-    {
-      return ProgrammatedTasks->get(num_tache)->getHours();
-    }
-    if (methode == "getMinutes")
-    {
-      return ProgrammatedTasks->get(num_tache)->getMinutes();
-    }
-    if (methode == "isActive")
-    {
-      return String(ProgrammatedTasks->get(num_tache)->isActive() ? "checked" : "");
-    }
-    if (methode == "targetVanne")
-    {
-      return String(ProgrammatedTasks->get(num_tache)->targetVanne);
-    }
-    if (methode == "deepsleep")
-    {
-      return String(ProgrammatedTasks->get(num_tache)->deepsleep);
-    }
-
-    return "erreur processing ProgrammatedTasks";
-  }
-  else
-  {
-    retour += "Erreur processing task";
-  }
-
-  return retour;
-}
 
 void WifiAppClass::onNotFound(AsyncWebServerRequest *request)
 {
@@ -310,35 +228,22 @@ bool WifiAppClass::begin()
 
   server.on("/programmateur/new", HTTP_GET, [](AsyncWebServerRequest *request)
   {
-		ProgrammatedTasks->add(new ProgrammatedTask(12,12,"test ajout"));
-		
+		//ProgrammatedTasks->add(new ProgrammatedTask(12,12,"test ajout"));
+		ProgTasks.addTask(new ProgrammatedTask(12,12,"test ajout"));
 		//request->send(SPIFFS,"/programmateur.html", "text/html", false, processor);
 		request->redirect("/programmateur"); 
   });
 
   server.on("/programmateur/sauvegarder", HTTP_GET, [](AsyncWebServerRequest *request)
   {
-		File file = SPIFFS.open("/Programmated","w+");
-
-		for (size_t i = 0; i < ProgrammatedTasks->size(); i++)
-		{
-			ProgrammatedTask *test = ProgrammatedTasks->get(i);
-			
-			file.print("name=" + String(test->name) + ";");
-			file.print("h=" + String(test->h) + ";");
-			file.print("m=" + String(test->m) + ";");
-			file.print("activate=" + String(test->isActive()) + ";");
-			file.print("targetVanne=" + String(test->targetVanne) + ";");
-			file.println("deepsleep=" + String(test->deepsleep) + ";");
-		}
-		file.close();
+		ProgTasks.saveTask();
 		
 		request->send(SPIFFS,"/Programmated","text/plaintext"); 
   });
 
   server.on("/programmateur", HTTP_GET, [](AsyncWebServerRequest *request)
   { 
-    request->send(SPIFFS, "/programmateur.html", "text/html", false, WifiApp.templateProcessorTask); 
+    request->send(SPIFFS, "/programmateur.html", "text/html", false, ProgTasks.templateProcessor); 
   });
 
   server.on("/updateprogrammateur", HTTP_POST , [](AsyncWebServerRequest* request) {
@@ -363,8 +268,8 @@ bool WifiAppClass::begin()
 		ProgrammatedTask *test;
 		if (request->hasParam("id",true))
 		{
-			test = ProgrammatedTasks->get(request->getParam("id",true)->value().toInt());
-			
+			//test = ProgrammatedTasks->get(request->getParam("id",true)->value().toInt());
+			test = ProgTasks.getTask(request->getParam("id",true)->value().toInt());
 		} else
 		{
 			request->send(400);
@@ -404,7 +309,7 @@ bool WifiAppClass::begin()
 		
 		
 		request->send(200,"text/json","{\"ok\":1}");
-		});
+  });
 
   
   SPIFFS_provide_file("/app.js");

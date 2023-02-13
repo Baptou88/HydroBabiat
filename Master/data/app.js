@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded',function (){
           //console.log("ajax: " , dt);
           graphNiveauOption.series[0].data.push([dt,parseFloat(items[2])]);
           graphTurbineOption.series[0].data.push([dt,parseFloat(items[4])]);
-          console.log(graphTurbineOption.series[0].data);
+
         }
       })
       chartNiveau = Highcharts.stockChart('chartNiveau',graphNiveauOption)
