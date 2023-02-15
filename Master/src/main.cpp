@@ -6,6 +6,8 @@
 #include "main.h"
 #include "motorState.h"
 
+#include <LoRaUploader.h>
+
 #include <FS.h>
 #include <TelegramCredentials.h>
 
@@ -219,6 +221,16 @@ String LoRaOnMsgStatut(){
 void LoRaMessage(LoRaPacket header, String msg)
 {
   receptionMessage = millis();
+  switch (header.Code)
+  {
+  case LoRaMessageCode::FileAck :
+    LoRaFileUpl.nextPacket();
+    return;
+    break;
+  
+  default:
+    break;
+  }
   if (ledNotif)
   {
     digitalWrite(LEDNOTIF,HIGH);
@@ -642,6 +654,20 @@ void loop() {
   btnPRG.loop();
   LoRa.loop();
   Ec.loop();
+
+
+  if (Serial.available()>0)
+  {
+    String cmd = Serial.readStringUntil('\n');
+    if (cmd.startsWith("F"))
+    {
+      LoRaFileUpl.beginTransmit("/testTransmitt.txt",4);
+
+    }
+    
+  }
+  
+  LoRaFileUpl.loop();
 
   // pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
   // pidC->loop();
