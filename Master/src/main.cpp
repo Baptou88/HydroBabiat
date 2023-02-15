@@ -199,14 +199,14 @@ bool saveDataCsV(void){
 	{
 		
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne");
+		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite");
 		myFile.close();
 		
 	}
 	myFile = SPIFFS.open("/data.csv",FILE_APPEND);
 	
 
-	myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne));
+	myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I));
 	myFile.close();
 	return true;
 }
@@ -582,7 +582,7 @@ void setup() {
 	{
 		
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne");
+		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite");
 		myFile.close();
 		
 	}
@@ -773,6 +773,7 @@ void loop() {
 	if (millis() > lastSaveData + 30000)
 	{
 		lastSaveData = millis();
+    
 		saveDataCsV();
 	}
 

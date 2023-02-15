@@ -259,11 +259,13 @@ document.addEventListener('DOMContentLoaded',function (){
       type: 'datetime',
       dateTimeLabelFormats: { second: '%H:%M:%S' }
     },
-    yAxis: {
+    yAxis: [{
         title: {
             text: '(%)'
         }
-    },
+    },{
+      title:{ text:"tacky"}
+    }],
     series: [ {
       name: 'Ouverture (%)',
       data: [],
@@ -275,11 +277,13 @@ document.addEventListener('DOMContentLoaded',function (){
         name: 'Cible (%)',
         color: '#FFAA8a' 
       },
-      { 
+      {
         data:[],
-        name: 'Cible (%)',
-        color: '#FFC78A' 
-      }//, {
+        name: 'tacky (rpm)',
+        color: '#ee931f',
+        yAxis: 1
+      }
+      //, {
     //       name: 'John',
     //       data: [5, 7, 3]
     //   }
@@ -312,6 +316,8 @@ document.addEventListener('DOMContentLoaded',function (){
           //console.log("ajax: " , dt);
           graphNiveauOption.series[0].data.push([dt,parseFloat(items[2])]);
           graphTurbineOption.series[0].data.push([dt,parseFloat(items[4])]);
+          graphTurbineOption.series[1].data.push([dt,parseFloat(items[3])]);
+          graphTurbineOption.series[2].data.push([dt,parseFloat(items[1])]);
 
         }
       })
@@ -391,6 +397,10 @@ function onMessage(event) {
     }
     if (element == "RangePosVanneTarget") {
       chartTurbine.series[1].addPoint([dt, data[element]],true ,false,true);
+      el.value = data[element]
+    }
+    if (element == "tacky") {
+      chartTurbine.series[2].addPoint([dt, data[element]],true ,false,true);
       el.value = data[element]
     }
     

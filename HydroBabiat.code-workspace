@@ -15,6 +15,10 @@
 		{
 			"name": "testV3",
 			"path": "testV3"
+		},
+		{
+			"name": "nodeTest",
+			"path": "nodeTest"
 		}
 	],
 	"settings": {

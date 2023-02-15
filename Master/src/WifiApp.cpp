@@ -144,6 +144,10 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)dataTurbine.U;
   }
+  if (var == "intensite")
+  {
+    return (String)dataTurbine.I;
+  }
   if (var == "motorState")
   {
     return (String)MotorStateToString(dataTurbine.motorState);
@@ -191,7 +195,7 @@ bool WifiAppClass::begin()
   { 
     request->send(SPIFFS, "/icons/hydro-elec-512.svg"); 
   });
-  server.on("/icons/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
   { 
     request->send(SPIFFS, "/icons/favicon.ico"); 
   });
