@@ -402,7 +402,7 @@ bool WifiAppClass::begin()
         response += ",";
       }
       
-      response += "{\"name\": \"" + (String)file.name() + "\", \"size\": "+ (String)file.size()+ "}";
+      response += "{\"name\": \"" + (String)file.name() + "\", \"size\": "+ (String)file.size() + ", \"path\": \""+ (String)file.path() + "\"}";
     }
     
     response += "]}";
@@ -420,9 +420,10 @@ bool WifiAppClass::begin()
       {
         Serial.println("Sending: " + String(fileName));
         //TODO lorafile transfer
-        request->send(200,"application/json","{\"status\":\"ok\"}");
+        LoRaFileUpl.beginTransmit(fileName,0x04);
+        return request->send(200,"application/json","{\"status\":\"ok\"}");
       }
-      request->send(400);
+      return request->send(400);
     }
     
   });

@@ -17,6 +17,7 @@
             <tr>
                 <th>Name</th>
                 <th>Size</th>
+                <th>Path</th>
                 <th>isDirectory</th>
             </tr>
         </table>
@@ -48,7 +49,8 @@
                 const ligne =  document.createElement('tr')
                 const fileName = document.createElement("th").textContent = file.name
                 const fileSize = document.createElement("th").textContent = file.size
-
+                const filePath = document.createElement("th").textContent = file.path
+                
                 var form = document.createElement('form')
                 const fileNameInput = document.createElement('input')
                 fileNameInput.name = 'fileName'
@@ -97,6 +99,7 @@
                 var nouvelleLigne = table.insertRow()
                 nouvelleLigne.insertCell().textContent = file.name
                 nouvelleLigne.insertCell().textContent = humanReadableSize( file.size)
+                nouvelleLigne.insertCell().textContent =  file.path
                 nouvelleLigne.insertCell().appendChild(form)
                 //t.appendChild(ligne)
                 if (blink) {

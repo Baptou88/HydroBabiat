@@ -6,7 +6,7 @@
 #include "main.h"
 #include "motorState.h"
 
-#include <LoRaUploader.h>
+#include "LoRaFileUploader.h"
 
 #include <FS.h>
 #include <TelegramCredentials.h>
@@ -340,6 +340,14 @@ void LoRaMessage(LoRaPacket header, String msg)
   
 }
 
+void LoRaNoReply(byte address){
+  if (address == LoRaFileUpl.id && LoRaFileUpl.initialized)
+  {
+    LoRaFileUpl.sendPacket();
+  }
+  
+  
+}
 
 /*
 * scan i2c bus
@@ -541,6 +549,7 @@ void setup() {
   Ec.getDisplay()->printf("Node Id %i \n", NODE_ID);
   LoRa.setNodeID(NODE_ID);
   LoRa.onMessage(LoRaMessage);
+  LoRa.onNoReply(LoRaNoReply);
   if (LoRa.begin()!= RADIOLIB_ERR_NONE)
   {
     Serial.println("Error init loRa");
@@ -726,10 +735,15 @@ void loop() {
     
   }
   
-  if (timerEnvoi.isOver())
+  if (!LoRaFileUpl.initialized)
   {
-    LoRa.sendData((i++%3)+2,LoRaMessageCode::DemandeStatut,"bonjour" + (String)random(0,100));
+    if (timerEnvoi.isOver())
+    {
+      LoRa.sendData((i++%3)+2,LoRaMessageCode::DemandeStatut,"bonjour" + (String)random(0,100));
+    }
+    
   }
+  
 
   // if (timerEnvoiWS.isOver())
   // {

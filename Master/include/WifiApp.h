@@ -11,6 +11,7 @@
 #include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
 #include "ProgrammatedTasks.h"
+#include "LoRaFileUploader.h"
 
 #include <IController.h>
 #include <basicController.h>
