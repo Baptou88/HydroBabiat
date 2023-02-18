@@ -321,6 +321,111 @@ bool WifiAppClass::begin()
   SPIFFS_provide_file("/data.csv");
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
+  //SPIFFS_provide_file("/fileSystem.html");
+  server.on("/fileSystem",HTTP_ANY,[](AsyncWebServerRequest * request){
+    request->send(SPIFFS,"/fileSystem.html","text/html",false,[](String var){
+      String retour;
+        if (var == "freeSpiffs")
+        {
+          retour += String(SPIFFS.totalBytes() - SPIFFS.usedBytes());
+        }
+        if (var == "usedSpiffs")
+        {
+          retour += String(SPIFFS.usedBytes());
+        }
+        if (var == "totalSpiffs")
+        {
+          retour += String(SPIFFS.totalBytes());
+        }
+        
+      return retour;
+    });
+  },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+    //if (checkUserWebAuth(request)) {
+      if (request->method() != HTTP_POST)
+      {
+        return;
+      }
+      
+
+      if (!index) {
+        
+        // open the file on first call and store the file handle in the request object
+        request->_tempFile = SPIFFS.open("/" + filename, "w");
+        
+      }
+
+      if (len) {
+        // stream the incoming chunk to the opened file
+        request->_tempFile.write(data, len);       
+      }
+
+      if (final) {
+        // close the file handle as the upload is now done
+        int filesize = request->_tempFile.size();
+        request->_tempFile.close();
+        return request->send(200,"application/json","{\"status\":\"ok\",\"file\":[{\"name\":\"" + String(filename) + "\",\"size\":"+ String(filesize)+"}]}");
+        //request->redirect("/");
+      }
+    // } else {
+    //   Serial.println("Auth: Failed");
+      
+
+    // }
+  });
+
+  server.on("/api/fs",HTTP_DELETE,[](AsyncWebServerRequest * request){
+    
+    if (request->hasParam("fileName",true))
+    {
+      String fileName = "/" + (String)request->getParam("fileName",true)->value();
+      if (SPIFFS.exists(fileName))
+      {
+        SPIFFS.remove( (String)fileName);
+        request->send(200,"application/json","{\"status\":\"ok\"}");
+      }
+      request->send(400);
+    }
+    
+  });
+  server.on("/api/fs",HTTP_GET,[](AsyncWebServerRequest * request) {
+    String response = "";
+    response += "{\"SPIFFS\":[";
+    
+    File fileRoot = SPIFFS.open("/");
+    
+    // Parcourt tous les fichiers et dossiers de la carte SD
+    while (File file = fileRoot.openNextFile()) {
+      // Ajoute le nom du fichier ou du dossier au tableau
+      if (!response.endsWith("["))
+      {
+        response += ",";
+      }
+      
+      response += "{\"name\": \"" + (String)file.name() + "\", \"size\": "+ (String)file.size()+ "}";
+    }
+    
+    response += "]}";
+   
+    request->send(200, "application/json",response );
+     
+  });
+
+  server.on("/sendFile",HTTP_POST,[](AsyncWebServerRequest * request){
+    
+    if (request->hasParam("fileName",true))
+    {
+      String fileName = "/" + (String)request->getParam("fileName",true)->value();
+      if (SPIFFS.exists(fileName))
+      {
+        Serial.println("Sending: " + String(fileName));
+        //TODO lorafile transfer
+        request->send(200,"application/json","{\"status\":\"ok\"}");
+      }
+      request->send(400);
+    }
+    
+  });
 
   server.onNotFound([](AsyncWebServerRequest *request)
                     { return request->send(404); });

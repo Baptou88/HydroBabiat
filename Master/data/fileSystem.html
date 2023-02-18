@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+</head>
+<body>
+    
+    <h2>FileSystem</h2>
+
+    Free Strorage %freeSpiffs% Used Storage: %usedSpiffs% Total: %totalSpiffs%
+    <div class="container">
+        <table class="table" id="fs">
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>isDirectory</th>
+            </tr>
+        </table>
+        <form id="fileUploadForm" action="/fileSystem" enctype="multipart/form-data" method="post">
+            <div>
+                <label class="form-label" for="file">Choose file to upload</label>
+                <input class="form-control" type="file" id="file" name="file" multiple />
+            </div>
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <button id="fileUpload" class="btn btn-primary" type="submit">Submit</button>
+        </form>
+    </div>
+    <script>
+        function blinkElement(el) {
+            let count = 0;
+            const interval = setInterval(() => {
+                if (count === 2) {
+                clearInterval(interval); // Arrêter l'intervalle après 2 clignotements
+                }
+                // Inverser la visibilité de l'élément
+                el.style.visibility = (el.style.visibility === 'visible') ? 'hidden' : 'visible';
+                count++;
+            }, 500); // Interval de 500ms (0.5 secondes) entre chaque changement de visibilité
+            }
+        function addFileToTable(table,data, blink = false) {
+            for (const file of data) {
+                const ligne =  document.createElement('tr')
+                const fileName = document.createElement("th").textContent = file.name
+                const fileSize = document.createElement("th").textContent = file.size
+
+                var form = document.createElement('form')
+                const fileNameInput = document.createElement('input')
+                fileNameInput.name = 'fileName'
+                fileNameInput.value = fileName
+                fileNameInput.hidden = true;
+                const btnDelete = document.createElement('button')
+                btnDelete.classList.add('btn')
+                btnDelete.classList.add('btn-outline-danger')
+                btnDelete.innerText = "delete"
+                btnDelete.type = "button"
+                btnDelete.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    const fData = new FormData();
+                    fData.append('fileName',e.target.parentNode.elements.fileName.value)
+                    //console.log(e.target.parentNode.elements.fileName.value);
+                    fetch("/api/fs/",{
+                        method:'delete',
+                        body: fData
+                    })
+                    .then((response) => response.json)
+                    .then((data) => {
+                        e.target.parentNode.parentNode.parentNode.parentNode.removeChild(e.target.parentNode.parentNode.parentNode)
+                    })
+                })
+
+                const btnSendNode = document.createElement('button')
+                btnSendNode.classList.add("btn","btn-outline-success")
+                btnSendNode.innerText = "send"
+                btnSendNode.type = 'button'
+                btnSendNode.addEventListener('click', (e)=>{
+                    e.preventDefault()
+                    const fData = new FormData();
+                    fData.append('fileName', e.target.parentNode.elements.fileName.value)
+                    fetch("/sendFile",{
+                        method:'post',
+                        body: fData
+                    })
+                })
+                fileName.value = fileName
+
+                form.appendChild(fileNameInput)
+                
+                form.appendChild(btnDelete)
+                form.appendChild(btnSendNode)
+
+                var nouvelleLigne = table.insertRow()
+                nouvelleLigne.insertCell().textContent = file.name
+                nouvelleLigne.insertCell().textContent = humanReadableSize( file.size)
+                nouvelleLigne.insertCell().appendChild(form)
+                //t.appendChild(ligne)
+                if (blink) {
+                    blinkElement(nouvelleLigne)
+                }
+            }
+        }
+        const t = document.querySelector("#fs")
+
+        document.querySelector('#fileUpload').addEventListener('click' ,(e)=>{
+            e.preventDefault();
+            const form = document.querySelector("#fileUploadForm")
+            const formData = new FormData(form)
+            const progressBar = form.querySelector('.progress-bar');
+            fetch("/fileSystem",{
+                method:'post',
+                body:formData,
+                onUploadProgress: progressEvent =>{
+                    if (progressEvent.lengthComputable) {
+                        const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+                        progressBar.style.width = `${percent}%%`
+                    }
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    progressBar.style.width = '0%';
+                    return response.json()
+                }
+            }).then(data => {
+                addFileToTable(t,data.file,true)
+                
+            })
+
+        })
+        function humanReadableSize(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+        
+        fetch("/api/fs")
+        .then( (response) => 
+            response.json()
+        )
+        .then((data) => {
+            addFileToTable(t,data.SPIFFS)
+        } 
+            
+        
+        )
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+</body>
+</html>
