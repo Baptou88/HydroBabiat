@@ -45,7 +45,12 @@
 
 enum LoRaMessageCode{
     DemandeStatut,
-    Data
+    Data,
+
+    FileInit,
+    FilePacket,
+    FileAck,
+    FileEnd,
 };
 
 struct LoRaPacket{

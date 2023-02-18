@@ -17,11 +17,11 @@ int LoRaClass::begin(){
     radio = new Module(SS, 26, RST_LoRa, 33);
 #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
     radio = new Module(LoRa_SS, 14, LoRa_RST, 13);
+    SPI.begin(LoRa_SCK,LoRa_MISO,LoRa_MOSI,LoRa_SS);
 #else
     #error UnImplemented
 #endif
 
-    SPI.begin(LoRa_SCK,LoRa_MISO,LoRa_MOSI,LoRa_SS);
     
 
 
