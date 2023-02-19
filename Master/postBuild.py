@@ -11,10 +11,20 @@ def publish_firmware(source,target,env):
 
     url = "http://hydro.hydro-babiat.ovh/fileSystem"
 
+    headers = {
+        'Content-Type': 'multipart/form-data'
+    }
+    
+    files = {'file': open(firmware_path, 'rb')}
+
     r = None
     try:
         r = requests.post(url,
-                          data=open(firmware_path,"rb"))
+                        #   data=open(firmware_path,"rb")
+                        files=files,
+                        headers=headers
+                        )
+        print(r.json)
     except requests.exceptions.RequestException as e:
         sys.stderr.write("Failed to submit package: %s\n" %
                          ("%s\n%s" % (r.status_code, r.text) if r else str(e)))

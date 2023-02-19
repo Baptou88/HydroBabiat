@@ -412,7 +412,17 @@ bool WifiAppClass::begin()
   });
 
   server.on("/sendFile",HTTP_POST,[](AsyncWebServerRequest * request){
-    
+    int params = request->params();
+    for(int i=0;i<params;i++){
+      AsyncWebParameter* p = request->getParam(i);
+      if(p->isFile()){ //p->isPost() is also true
+        Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+      } else if(p->isPost()){
+        Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      } else {
+        Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      }
+    }
     if (request->hasParam("fileName",true))
     {
       String fileName = "/" + (String)request->getParam("fileName",true)->value();
@@ -425,6 +435,7 @@ bool WifiAppClass::begin()
       }
       return request->send(400);
     }
+      return request->send(400,"text/plaintext","wrong filename");
     
   });
 
