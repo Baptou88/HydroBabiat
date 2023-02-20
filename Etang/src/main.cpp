@@ -24,6 +24,8 @@ Adafruit_VL53L1X vl53 = Adafruit_VL53L1X(12,13);
 float consoCourrant = 0;
 //#define RADIOLIB_DEBUG
 
+bool ledNotif = false;
+
 unsigned long receptionMessage = 0;
 String message = "Default";
 
@@ -60,30 +62,87 @@ void SauvegardePref(){
   pref.putInt("levelRempli",niveauEtangRempli);
   pref.putInt("levelVide",niveauEtangVide);
   pref.putInt("levelTp",niveauEtangTropPlein);
+  pref.putBool("ledNotif",ledNotif);
+  Serial.println("save Prek ok");
   
+}
+
+void executeCmd(String msg) {
+  if (msg.startsWith("setNiveauFull"))
+  {
+    msg.replace("setNiveauFull","");
+    if (msg.startsWith("="))
+    {
+      msg.replace("=","");
+      niveauEtangRempli = msg.toInt();
+    } else
+    {
+      niveauEtangRempli = NiveauEtang;
+    }
+    
+  }
+  if (msg.startsWith( "setNiveauEmpty"))
+  {
+    msg.replace("setNiveauEmpty","");
+    if (msg.startsWith("="))
+    {
+      msg.replace("=","");
+      niveauEtangVide = msg.toInt();
+    } else
+    {
+      niveauEtangVide = NiveauEtang;
+    }
+    
+  }
+  if (msg.startsWith("setNiveauTP"))
+  {
+    msg.replace("setNiveauTP","");
+    if (msg.startsWith("="))
+    {
+      msg.replace("=","");
+      niveauEtangTropPlein = msg.toInt();
+    } else
+    {
+      niveauEtangTropPlein = NiveauEtang;
+    }
+  }
+
+  if (msg.startsWith("CpuFreq"))
+  {
+    msg.replace("CpuFreq","");
+    if (msg.startsWith("="))
+    {
+      msg.replace("=","");
+      setCpuFrequencyMhz( msg.toInt());
+      Serial.printf("Changement CpuFreq : %i MHz \n" , msg.toInt());
+      
+    } 
+  }
+  
+  
+  
+  if (msg.startsWith("ledNotif"))
+  {
+    ledNotif = !ledNotif;
+  }
+  if (msg.startsWith("savePref"))
+  {
+    SauvegardePref();
+  }
 }
 
 void LoRaMessage(LoRaPacket header, String msg){
   receptionMessage = millis();
   message = msg;
-  digitalWrite(LED_BUILTIN,HIGH);
+  if (ledNotif)
+  {
+    digitalWrite(LED_BUILTIN,HIGH);
+  }
+  
   Serial.println("RSSI : " + (String)header.RSSI);
-  if (msg == "setNiveauFull")
-  {
-    niveauEtangRempli = NiveauEtang;
-  }
-  if (msg == "setNiveauEmpty")
-  {
-    niveauEtangVide = NiveauEtang;
-  }
-  if (msg == "setNiveauTP")
-  {
-    niveauEtangTropPlein = NiveauEtang;
-  }
-  if (msg == "savePref")
-  {
-    SauvegardePref();
-  }
+
+  executeCmd(msg);
+  
   
 }
 
@@ -137,6 +196,8 @@ void loadPref(){
   niveauEtangRempli = pref.getInt("levelRempli",niveauEtangRempli);
   niveauEtangVide = pref.getInt("levelVide",niveauEtangVide);
   niveauEtangTropPlein = pref.getInt("levelTp", niveauEtangTropPlein);
+  ledNotif = pref.getBool("ledNotif");
+  Serial.println("load pref !");
 }
 float ratioEtang(){
   return (float(niveauEtangVide - NiveauEtang)) / (float(niveauEtangVide - niveauEtangRempli));
@@ -286,6 +347,8 @@ void loop() {
   if (Serial.available()>0)
   {
     String str = Serial.readStringUntil('\n');
+    Serial.println("cmd: " + str);
+    executeCmd(str);
     if (str.startsWith("V"))
     {
       str.replace("V", "");
