@@ -25,10 +25,17 @@ void LoRaFileUploader::loop()
         if (endMessage)
         {
             Serial.println("[LoRaUploader] - fin ");
-            initialized = false;
             LoRa.sendData(id,LoRaMessageCode::FileEnd,"Ende");
+            delay(delay_ms); //TODO remove this attrocity
+            endMessage = false;
+            stop = true;
             return;
         }
+        if (stop)
+        {
+            initialized = false;
+        }
+        
         
         sendPacket();
         waitResponse = true;
@@ -38,7 +45,7 @@ void LoRaFileUploader::loop()
     
 }
 
-void LoRaFileUploader::beginTransmit(String fileName, byte addr)
+void LoRaFileUploader::beginTransmit(String fileName, byte addr, bool OtaUpdate)
 {
     Serial.printf("[LoRaUploader] - begin\n");
     if (!fileName.startsWith("/"))
@@ -64,6 +71,7 @@ void LoRaFileUploader::beginTransmit(String fileName, byte addr)
     fileLength = file.size();
     numPacket = ceil(fileLength / float(maxPaacketSize));
     packetNum = 0;
+    stop =false;
 
     packetFile.fileSize = file.size();
     packetFile.fileName = fileName;
@@ -71,7 +79,7 @@ void LoRaFileUploader::beginTransmit(String fileName, byte addr)
     
     Serial.printf("[LoRaUploader] - numPacket %i filesize %i\n", numPacket, fileLength);
 
-    LoRa.sendData(id,LoRaMessageCode::FileInit,fileName + "," + (String)fileLength + "," + (String)numPacket);
+    LoRa.sendData(id,LoRaMessageCode::FileInit,fileName + "," + (String)fileLength + "," + (String)numPacket + "," + (String)OtaUpdate);
     waitResponse = true;
 
 
@@ -93,12 +101,7 @@ void LoRaFileUploader::sendPacket()
     Serial.printf("[LoRaUploader] - send fileOffset%i \n", fileOffset);
     int bytesRead = file.read(buffer,packetSize);
     Serial.printf("[LoRaUploader] - bytesread %i packetsize %i\n", bytesRead, packetSize);
-    // if (bytesRead < maxPaacketSize)
-    // {
-        
-    //     Serial.printf("[LoRaUploader] - fin\n");
-    //     endMessage = true;
-    // }
+
     if (bytesRead < maxPaacketSize)
     {
         
@@ -106,7 +109,7 @@ void LoRaFileUploader::sendPacket()
         endMessage = true;
     }
     //LoRa.getRadio().startTransmit(buffer, sizeof(buffer));
-    LoRa.sendData(id,LoRaMessageCode::FilePacket,String(buffer,sizeof(buffer)));
+    LoRa.sendData(id,LoRaMessageCode::FilePacket,String(packetNum) + "," +String(buffer,sizeof(buffer)));
     _millis = millis();
     for (int i = 0; i < bytesRead; i++) {
         Serial.print(buffer[i]);
@@ -118,6 +121,13 @@ void LoRaFileUploader::sendPacket()
 
 void LoRaFileUploader::nextPacket()
 {
+    if (!initialized )
+    {
+        return;
+    }
+    
+    
+    
     waitResponse = false;
     attempt = 0;
     if (hasJustStarted)
@@ -125,7 +135,10 @@ void LoRaFileUploader::nextPacket()
         hasJustStarted = false;
         return;
     }
-    
+    if (endMessage)
+    {
+        return;
+    }
     fileOffset += maxPaacketSize;
     packetNum++;
 }

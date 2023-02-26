@@ -23,7 +23,7 @@
   
     const showActiveTheme = theme => {
     console.log(theme);
-      const activeThemeIcon = document.querySelector('.theme-icon-active i')
+      const activeThemeIcon = document.querySelector('.theme-icon-active use')
       const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
       const svgOfActiveBtn = btnToActive.querySelector('svg use').getAttribute('href')
   

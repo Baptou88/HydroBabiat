@@ -36,3 +36,14 @@ def after_build(source,target,env):
     publish_firmware(source,target,env)
 
 env.AddPostAction("buildprog",after_build)
+
+env.AddCustomTarget(
+    name="pioenvB",
+    dependencies=None,
+    actions=[
+        "pio --version",
+        "python --version"
+    ],
+    title="Core Env",
+    description="Show PlatformIO Core and Python versions"
+)

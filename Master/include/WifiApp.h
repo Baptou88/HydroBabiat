@@ -18,6 +18,8 @@
 #include <manuelController.h>
 #include <PIDController.h>
 #include <LList.h>
+#include "AlertNiveau.h"
+
 
 extern int potValue;
 extern bool ledNotif;
@@ -43,8 +45,11 @@ public:
     WifiAppClass(/* args */);
     ~WifiAppClass();
     bool begin();
+
     void notifyClients();
     void notifyClient(uint32_t clientId);
+
+    void monitorClients(String message);
 
     void onNotFound(AsyncWebServerRequest *request);
 

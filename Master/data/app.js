@@ -62,7 +62,17 @@ var modesArray = [mode1,mode2,mode3];
 
 let chartNiveau 
 let chartTurbine 
+function initTerminal(){
+  console.log("init terminal");
+  const form = document.querySelector("#command-form")
+  const input = document.querySelector("#command-input")
 
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const command = input.value;
+    terminalAdd("command",command)
+  }
+)}
 /**
  * 
  * @param {number} timeS Temps en secondes
@@ -78,6 +88,26 @@ function timeElapsedToString(timeS) {
   return timeS/3600 + "h" + (timeS%3600)/60 + "min" + (timeS%3600)%60 + "s"
 }
 
+function terminalAdd(type,text) {
+    const terminal = document.getElementById("terminal");
+    const n = terminal.lastChild
+    if (n != undefined || n != null) {
+      
+      n.removeChild(n.lastChild)
+    }
+    const p = document.createElement("p")
+    const dt = new Date();
+    p.classList.add(type)
+    p.appendChild(document.createTextNode("> [" + dt.toLocaleTimeString() +"] " + text))
+    
+    const cursor = document.createElement("span");
+    cursor.textContent ="█"
+    cursor.classList.add("cursor");
+    cursor.classList.add(type);
+    p.appendChild(cursor);
+    terminal.appendChild(p)
+    terminal.scrollTop = terminal.scrollHeight;
+}
 function desactivateModes() {
   modes_li.forEach(el => {
     el.classList.remove('active')
@@ -149,6 +179,14 @@ document.addEventListener('DOMContentLoaded',function (){
             type: 'minute',
             text: '30M'
         }, {
+            count: 1,
+            type: 'day',
+            text: '1D'
+        }, {
+            count: 1,
+            type: 'week',
+            text: '1W'
+        }, {
             type: 'all',
             text: 'All'
         }],
@@ -186,7 +224,7 @@ document.addEventListener('DOMContentLoaded',function (){
         data: [],
         name: 'Niveau (%)',
         color: '#007acc',
-      },
+      }
       // { 
       //   data:[],
       //   name: 'Ouverture (%)',
@@ -330,6 +368,7 @@ document.addEventListener('DOMContentLoaded',function (){
   initWebSocket();
 
  
+  initTerminal()
 
   
 })
@@ -363,48 +402,65 @@ function onClose(event) {
   setTimeout(initWebSocket, 2000);
   Alpine.store("Ws.etablished",false);
 }
-function onMessage(event) {
-  //console.log(event.data);
-  var data = JSON.parse(event.data);
-  var keys = Object.keys(data);
-
-  var dt =  Date.now();
-  for (let i = 0; i < keys.length; i++) {
-    const element = keys[i];
-    //console.log(element);
-    var el  = document.getElementById(element);
-    if(typeof(el) != 'undefined' && el != null){
-      el.innerHTML = data[element];
-    }else{
-      //console.log("element: " + element + " not exist");
-    }
-    if (element == "Mode") {
-      desactivateModes();
-      var el = modes.querySelector(`[data-num="${data[element]}"]`)
-
-      activateMode(el);
-    }
-    if (element == "ratioNiveauEtang") {
-      //console.log("av " , chartNiveau.series[0].data);
-      chartNiveau.series[0].addPoint([dt, data[element]],true ,false,true);
-      //console.log("ap " ,chartNiveau.series[0].data);
-    }
-    if (element == "targetNiveauEtang") {
-      chartNiveau.series[2].addPoint([dt, data[element]],true ,false,true);
-    }
-    if (element == "positionVanne") {
-      chartTurbine.series[0].addPoint([dt, data[element]],true ,false,true);
-    }
-    if (element == "RangePosVanneTarget") {
-      chartTurbine.series[1].addPoint([dt, data[element]],true ,false,true);
-      el.value = data[element]
-    }
-    if (element == "tacky") {
-      chartTurbine.series[2].addPoint([dt, data[element]],true ,false,true);
-      el.value = data[element]
-    }
+function wsData(d) {
+  var keys = Object.keys(d)
+  try {
     
+
+    var dt =  Date.now();
+    for (let i = 0; i < keys.length; i++) {
+      const element = keys[i];
+
+      var el  = document.getElementById(element);
+      if(typeof(el) != 'undefined' && el != null){
+        el.innerHTML = d[element];
+      }else{
+        console.log("element: " + element + " not exist");
+      }
+      if (element == "Mode") {
+        desactivateModes();
+        var el = modes.querySelector(`[data-num="${d[element]}"]`)
+
+        activateMode(el);
+      }
+      if (element == "ratioNiveauEtang") {
+        chartNiveau.series[0].addPoint([dt, d[element]],true ,false,true);
+      }
+      if (element == "targetNiveauEtang") {
+        chartNiveau.series[2].addPoint([dt, d[element]],true ,false,true);
+      }
+      if (element == "positionVanne") {
+        chartTurbine.series[0].addPoint([dt, d[element]],true ,false,true);
+      }
+      if (element == "RangePosVanneTarget") {
+        chartTurbine.series[1].addPoint([dt, d[element]],true ,false,true);
+        el.value = d[element]
+      }
+      if (element == "tacky") {
+        chartTurbine.series[2].addPoint([dt, d[element]],true ,false,true);
+        el.value = d[element]
+      }
+      
+    }
+  } catch (error) {
+   console.error(error); 
   }
+}
+function onMessage(event) {
+
+  var data = JSON.parse(event.data);
+  
+  if (data.data) {
+    wsData(data.data)
+  }
+  if (data.monitor) {
+    console.log(data.monitor);
+    terminalAdd("info",data.monitor)
+  }
+}
+function sendAction(node,action) {
+  console.log("sendAction: " , node , action);
+  websocket.send("Action:" + node + ":" + action + ";")
 }
 function onLoad(event) {
   //initWebSocket();
@@ -426,12 +482,19 @@ function onLoad(event) {
   
   })
 
+  var computedRange = document.querySelectorAll(".computed-range")
+  computedRange.forEach(element => {
+    element.addEventListener('change', (e) => {
+      console.log(e);
+    })
+  })
+
 param = document.querySelectorAll(".param")
   param.forEach(element =>{
     if (element.type == "text" || element.type == "number") {
       element.addEventListener('change',  el =>{
-        console.log("param onchange");
-        websocket.send(`kp=${el.target.value}`)
+        let param = el.target.dataset.param;
+        websocket.send(`${param}=${el.target.value}`)
       })
       
     } else if (element.type == "button") {

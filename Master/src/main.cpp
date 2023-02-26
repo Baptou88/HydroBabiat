@@ -5,6 +5,7 @@
 #include <AsyncTelegram2.h>
 #include "main.h"
 #include "motorState.h"
+#include "AlertNiveau.h"
 
 #include "LoRaFileUploader.h"
 
@@ -25,7 +26,7 @@
 #include "LoRa.h"
 #include "Timer.h"
 #include <LList.h>
-
+#include <Preferences.h>
 #include <digitalInput.h>
 #include <parser.h>
 
@@ -85,6 +86,7 @@ ReplyKeyboard myreplykbd;
 InlineKeyboard myinlinekbd;
 bool iskeyboardactive = false;
 
+Preferences Prefs;
 
 digitalInput btnPRG(0,INPUT_PULLUP);
 
@@ -201,14 +203,14 @@ bool saveDataCsV(void){
 	{
 		
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite");
+		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power");
 		myFile.close();
 		
 	}
 	myFile = SPIFFS.open("/data.csv",FILE_APPEND);
 	
 
-	myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I));
+	myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
 	myFile.close();
 	return true;
 }
@@ -323,7 +325,7 @@ void LoRaMessage(LoRaPacket header, String msg)
       {
         dataEtang.ratioNiveauEtang = (val.toFloat())*100; //TODO 
       }
-      
+      AlertNiv.updateNiveau(dataEtang.ratioNiveauEtang);
     }
     
 
@@ -344,6 +346,7 @@ void LoRaMessage(LoRaPacket header, String msg)
 void LoRaNoReply(byte address){
   if (address == LoRaFileUpl.id && LoRaFileUpl.initialized)
   {
+    Serial.println("NoReply");
     LoRaFileUpl.sendPacket();
   }
   
@@ -509,6 +512,25 @@ void initNodes(){
   nodeTest.Name = "NodeTest";
 }
 
+bool initPref() {
+  if (Prefs.begin("Master", false)) {
+    AlertNiv.active = Prefs.getBool("AlertNivActiv");
+    AlertNiv.max = Prefs.getInt("AlertNivMax");
+    AlertNiv.min = Prefs.getInt("AlertNivMin");
+    return true;
+  }
+  return false;
+
+}
+
+bool savePref() {
+  Prefs.putBool("AlertNivActiv", AlertNiv.active);
+  Prefs.putInt("AlertNivMax", AlertNiv.max);
+  Prefs.putInt("AlertNivMin", AlertNiv.min);
+  WifiApp.monitorClients("Save Pref Ok");
+  return true;
+}
+
 // put your setup code here, to run once:
 void setup() {
   Serial.begin(115200);
@@ -529,6 +551,8 @@ void setup() {
 
 
   initNodes();
+
+  initPref();
   
   if (!Ec.begin())
   {
@@ -604,7 +628,7 @@ void setup() {
 	{
 		
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite");
+		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power");
 		myFile.close();
 		
 	}
@@ -740,6 +764,7 @@ void loop() {
   {
     if (timerEnvoi.isOver())
     {
+      WifiApp.monitorClients("Demande statut lora");
       LoRa.sendData((i++%3)+2,LoRaMessageCode::DemandeStatut,"bonjour" + (String)random(0,100));
     }
     

@@ -33,15 +33,16 @@ WifiAppClass::~WifiAppClass()
 void WifiAppClass::notifyClients()
 {
 
-  String message = "{";
+  String message = "{\"data\":{";
 
   message += "\"Mode\":" + (String)modeActuel + ",";
+  message += "\"freeheap\":" + (String)ESP.getFreeHeap() + ",";
   message += dataTurbine.toJson() + ",";
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
   message += EtangStatus.toJson();
 
-  message += "}";
+  message += "}}";
   // Serial.print("[WiFiAPP] notif: ");
   // Serial.println(message);
   WifiApp.ws.textAll(String(message));
@@ -49,18 +50,25 @@ void WifiAppClass::notifyClients()
 void WifiAppClass::notifyClient(uint32_t clientId)
 {
 
-  String message = "{";
+  String message = "{\"data\":{";
 
   message += "\"Mode\":" + (String)modeActuel + ",";
+  message += "\"freeheap\":" + (String)ESP.getFreeHeap() + ",";
   message += dataTurbine.toJson() + ",";
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
   message += EtangStatus.toJson();
 
-  message += "}";
+  message += "}}";
   // Serial.print("[WiFiAPP] notif: ");
   // Serial.println(message);
   WifiApp.ws.text(clientId, message);
+}
+
+void WifiAppClass::monitorClients(String message)
+{
+  String msg = "{\"monitor\":\" "+ message + "\"}";
+  WifiApp.ws.textAll(msg);
 }
 
 String WifiAppClass::templateProcessor(const String &var)
@@ -81,6 +89,14 @@ String WifiAppClass::templateProcessor(const String &var)
   if (var == "ratioNiveauEtang")
   {
     return (String)(dataEtang.ratioNiveauEtang);
+  }
+  if (var == "niveuEtangRempli")
+  {
+    return (String)(dataEtang.niveauEtangRempli);
+  }
+  if (var == "niveuEtangVide")
+  {
+    return (String)(dataEtang.niveauEtangVide);
   }
   if (var == "mode")
   {
@@ -148,11 +164,29 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)dataTurbine.I;
   }
+  if (var == "power")
+  {
+    return (String)dataTurbine.getPower();
+  }
   if (var == "motorState")
   {
     return (String)MotorStateToString(dataTurbine.motorState);
   }
 
+  if (var == "AlertNivActif")
+  {
+    Serial.println("sef" + (String) AlertNiv.active);
+    if (AlertNiv.active)
+    {
+      return "checked";
+    } else
+    {
+      return "";
+    }
+    
+    
+  }
+  
   return "templateProcesor default: " + var;
 }
 
@@ -321,13 +355,29 @@ bool WifiAppClass::begin()
   
   SPIFFS_provide_file("/app.js");
   SPIFFS_provide_file("/theme.js");
+  SPIFFS_provide_file("/fileSystem.js");
   SPIFFS_provide_file("/Programmateur.js");
   
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
   //SPIFFS_provide_file("/fileSystem.html");
   server.on("/fileSystem",HTTP_ANY,[](AsyncWebServerRequest * request){
-    request->send(SPIFFS,"/fileSystem.html","text/html",false,[](String var){
+    Serial.println("request method: "+ (String)request->method());
+    int params = request->params();
+    for(int i=0;i<params;i++){
+      AsyncWebParameter* p = request->getParam(i);
+      if(p->isFile()){ //p->isPost() is also true
+        Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+      } else if(p->isPost()){
+        Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      } else {
+        Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+      }
+    }
+    if (request->method() == HTTP_GET)
+    {
+     
+      request->send(SPIFFS,"/fileSystem.html","text/html",false,[](String var){
       String retour;
         if (var == "freeSpiffs")
         {
@@ -344,8 +394,14 @@ bool WifiAppClass::begin()
         
       return retour;
     });
+    } else {
+      request->send(200,"text/plaintext","par l)");
+    }
+    
+    
   },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
     //if (checkUserWebAuth(request)) {
+      Serial.println("par ici : "+ (String)filename);
       if (request->method() != HTTP_POST)
       {
         return;
@@ -355,6 +411,7 @@ bool WifiAppClass::begin()
       if (!index) {
         
         // open the file on first call and store the file handle in the request object
+        Serial.println("Upload file "+ String(filename));
         request->_tempFile = SPIFFS.open("/" + filename, "w");
         
       }
@@ -382,13 +439,13 @@ bool WifiAppClass::begin()
     
     if (request->hasParam("fileName",true))
     {
-      String fileName = "/" + (String)request->getParam("fileName",true)->value();
+      String fileName =  (String)request->getParam("fileName",true)->value();
       if (SPIFFS.exists(fileName))
       {
         SPIFFS.remove( (String)fileName);
         request->send(200,"application/json","{\"status\":\"ok\"}");
       }
-      request->send(400);
+      request->send(400,"text/plaintext","file \""+ fileName +"\" doesn't exist");
     }
     
   });
@@ -427,17 +484,24 @@ bool WifiAppClass::begin()
         Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
       }
     }
+    bool otaUpdate = false;
+
+    if (request->hasParam("Ota",true))
+    {
+        otaUpdate = true;
+    }
+    
     if (request->hasParam("fileName",true))
     {
-      String fileName = "/" + (String)request->getParam("fileName",true)->value();
+      String fileName =  (String)request->getParam("fileName",true)->value();
       if (SPIFFS.exists(fileName))
       {
         Serial.println("Sending: " + String(fileName));
         //TODO lorafile transfer
-        LoRaFileUpl.beginTransmit(fileName,0x04);
+        LoRaFileUpl.beginTransmit(fileName,0x04,otaUpdate);
         return request->send(200,"application/json","{\"status\":\"ok\"}");
       }
-      return request->send(400);
+      return request->send(400,"text/plaintext","file doesn't exist");
     }
       return request->send(400,"text/plaintext","wrong filename");
     
@@ -533,6 +597,45 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
         bC->niveauMin = dataStr.toInt();
       }
     }
+    else if (dataStr.startsWith("testNotif"))
+    {
+      TelegramBot.sendTo(CHAT_ID,"TestNotif");
+    }
+    else if (dataStr.startsWith("SavePref"))
+    {
+      savePref();
+    }
+    else if (dataStr.startsWith("AlertNiv"))
+    {
+      dataStr.replace("AlertNiv","");
+
+      if (dataStr.startsWith("Actif="))
+      {
+        dataStr.replace("Actif=","");
+        if (dataStr.startsWith("true"))
+        {
+          AlertNiv.active = true;
+        } else
+        {
+          AlertNiv.active = false;
+        }
+      }
+      if (dataStr.startsWith("Min="))
+      {
+        dataStr.replace("Min=","");
+        AlertNiv.min = dataStr.toInt();
+      }
+      if (dataStr.startsWith("Max="))
+      {
+        dataStr.replace("Max=","");
+        AlertNiv.max = dataStr.toInt();
+      }
+      
+      
+      
+      
+    }
+    
 
     else
     {

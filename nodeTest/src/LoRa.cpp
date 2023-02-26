@@ -186,7 +186,8 @@ int LoRaClass::sendData(byte address,LoRaMessageCode code, String Data)
     String msg = String(nodeID) + "," + String(address)+"," + String(code)+",|"+String(Data);
     lastSend.id = address;
     lastSend.sendingTime = millis();
-
+    
+    
     LORACLASS_DEBUG_PRINTLN("[LORA] send msg " + (String)msg)
     return radio.startTransmit(msg);
 }

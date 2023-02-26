@@ -2,7 +2,10 @@
 #define __MAIN_H__
 
 #include "AsyncTelegram2.h"
+#include "TelegramCredentials.h"
 #include "motorState.h"
+
+bool savePref();
 
 struct dataTurbine_t
 {
@@ -22,9 +25,14 @@ struct dataTurbine_t
     message += "\"tension\":" +  (String)U + ",";
     message += "\"tensionBatterie\":" +  (String)UB + ",";
     message += "\"motorState\":" +  (String)motorState + ",";
+    message += "\"power\":" +  (String)getPower() + ",";
     message += "\"intensite\":" +  (String)I;
     
     return message;
+  }
+  float getPower(){
+    //Serial.println("u " + (String)U + " I " + (String) I + (String)(U*I));
+    return U*I;
   }
 };
 
@@ -56,7 +64,9 @@ struct dataEtang_t
   String toJson(){
     String message = "";
     message += "\"niveauEtang\":" +  (String)niveauEtang +",";
-    message += "\"ratioNiveauEtang\":" +  (String)ratioNiveauEtang;
+    message += "\"ratioNiveauEtang\":" +  (String)ratioNiveauEtang + ",";
+    message += "\"niveauEtangRempli\":" +  (String)niveauEtangRempli + ",";
+    message += "\"niveauEtangVide\":" +  (String)niveauEtangVide ;
     return message;
   }
 };

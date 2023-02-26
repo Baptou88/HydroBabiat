@@ -1,17 +1,200 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="fileSystem.js"></script>
+    <script src="/theme.js" type="text/javascript"></script>
 </head>
+
 <body>
-    
+    <nav class="navbar navbar-expand-lg ">
+
+
+
+        <div class="container-fluid">
+
+            <a class="navbar-brand" href="/">
+                <img src="/icons/hydro-elec-512.svg" alt="Bootstrap" width="30" height="30">
+                HydroBabiat
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link " aria-current="page" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="programmateur">Programmateur</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="fileSystem">FS</a>
+                    </li>
+                    <!-- <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Dropdown
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Action</a></li>
+                            <li><a class="dropdown-item" href="#">Another action</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Something else here</a></li>
+                        </ul>
+                    </li> -->
+                    <li class="nav-item">
+                        <a class="nav-link disabled">Disabled</a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <button
+                            class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center"
+                            id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown"
+                            data-bs-display="static">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-moon-stars-fill theme-icon-active" viewBox="0 0 16 16">
+                                <path
+                                    d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z" />
+                                <path
+                                    d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z" />
+                                <use href="#circle-half"></use>
+                            </svg>
+                            </svg>
+                            <span class="d-lg-none ms-2">Toggle theme</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme"
+                            style="--bs-dropdown-min-width: 8rem;">
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                    data-bs-theme-value="light">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-sun-fill" viewBox="0 0 16 16">
+                                        <path
+                                            d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z" />
+                                        <use href="#sun-fill"></use>
+                                    </svg>
+                                    Light
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-check2" viewBox="0 0 16 16">
+                                        <path
+                                            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                                        <use href="#check2"></use>
+                                    </svg>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center active"
+                                    data-bs-theme-value="dark">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-moon-stars-fill" viewBox="0 0 16 16">
+                                        <path
+                                            d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z" />
+                                        <path
+                                            d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z" />
+                                        <use href="#moon-stars-fill"></use>
+                                    </svg>
+                                    Dark
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-check2" viewBox="0 0 16 16">
+                                        <path
+                                            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                                        <use href="#check2"></use>
+                                    </svg>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                    data-bs-theme-value="auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-circle-half" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z" />
+                                        <use href="#circle-half"></use>
+                                    </svg>
+                                    Auto
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-check2" viewBox="0 0 16 16">
+                                        <path
+                                            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                                        <use href="#check2"></use>
+                                    </svg>
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+
+
+                </ul>
+                <form class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
     <h2>FileSystem</h2>
 
     Free Strorage %freeSpiffs% Used Storage: %usedSpiffs% Total: %totalSpiffs%
+
+    <div class="container">
+        <!-- <div
+            x-cloak
+            x-data="{files: [], 'isLoading': true}"
+            x-init="fetch('/api/fs')
+            .then(response => response.json())
+            .then(response => { files = response.SPIFFS; isLoading = false; console.log(response.SPIFFS); })"
+
+        > -->
+        <!-- Table will go here -->
+
+        <table class="table" x-data="filesData">
+            <tr>
+                <th @click="sort('id')">ID</th>
+                <th @click="sort('name')">Name</th>
+                <th @click="sort('size')">Size</th>
+                <th>path</th>
+                <th>Capacity</th>
+            </tr>
+            <template x-if="!files">
+                <tr>
+                    <td colspan="8"><i>Loading...</i></td>
+                </tr>
+            </template>
+            <template x-for="file in files" :key="file.name">
+                <tr>
+                    <td x-text="file.id"></td>
+                    <td x-text="file.name"></td>
+                    <td x-text="humanReadableSize(file.size)"></td>
+                    <td x-text="file.path"></td>
+                    <td>
+                        <button @click="send(file)" class="btn btn-outline-success">send</button>
+                    </td>
+                    <td>
+                        <button @click="sendOta(file)" class="btn btn-outline-warning">sendOta</button>
+                    </td>
+                    <td>
+                        <button @click="deletet(file)" class="btn btn-outline-danger">delete</button>
+                    </td>
+                    <td>
+                        <button @click="test(file)" class="btn btn-outline-info">tesr</button>
+                    </td>
+                    <td>
+                        <button @click="test2(file)" class="btn btn-outline-info">tesp</button>
+                    </td>
+
+                </tr>
+            </template>
+        </table>
+    </div>
+
     <div class="container">
         <table class="table" id="fs">
             <tr>
@@ -27,30 +210,34 @@
                 <input class="form-control" type="file" id="file" name="file" multiple />
             </div>
             <div class="progress">
-                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                </div>
             </div>
             <button id="fileUpload" class="btn btn-primary" type="submit">Submit</button>
         </form>
     </div>
+    
+
     <script>
+
         function blinkElement(el) {
             let count = 0;
             const interval = setInterval(() => {
                 if (count === 2) {
-                clearInterval(interval); // Arrêter l'intervalle après 2 clignotements
+                    clearInterval(interval); // Arrêter l'intervalle après 2 clignotements
                 }
                 // Inverser la visibilité de l'élément
                 el.style.visibility = (el.style.visibility === 'visible') ? 'hidden' : 'visible';
                 count++;
             }, 500); // Interval de 500ms (0.5 secondes) entre chaque changement de visibilité
-            }
-        function addFileToTable(table,data, blink = false) {
+        }
+        function addFileToTable(table, data, blink = false) {
             for (const file of data) {
-                const ligne =  document.createElement('tr')
+                const ligne = document.createElement('tr')
                 const fileName = document.createElement("th").textContent = file.name
                 const fileSize = document.createElement("th").textContent = file.size
                 const filePath = document.createElement("th").textContent = file.path
-                
+
                 var form = document.createElement('form')
                 const fileNameInput = document.createElement('input')
                 fileNameInput.name = 'fileName'
@@ -61,45 +248,45 @@
                 btnDelete.classList.add('btn-outline-danger')
                 btnDelete.innerText = "delete"
                 btnDelete.type = "button"
-                btnDelete.addEventListener('click', (e)=>{
+                btnDelete.addEventListener('click', (e) => {
                     e.preventDefault();
                     const fData = new FormData();
-                    fData.append('fileName',e.target.parentNode.elements.fileName.value)
+                    fData.append('fileName', e.target.parentNode.elements.fileName.value)
                     //console.log(e.target.parentNode.elements.fileName.value);
-                    fetch("/api/fs/",{
-                        method:'delete',
+                    fetch("/api/fs/", {
+                        method: 'delete',
                         body: fData
                     })
-                    .then((response) => response.json)
-                    .then((data) => {
-                        e.target.parentNode.parentNode.parentNode.parentNode.removeChild(e.target.parentNode.parentNode.parentNode)
-                    })
+                        .then((response) => response.json)
+                        .then((data) => {
+                            e.target.parentNode.parentNode.parentNode.parentNode.removeChild(e.target.parentNode.parentNode.parentNode)
+                        })
                 })
 
                 const btnSendNode = document.createElement('button')
-                btnSendNode.classList.add("btn","btn-outline-success")
+                btnSendNode.classList.add("btn", "btn-outline-success")
                 btnSendNode.innerText = "send"
                 btnSendNode.type = 'button'
-                btnSendNode.addEventListener('click', (e)=>{
+                btnSendNode.addEventListener('click', (e) => {
                     e.preventDefault()
                     const fData = new FormData();
                     fData.append('fileName', e.target.parentNode.elements.fileName.value)
-                    fetch("/sendFile",{
-                        method:'post',
+                    fetch("/sendFile", {
+                        method: 'post',
                         body: fData
                     })
                 })
                 fileName.value = fileName
 
                 form.appendChild(fileNameInput)
-                
+
                 form.appendChild(btnDelete)
                 form.appendChild(btnSendNode)
 
                 var nouvelleLigne = table.insertRow()
                 nouvelleLigne.insertCell().textContent = file.name
-                nouvelleLigne.insertCell().textContent = humanReadableSize( file.size)
-                nouvelleLigne.insertCell().textContent =  file.path
+                nouvelleLigne.insertCell().textContent = humanReadableSize(file.size)
+                nouvelleLigne.insertCell().textContent = file.path
                 nouvelleLigne.insertCell().appendChild(form)
                 //t.appendChild(ligne)
                 if (blink) {
@@ -109,52 +296,48 @@
         }
         const t = document.querySelector("#fs")
 
-        document.querySelector('#fileUpload').addEventListener('click' ,(e)=>{
+        document.querySelector('#fileUpload').addEventListener('click', (e) => {
             e.preventDefault();
             const form = document.querySelector("#fileUploadForm")
             const formData = new FormData(form)
             const progressBar = form.querySelector('.progress-bar');
-            fetch("/fileSystem",{
-                method:'post',
-                body:formData,
-                onUploadProgress: progressEvent =>{
+            fetch("/fileSystem", {
+                method: 'post',
+                body: formData,
+                onUploadProgress: progressEvent => {
                     if (progressEvent.lengthComputable) {
                         const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
                         progressBar.style.width = `${percent}%%`
                     }
                 }
             })
-            .then(response => {
-                if (response.ok) {
-                    progressBar.style.width = '0%';
-                    return response.json()
-                }
-            }).then(data => {
-                addFileToTable(t,data.file,true)
-                
-            })
+                .then(response => {
+                    if (response.ok) {
+                        progressBar.style.width = '0%';
+                        return response.json()
+                    }
+                }).then(data => {
+                    addFileToTable(t, data.file, true)
+
+                })
 
         })
-        function humanReadableSize(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-        
+
+
         fetch("/api/fs")
-        .then( (response) => 
-            response.json()
-        )
-        .then((data) => {
-            addFileToTable(t,data.SPIFFS)
-        } 
-            
-        
-        )
+            .then((response) =>
+                response.json()
+            )
+            .then((data) => {
+                addFileToTable(t, data.SPIFFS)
+            }
+
+
+            )
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
 </body>
+
 </html>
