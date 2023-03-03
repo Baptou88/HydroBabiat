@@ -3,6 +3,7 @@
 #include <LList.h>
 #include <SPIFFS.h>
 #include <NTPClient.h>
+#include "main.h"
 
 #if !defined(__PROGRAMMATEDTASKS_H__)
 #define __PROGRAMMATEDTASKS_H__

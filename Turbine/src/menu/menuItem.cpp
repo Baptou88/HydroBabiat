@@ -172,7 +172,7 @@ void menuItemFloat::draw(Adafruit_SSD1306* display)
 
 void menuItemFloat::select()
 {
-    if (multiplicateur > 0.01)
+    if (multiplicateur > 0.001)
     {
         multiplicateur =  multiplicateur / 10;
         return;

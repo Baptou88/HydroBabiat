@@ -23,6 +23,7 @@ function update(el) {
   declenchement.disabled= !el.checked
   //rangetargetVanne.style.disabled = el.checked
 }
+
 document.querySelectorAll('form').forEach(function (element){
     console.log(element);
     element.addEventListener('submit', function(e) {

@@ -7,8 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HydroBabiat</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-nightshade.min.css" rel="stylesheet"> -->
     <script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
@@ -20,6 +19,9 @@
 
     <script src="/app.js" type="text/javascript"></script>
     <script src="/theme.js" type="text/javascript"></script>
+    
+    <link rel="stylesheet" href="/rSlider.css">
+    <script src="/rSlider.js"></script>
 
     <style>
         /* Works on Firefox */
@@ -133,7 +135,7 @@
 
         <div class="container-fluid">
 
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="/">
                 <img src="/icons/hydro-elec-512.svg" alt="Bootstrap" width="30" height="30">
                 HydroBabiat
             </a>
@@ -145,7 +147,7 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                        <a class="nav-link active" aria-current="page" href="/">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="programmateur">Programmateur</a>
@@ -316,12 +318,12 @@
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Alert Min</span>
-                    <input type="number" class="form-control param" name="AlertMin" id="AlertMin" value="20"
+                    <input type="number" class="form-control param" name="AlertMin" id="AlertMin" value="%AlertNivMin%"
                         data-param="AlertNivMin">
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Alert Max</span>
-                    <input type="number" class="form-control param" name="AlertMax" id="AlertMax" value="100"
+                    <input type="number" class="form-control param" name="AlertMax" id="AlertMax" value="%AlertNivMax%"
                         data-param="AlertNivMax">
                 </div>
             </div>
@@ -331,7 +333,7 @@
 
     <div class="row py-2 mx-2">
         <div class="col-sm ">
-            <div class="card">
+            <div class="card mb-2">
                 <div class="card-header">
                     Turbine
                 </div>
@@ -354,7 +356,8 @@
                     <div class="btn-group" role="group" aria-label="Sommeil">
                         <button class="computed btn btn-secondary" data-node="TURBINE"
                             data-action="DeepSleep">DeepSleep</button>
-                    </div>
+                            <button type="button" class="btn btn-outline-warning computed" data-node="TURBINE" data-action="Reboot">Reboot</button>
+                        </div>
                     <div class="btn-group" role="group" aria-label="Zero Tension">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZV">Zero
                             Tension</button>
@@ -363,7 +366,7 @@
             </div>
         </div>
         <div class="col-sm">
-            <div class="card">
+            <div class="card mb-2">
                 <div class="card-header">
                     Etang
                 </div>
@@ -383,21 +386,57 @@
                         <button type="button" class="btn btn-secondary computed" data-node="ETANG"
                             data-action="setNiveauEmpty">Set Niveau empty</button>
                     </div>
-                    <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                        data-action="savePref">Save Pref</button>
+                    <p>RoiXY: <span id="RoiX"></span> <span id="RoiY"></span></p>
+                    <p>RoiC : <span id="RoiCenter"></span> </p>
+                    <p>TimingBudget : <span id="timingBudget"></span> </p>
+                    <p>distanceMode : <span id="distanceMode"></span> </p>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
+                            data-action="RoiX=16">RoiX = 16 (default)</button>
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
+                            data-action="RoiX=8">RoiX = 8</button>
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
+                            data-action="RoiX=4">RoiX = 4 (min)</button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-secondary computed" data-node="ETANG" data-action="TimingBudget=50">Timing Budget 50</button>
+                        <button class="btn btn-secondary computed" data-node="ETANG" data-action="TimingBudget=100">Timing Budget 100</button>
+                        <button class="btn btn-secondary computed" data-node="ETANG" data-action="TimingBudget=200">Timing Budget 200</button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
+                            data-action="savePref">Save Pref</button>
+                        <button type="button" class="btn btn-outline-warning computed" data-node="ETANG" data-action="Reboot">Reboot</button>
+                    </div>  
                     <p>Niveau Etang Rempli: <span id="niveauEtangRempli">%niveauEtangRempli% </span></p>
                     <p>Niveau Etang Vide: <span id="niveauEtangVide">%niveauEtangVide% </span></p>
                     <label for="settingEtangRempli" class="form-label">Etang Rempli</label>
                     <input type="range" class="form-range computed-range" min="500" max="1000" id="settingEtangRempli"
-                        value="%niveuEtangRempli%">
+                        value="%niveauEtangRempli%" data-node="ETANG" data-action="setNiveauFull">
                     <label for="settingEtangVide" class="form-label">Etang Vide</label>
                     <input type="range" class="form-range computed-range" min="2000" max="3000" id="settingEtangVide"
-                        value="%niveuEtangVide%">
-                    <label for="teste" class="form-label">Etang Vide</label>
-                    <input type="range" x-on:input.change="sendAction('4','test'+e.target.value)" class="form-range "
-                        min="2000" max="3000" id="teste" value="%niveuEtangVide%">
-
+                        value="%niveauEtangVide%">
+                    
+                    <div class="container mt-5">
+                        <input type="text" id="sliderTimingBudget" />
+                    </div>
                 </div>
+            </div>
+        </div>
+        <div class="col-sm">
+            <div class="card mb-2">
+                <div class="card-header">
+                    <div class="d-flex">
+                        Test
+                        <div class="ms-auto">
+                            <button onclick="console.log('bjr');">
+                                <i class="bi bi-tools"></i>
+
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body"></div>
             </div>
         </div>
     </div>
@@ -417,7 +456,8 @@
                 <h2 class="accordion-header" id="headingOne">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse"
                         data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                        Terminal
+                        <i class="bi bi-terminal-x"></i>
+                        Terminal 
                     </button>
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne"
@@ -443,14 +483,33 @@
                     data-bs-parent="#accordionExample">
                     <div class="accordion-body">
                         <button type="button" class="btn btn-outline-success" onclick="websocket.send('SavePref')">SavePref</button>
+                        <button type="button" class="btn btn-outline-warning" onclick="websocket.send('DeepSleepServer')">DeepSleepServer</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
-        crossorigin="anonymous"></script>
+
+    <!-- Modal -->
+<div class="modal fade" id="modalDisconnected" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Serveur Eteind</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          ... :'(
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     <script>
         // document.querySelector("#darkmode").onclick = function(e){
         //   darkmode.toggleDarkMode();

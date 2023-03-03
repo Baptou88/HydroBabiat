@@ -4,109 +4,107 @@ ProgrammatedTasksClass ProgTasks;
 
 ProgrammatedTasksClass::ProgrammatedTasksClass()
 {
-    ListTasks =  new  LList<ProgrammatedTask*>();
+  ListTasks = new LList<ProgrammatedTask *>();
 }
 
 ProgrammatedTasksClass::~ProgrammatedTasksClass()
 {
 }
 
-bool ProgrammatedTasksClass::begin(NTPClient* ntpCli)
+bool ProgrammatedTasksClass::begin(NTPClient *ntpCli)
 {
-    NtpCli = ntpCli;
-    return false;
+  NtpCli = ntpCli;
+  return false;
 }
 
 bool ProgrammatedTasksClass::initTask()
 {
   if (!SPIFFS.exists(ProgrammatedTaskFile))
-	{
-		return true;
-	}
-	
-	File fichier = SPIFFS.open(ProgrammatedTaskFile,"r");
-	while (fichier.available()) {
-		String a =fichier.readStringUntil('\n');
-		if (a!="")
-		{
-			
-			String name = "";
-			byte h = 0;
-			byte m = 0;
-			bool activ = false;
-			int targetVanne = 0;
-			double deepsleep = 0;
-
-			while (a.indexOf(";") !=-1)
-			{
-				String part1 = a.substring(0,a.indexOf("="));
-    		String part2 = a.substring(a.indexOf("=")+1 , a.indexOf(";"));
-				
-				a.remove(0,a.indexOf(";")+1);
-
-				if (part1 == "name")
-				{
-					name = part2;
-				}
-				if (part1 == "h")
-				{
-					h = part2.toInt();
-				}
-				if (part1 == "m")
-				{
-					m = part2.toInt();
-				}
-				if (part1 == "activate")
-				{
-					activ = part2.toInt();
-				}
-				if (part1 == "targetVanne")
-				{
-					targetVanne = part2.toInt();
-				}
-				
-				if (part1 == "deepsleep")
-				{
-					deepsleep = part2.toDouble();
-				}
-				
-			}
-			
-			ProgrammatedTask *ajout = new ProgrammatedTask(h,m,name);
-			if (activ)
-			{
-				ajout->activate();
-			} else
-			{
-				ajout->deactivate();
-			}
-			ajout->deepsleep = deepsleep;
-			ajout->targetVanne = targetVanne;
-			
-			ListTasks->add(ajout);
-			
-		}
-		
-		
-	}
-	fichier.close();
-
+  {
     return true;
+  }
+
+  File fichier = SPIFFS.open(ProgrammatedTaskFile, "r");
+  while (fichier.available())
+  {
+    String a = fichier.readStringUntil('\n');
+    if (a != "")
+    {
+
+      String name = "";
+      byte h = 0;
+      byte m = 0;
+      bool activ = false;
+      int targetVanne = 0;
+      double deepsleep = 0;
+
+      while (a.indexOf(";") != -1)
+      {
+        String part1 = a.substring(0, a.indexOf("="));
+        String part2 = a.substring(a.indexOf("=") + 1, a.indexOf(";"));
+
+        a.remove(0, a.indexOf(";") + 1);
+
+        if (part1 == "name")
+        {
+          name = part2;
+        }
+        if (part1 == "h")
+        {
+          h = part2.toInt();
+        }
+        if (part1 == "m")
+        {
+          m = part2.toInt();
+        }
+        if (part1 == "activate")
+        {
+          activ = part2.toInt();
+        }
+        if (part1 == "targetVanne")
+        {
+          targetVanne = part2.toInt();
+        }
+
+        if (part1 == "deepsleep")
+        {
+          deepsleep = part2.toDouble();
+        }
+      }
+
+      ProgrammatedTask *ajout = new ProgrammatedTask(h, m, name);
+      if (activ)
+      {
+        ajout->activate();
+      }
+      else
+      {
+        ajout->deactivate();
+      }
+      ajout->deepsleep = deepsleep;
+      ajout->targetVanne = targetVanne;
+
+      ListTasks->add(ajout);
+    }
+  }
+  fichier.close();
+
+  return true;
 }
 
 void ProgrammatedTasksClass::addTask(ProgrammatedTask *task)
 {
-    ListTasks->add(task);
+  ListTasks->add(task);
 }
 
 bool ProgrammatedTasksClass::saveTask()
 {
-  File file = SPIFFS.open("/Programmated","w+");
+  File file = SPIFFS.open("/Programmated", "w+");
 
   for (size_t i = 0; i < ProgTasks.ListTasks->size(); i++)
   {
     ProgrammatedTask *test = ProgTasks.ListTasks->get(i);
-    
+
     file.print("name=" + String(test->name) + ";");
     file.print("h=" + String(test->h) + ";");
     file.print("m=" + String(test->m) + ";");
@@ -120,56 +118,50 @@ bool ProgrammatedTasksClass::saveTask()
 
 void ProgrammatedTasksClass::loop()
 {
-    if (millis() > previouscheck + 60000)
+  if (millis() > previouscheck + 60000)
+  {
+    previouscheck = millis();
+
+    for (size_t i = 0; i < ListTasks->size(); i++)
     {
-        previouscheck = millis();
-
-        for (size_t i = 0; i < ListTasks->size(); i++)
-		{
-			ProgrammatedTask *tache = ListTasks->get(i);
-			if (tache->isActive())
-			{
-				if (NtpCli->getHours() == tache->h && NtpCli->getMinutes() == tache->m  )
-				{
-					Serial.println("exec Tache: " + (String)tache->name);
-          //TODO Gerer Execution Tache
-
+      ProgrammatedTask *tache = ListTasks->get(i);
+      if (tache->isActive())
+      {
+        if (NtpCli->getHours() == tache->h && NtpCli->getMinutes() == tache->m)
+        {
+          Serial.println("exec Tache: " + (String)tache->name);
+          TelegramBot.sendTo(CHAT_ID,"Exec Tache: " + (String)tache->name);
           
-					// if (tache->deepsleep != 0)
-					// {
-					// 	for (size_t i = 1; i < allBoard->size()	; i++)
-					// 	{
-					// 		allBoard->get(i)->msgToSend += "DeepSleep="+ String(tache->deepsleep);
-					// 	}
-						
-					// }
-					// if (tache->targetVanne != 0)
-					// {
-					// 	searchBoardById(TURBINE)->msgToSend += "P=" + String(tache->targetVanne);
-					// }
-					
-					
-				}
-				
-			}
-			
-		}
+          // TODO Gerer Execution Tache
 
+          // if (tache->deepsleep != 0)
+          // {
+          // 	for (size_t i = 1; i < allBoard->size()	; i++)
+          // 	{
+          // 		allBoard->get(i)->msgToSend += "DeepSleep="+ String(tache->deepsleep);
+          // 	}
+
+          // }
+          // if (tache->targetVanne != 0)
+          // {
+          // 	searchBoardById(TURBINE)->msgToSend += "P=" + String(tache->targetVanne);
+          // }
+        }
+      }
     }
-    
+  }
 }
 
 ProgrammatedTask *ProgrammatedTasksClass::getTask(int taskNumber)
 {
 
-    
-    return ListTasks->get(taskNumber);
-    return nullptr;
+  return ListTasks->get(taskNumber);
+  return nullptr;
 }
 
 String ProgrammatedTasksClass::templateProcessor(const String var)
 {
-    String retour = "";
+  String retour = "";
 
   if (var == "ListeProgram")
   {
@@ -190,16 +182,22 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
 
       retour += "</div>\n";
       retour += "</div>\n";
+      retour += "<div class =\"card-body\">\n";
       retour += "<div class=\"form-group\" hidden>\n";
       retour += "<label for=\"exampleFormControlInput1\">ID</label>\n";
       retour += "<input type=\"number\" class=\"form-control\" name=\"id\" id=\"exampleFormControlInput1\" placeholder=\"id\" value=\"" + (String)i + "\" hidden>\n";
       retour += "</div>\n";
-      retour += "<label for=\"appt\">Heure du déclanchement:</label>\n";
-      retour += "<input type=\"time\" id=\"appt\" name=\"appt\"  value= \"\%ProgrammatedTasks" + String(i) + ":getHours\%" + ":" + "\%ProgrammatedTasks" + String(i) + ":getMinutes\%" + "\"  required>\n";
+      retour += "<div class=\"input-group mb-3\">\n";
+      retour += "<label class=\"input-group-text\" for=\"appt\">Heure Declanchement</label>\n";
+      //retour += "<label for=\"appt\">Heure du déclanchement:</label>\n";
+      retour += "<input type=\"time\" id=\"appt\" class=\"form-control\" name=\"appt\"  value= \"\%ProgrammatedTasks" + String(i) + ":getHours\%" + ":" + "\%ProgrammatedTasks" + String(i) + ":getMinutes\%" + "\"  required>\n";
+      retour += "</div>\n";
       retour += "<label for=\"customRange1\" class=\"form-label\">Example range</label>";
       retour += "<input type=\"range\" value=\"\%ProgrammatedTasks" + String(i) + ":targetVanne\%" + "\" name=\"targetVanne\" class=\"form-range\" id=\"customRange1\">";
-      retour += "<label for=\"deepsleep\">DeepSleep (ms) :</label>\n";
-      retour += "<input type=\"number\" id=\"appte\" name=\"deepsleep\"  value= \"\%ProgrammatedTasks" + String(i) + ":deepsleep\%" + "\"  required>\n";
+      retour += "<div class=\"input-group mb-3\">\n";
+      retour += "<label class=\"input-group-text\" for=\"deepsleep\">DeepSleep (ms)</label>\n";
+      retour += "<input type=\"number\" class=\"form-control\" id=\"appte\" name=\"deepsleep\"  value= \"\%ProgrammatedTasks" + String(i) + ":deepsleep\%" + "\"  required>\n";
+      retour += "</div>";
       retour += "<button class=\"btn btn-primary\" type=\"submit\">Mettre a jour</button>";
       retour += "<a href=\"/programmateur/?delete=" + (String)i + "\" class=\"btn btn-danger\">";
       retour += "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"white\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">";
@@ -208,6 +206,7 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
       retour += "</svg>";
       retour += "</a>";
       retour += "</form>";
+      retour += "</div>\n";
       retour += "</div>\n";
     }
 

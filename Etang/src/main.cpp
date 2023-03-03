@@ -54,20 +54,30 @@ String LoRaMesageStatut(){
   retour += "NETropPlein:"+(String)niveauEtangTropPlein +",";
   retour += "ratio:"+(String)ratioEtang() +",";
   retour += "consoCourant:"+(String)consoCourrant +",";
+  retour += "status:"+(String)vl53.vl_status + ",";
+  retour += "timingBudget:"+(String)vl53.getTimingBudget() + ",";
+  uint8_t roiCenter;
+  vl53.VL53L1X_GetROICenter(&roiCenter);
+  retour += "RoiC:"+(String)roiCenter + ",";
+  uint16_t roix;
+  uint16_t roiy;
+  vl53.VL53L1X_GetROI_XY(&roix,&roiy);
+  retour += "RoiXY:"+(String) roix + "|" + (String)roiy + ",";
+  uint16_t distanceMode;
+  vl53.VL53L1X_GetDistanceMode(&distanceMode);
+  retour += "distanceMode:"+(String)distanceMode;
   
   return retour;
 }
 
-void SauvegardePref(){
-  pref.putInt("levelRempli",niveauEtangRempli);
-  pref.putInt("levelVide",niveauEtangVide);
-  pref.putInt("levelTp",niveauEtangTropPlein);
-  pref.putBool("ledNotif",ledNotif);
-  Serial.println("save Prek ok");
-  
-}
+
 
 void executeCmd(String msg) {
+  if (msg.startsWith("Reboot"))
+  {
+    ESP.restart(); //TODO Gérer mieu que ça
+  }
+  
   if (msg.startsWith("setNiveauFull"))
   {
     msg.replace("setNiveauFull","");
@@ -81,7 +91,7 @@ void executeCmd(String msg) {
     }
     
   }
-  if (msg.startsWith( "setNiveauEmpty"))
+  if (msg.startsWith("setNiveauEmpty"))
   {
     msg.replace("setNiveauEmpty","");
     if (msg.startsWith("="))
@@ -120,6 +130,16 @@ void executeCmd(String msg) {
   }
   
   
+  if (msg.startsWith("TimingBudget="))
+  {
+    msg.replace("TimingBudget=","");
+    Serial.println(vl53.setTimingBudget(msg.toInt()));
+  }
+  if (msg.startsWith("DistanceMode="))
+  {
+    vl53.VL53L1X_SetDistanceMode(msg.toInt());
+  }
+  
   
   if (msg.startsWith("ledNotif"))
   {
@@ -129,6 +149,21 @@ void executeCmd(String msg) {
   {
     SauvegardePref();
   }
+  if (msg.startsWith("RoiC="))
+  {
+    msg.replace("RoiC=","");
+    uint8_t roic = msg.toInt();
+    Serial.println(vl53.VL53L1X_GetROICenter(&roic));
+  }
+  if (msg.startsWith("RoiX"))
+  {
+    msg.replace("RoiX=","");
+    uint16_t roiX = msg.toInt();
+    Serial.println(vl53.VL53L1X_SetROI(roiX,roiX));
+    vl53.VL53L1X_GetROI_XY(&roiX,&roiX);
+    Serial.println("nouveau RoiX: "+ (String)roiX);
+  }
+  
 }
 
 void LoRaMessage(LoRaPacket header, String msg){
@@ -197,8 +232,26 @@ void loadPref(){
   niveauEtangVide = pref.getInt("levelVide",niveauEtangVide);
   niveauEtangTropPlein = pref.getInt("levelTp", niveauEtangTropPlein);
   ledNotif = pref.getBool("ledNotif");
+  
+  
+
   Serial.println("load pref !");
 }
+
+void SauvegardePref(){
+  pref.putInt("levelRempli",niveauEtangRempli);
+  pref.putInt("levelVide",niveauEtangVide);
+  pref.putInt("levelTp",niveauEtangTropPlein);
+  pref.putBool("ledNotif",ledNotif);
+  
+  pref.putUInt("timingBudget",vl53.getTimingBudget());
+  uint16_t distanceMode;
+  vl53.VL53L1X_GetDistanceMode(&distanceMode);
+  pref.putInt("distanceMode",distanceMode);
+  Serial.println("save Prek ok");
+  
+}
+
 float ratioEtang(){
   return (float(niveauEtangVide - NiveauEtang)) / (float(niveauEtangVide - niveauEtangRempli));
 }
@@ -290,6 +343,7 @@ void setup() {
     Ec.getDisplay()->display();
     while (1)       delay(10);
   }
+  
   Serial.println(F("Ok VL53L1X sensor !"));
   Serial.print(F("Sensor ID: 0x"));
   Serial.println(vl53.sensorID(), HEX);
@@ -302,9 +356,10 @@ void setup() {
   Ec.getDisplay()->println("Ok Init VL53 ");
   Ec.getDisplay()->display();
   
-
+  vl53.setTimingBudget(pref.getUInt("timingBudget",100));
+  vl53.VL53L1X_SetDistanceMode(pref.getUInt("distanceMode",2));
 // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
-  vl53.setTimingBudget(50);
+  //vl53.setTimingBudget(100);
   Serial.print(F("Timing budget (ms): "));
   Serial.println(vl53.getTimingBudget());
 
@@ -416,6 +471,7 @@ void loop() {
     }
     //Serial.println("Distance: " +(String) distance);
   }
+
 
   displayData();
   LoRa.loop();

@@ -68,6 +68,8 @@ int maxDisplay = 4;
 
 bool ledNotif = false;
 
+unsigned long startDeepSleep = 0;
+
 String bufferActionToSend;
 
 
@@ -325,6 +327,25 @@ void LoRaMessage(LoRaPacket header, String msg)
       {
         dataEtang.ratioNiveauEtang = (val.toFloat())*100; //TODO 
       }
+      if (key == "timingBudget")
+      {
+        dataEtang.timingBudget = val.toInt();
+      }
+      if (key == "RoiC")
+      {
+        dataEtang.RoiCenter = val.toInt();
+      }
+      if (key == "RoiXY")
+      {
+        dataEtang.RoiX = val.substring(0,val.indexOf("|")).toInt();
+        dataEtang.RoiY = val.substring(val.indexOf("|")+1).toInt();
+      }
+      if (key == "distanceMode")
+      {
+        dataEtang.distanceMode = val.toInt();
+        
+      }
+      
       AlertNiv.updateNiveau(dataEtang.ratioNiveauEtang);
     }
     
@@ -535,7 +556,6 @@ bool savePref() {
 void setup() {
   Serial.begin(115200);
   Wire.begin(SDA_OLED,SCL_OLED,400000);
-  Serial.println("RSTOLED " + String(RST_OLED));
   //scanI2C(&Wire);
   pinMode(LEDNOTIF,OUTPUT);
 
@@ -846,5 +866,16 @@ void loop() {
   ProgTasks.loop();
   
   displayData();
+
+  if (millis() > startDeepSleep && startDeepSleep !=0)
+  {
+    startDeepSleep = 0;
+
+    WifiApp.close();
+
+    esp_sleep_enable_timer_wakeup(10e6);
+    esp_deep_sleep_start();
+  }
+  
   delay(10);
 }

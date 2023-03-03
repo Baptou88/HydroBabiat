@@ -90,11 +90,11 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)(dataEtang.ratioNiveauEtang);
   }
-  if (var == "niveuEtangRempli")
+  if (var == "niveauEtangRempli")
   {
     return (String)(dataEtang.niveauEtangRempli);
   }
-  if (var == "niveuEtangVide")
+  if (var == "niveauEtangVide")
   {
     return (String)(dataEtang.niveauEtangVide);
   }
@@ -185,6 +185,14 @@ String WifiAppClass::templateProcessor(const String &var)
     }
     
     
+  }
+  if (var == "AlertNivMax")
+  {
+    return (String)AlertNiv.max;
+  }
+  if (var == "AlertNivMin")
+  {
+    return (String)AlertNiv.min;
   }
   
   return "templateProcesor default: " + var;
@@ -357,6 +365,8 @@ bool WifiAppClass::begin()
   SPIFFS_provide_file("/theme.js");
   SPIFFS_provide_file("/fileSystem.js");
   SPIFFS_provide_file("/Programmateur.js");
+  SPIFFS_provide_file("/rSlider.js");
+  SPIFFS_provide_file("/rSlider.css");
   
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
@@ -516,6 +526,17 @@ bool WifiAppClass::begin()
   return true;
 }
 
+bool WifiAppClass::close()
+{
+  ws.closeAll() ;
+  Serial.println("ws closed !");
+  //server.removeHandler(&ws);
+  Serial.println("handler removed !");
+  server.end();
+  Serial.println("server closed !");
+  return false;
+}
+
 void WifiAppClass::onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
                            void *arg, uint8_t *data, size_t len)
 {
@@ -634,6 +655,11 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       
       
       
+    }
+    
+    if (dataStr.startsWith("DeepSleepServer"))
+    {
+      startDeepSleep = millis() + 5000;
     }
     
 

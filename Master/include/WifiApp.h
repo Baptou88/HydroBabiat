@@ -45,6 +45,7 @@ public:
     WifiAppClass(/* args */);
     ~WifiAppClass();
     bool begin();
+    bool close();
 
     void notifyClients();
     void notifyClient(uint32_t clientId);

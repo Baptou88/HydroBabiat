@@ -58,8 +58,9 @@ var modes_li
 var modes
 var param
 var modesArray = [mode1,mode2,mode3];
+var sliderTimingBudget
 
-
+let modalDisconnected;
 let chartNiveau 
 let chartTurbine 
 function initTerminal(){
@@ -129,6 +130,8 @@ document.addEventListener('alpine:init', () => {
 document.addEventListener('DOMContentLoaded',function (){
   modes = document.querySelector("#modes")
   modes_li =  modes.querySelectorAll("li")
+
+  modalDisconnected = new bootstrap.Modal(document.getElementById('modalDisconnected'))
   
   modesArray.forEach(el => {
     el.desactive()
@@ -365,11 +368,18 @@ document.addEventListener('DOMContentLoaded',function (){
   })
   //console.log("fini" , graphNiveauOption.series[0].data);
   
-  initWebSocket();
+  initWebSocket(); 
 
  
   initTerminal()
 
+   sliderTimingBudget = new rSlider({
+    target: '#sliderTimingBudget',
+    values: [15, 20, 33, 50, 100, 200, 500],
+    range: false,
+    set:[100]
+
+  })
   
 })
 
@@ -395,10 +405,12 @@ function initWebSocket() {
 function onOpen(event) {
   console.log('Connection opened');
   Alpine.store("Ws.etablished",true);
+  modalDisconnected.hide();
 }
 function onClose(event) {
   console.log('Connection closed');
   //alert('Connection closed');
+  modalDisconnected.show();
   setTimeout(initWebSocket, 2000);
   Alpine.store("Ws.etablished",false);
 }
@@ -460,6 +472,7 @@ function onMessage(event) {
 }
 function sendAction(node,action) {
   console.log("sendAction: " , node , action);
+  terminalAdd("command","sendAction: " + node + action);
   websocket.send("Action:" + node + ":" + action + ";")
 }
 function onLoad(event) {
@@ -486,13 +499,19 @@ function onLoad(event) {
   computedRange.forEach(element => {
     element.addEventListener('change', (e) => {
       console.log(e);
+      var node = e.target.dataset.node
+      var cmd = e.target.dataset.action
+      var val = e.target.value
+      console.log(node,cmd,val);
+      sendAction(node,cmd + "=" + val)
+
     })
   })
 
 param = document.querySelectorAll(".param")
   param.forEach(element =>{
     if (element.type == "text" || element.type == "number") {
-      element.addEventListener('change',  el =>{
+      element.addEventListener('change',  el =>{c
         let param = el.target.dataset.param;
         websocket.send(`${param}=${el.target.value}`)
       })

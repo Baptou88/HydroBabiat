@@ -19,7 +19,7 @@ bool Ecran::begin()
 {
     
     
-    Serial.println("RSTOLED " + String(RST_OLED));
+    //Serial.println("RSTOLED " + String(RST_OLED));
     if (!_display->begin(SSD1306_SWITCHCAPVCC, 0x3C))
     {
         return false;

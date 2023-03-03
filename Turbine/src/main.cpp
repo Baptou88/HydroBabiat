@@ -173,6 +173,8 @@ String LoRaMesageStatut(){
   toSend += "tachy:" + (String) tachy.getRPM() + ",";
   toSend += "UB:" + (String) VoltageBattery + ",";
   toSend += "motorState:" + (String) mot.getState() + ",";
+  toSend += "ZV:" + (String) VoltageOutput._a + ",";
+  toSend += "ZC:" + (String) CurrentOutput._a + ",";
 
   return toSend;
 }
@@ -196,9 +198,7 @@ void LoRaMessage(LoRaPacket header, String msg){
 
   commandProcess(msg);
 
-  //TODO lorsque je recois un message je constate que le mcu perd ces infos
-  //pinMode(PIN_FC_O,INPUT_PULLUP);
-  //pinMode(PIN_FC_F,INPUT_PULLUP);
+ 
 }
 
 void printWakeUpReason(){
@@ -218,6 +218,11 @@ void printWakeUpReason(){
 }
 
 void commandProcess(String cmd){
+  if (cmd.startsWith("Reboot"))
+  {
+    ESP.restart(); //TODO Gérer mieu que ça
+  }
+  
   if (cmd.startsWith("DeepSleep"))
   {
     // delai avant de dormir default 10 secondes
@@ -248,6 +253,17 @@ void commandProcess(String cmd){
   {
     VoltageOutput.setZero();
   }
+  if (cmd.startsWith("AV="))
+  {
+    cmd.replace("AV=",""); 
+    VoltageOutput.changeAparam(cmd.toFloat());
+  }
+  if (cmd.startsWith("AC="))
+  {
+    cmd.replace("AC=","");
+    CurrentOutput.changeAparam(cmd.toFloat());
+  }
+  
   if (cmd.startsWith("DS"))
   {
     //TODO

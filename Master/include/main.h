@@ -7,6 +7,7 @@
 
 bool savePref();
 
+extern unsigned long startDeepSleep;
 struct dataTurbine_t
 {
   float positionVanne = 0;
@@ -61,12 +62,22 @@ struct dataEtang_t
   float niveauEtangVide = 0;
   float niveauEtangTroPlein = 0;
   float ratioNiveauEtang = 0;
+  uint8_t RoiCenter = 0;
+  uint16_t RoiX = 0;
+  uint16_t RoiY = 0;
+  uint16_t timingBudget = 0;
+  int distanceMode = 0;
   String toJson(){
     String message = "";
     message += "\"niveauEtang\":" +  (String)niveauEtang +",";
     message += "\"ratioNiveauEtang\":" +  (String)ratioNiveauEtang + ",";
     message += "\"niveauEtangRempli\":" +  (String)niveauEtangRempli + ",";
-    message += "\"niveauEtangVide\":" +  (String)niveauEtangVide ;
+    message += "\"niveauEtangVide\":" +  (String)niveauEtangVide + ",";
+    message += "\"RoiCenter\":" +  (String)RoiCenter +"," ;
+    message += "\"RoiX\":" +  (String)RoiX  + ",";
+    message += "\"RoiY\":" +  (String)RoiY + ",";
+    message += "\"timingBudget\":" +  (String)timingBudget + ",";
+    message += "\"distanceMode\":" +  (String)distanceMode;
     return message;
   }
 };
