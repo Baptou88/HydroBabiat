@@ -50,7 +50,7 @@ public:
     void setEndstop(digitalInput *fcf, digitalInput *fco);
     MotorState getState(void);
     void setState(MotorState state);
-    
+    int getSpeed();
 };
 
 

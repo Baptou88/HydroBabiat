@@ -49,6 +49,7 @@ struct nodeStatus_t
     String message = "" ;
     message += "\"" + (String)Name + "RSSI\":" +  (String)RSSI +",";
     message += "\"" + (String)Name + "SNR\":" +  (String)SNR +",";
+    message += "\"" + (String)Name + "Active\":" +  (String)active +",";
     message += "\"" + (String)Name + "DernierMessage\":" +  (String)((millis()-dernierMessage)/1000) ;
 
     return message;
@@ -88,6 +89,7 @@ extern dataTurbine_t dataTurbine;
 extern nodeStatus_t TurbineStatus;
 extern dataEtang_t dataEtang;
 extern nodeStatus_t EtangStatus;
+extern nodeStatus_t nodeTest;
 
 extern AsyncTelegram2 TelegramBot;
 

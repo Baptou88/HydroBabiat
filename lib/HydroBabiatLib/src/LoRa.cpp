@@ -140,10 +140,10 @@ void LoRaClass::loop()
                     {
                         messageCalleBack(packet,str);
                     }
-                }else
-                {
-                    LORACLASS_DEBUG_PRINTLN("[LoRa] pas pour moi");
-                }
+                } //else
+                // {
+                //     LORACLASS_DEBUG_PRINTLN("[LoRa] pas pour moi");
+                // }
                 
                 
                 
@@ -158,6 +158,7 @@ void LoRaClass::loop()
         
         operationDone = false;
         radio.startReceive();
+        
         //LORACLASS_DEBUG_PRINTLN("[LoRa] op done "+(String) operationDone);
     }
     
@@ -188,7 +189,13 @@ int LoRaClass::sendData(byte address,LoRaMessageCode code, String Data)
     lastSend.sendingTime = millis();
 
     LORACLASS_DEBUG_PRINTLN("[LORA] send msg " + (String)msg)
-    return radio.startTransmit(msg);
+    int16_t retour = radio.startTransmit(msg);
+    if (retour != RADIOLIB_ERR_NONE)
+    {
+        LORACLASS_DEBUG_PRINTLN("[LORA] send msg error: " + retour)
+    }
+    
+    return retour;
 }
 
 void LoRaClass::onMessage(void(*cb)(LoRaPacket header, String message))

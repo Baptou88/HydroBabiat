@@ -20,3 +20,11 @@ void IController::output()
     }
     
 }
+
+void IController::startMode(){
+
+}
+
+void IController::endMode(){
+    
+}

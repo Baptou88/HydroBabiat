@@ -27,8 +27,8 @@ public:
     virtual void loop(void) = 0;
     void output();
 
-    virtual void startMode(){};
-    virtual void endMode() {};
+    virtual void startMode();
+    virtual void endMode() ;
      
     String name = "default";
 };

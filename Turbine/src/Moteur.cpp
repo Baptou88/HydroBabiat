@@ -178,8 +178,10 @@ void Moteur::setState(MotorState state)
     _state = state;
 }
 
-
-
+int Moteur::getSpeed()
+{
+    return _speed;
+}
 
 void Moteur::ouvrirVanne(int speed)
 {

@@ -425,7 +425,11 @@ function wsData(d) {
 
       var el  = document.getElementById(element);
       if(typeof(el) != 'undefined' && el != null){
-        el.innerHTML = d[element];
+        if (el.type == "checkbox") {
+          el.checked = d[element]
+        } else {
+          el.innerHTML = d[element];
+        }
       }else{
         console.log("element: " + element + " not exist");
       }

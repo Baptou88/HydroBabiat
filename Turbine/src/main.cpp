@@ -173,8 +173,13 @@ String LoRaMesageStatut(){
   toSend += "tachy:" + (String) tachy.getRPM() + ",";
   toSend += "UB:" + (String) VoltageBattery + ",";
   toSend += "motorState:" + (String) mot.getState() + ",";
-  toSend += "ZV:" + (String) VoltageOutput._a + ",";
-  toSend += "ZC:" + (String) CurrentOutput._a + ",";
+  toSend += "ZV:" + (String) VoltageOutput._b + ",";
+  toSend += "AV:" + (String) VoltageOutput._a + ",";
+  toSend += "ZC:" + (String) CurrentOutput._b + ",";
+  toSend += "AC:" + (String) CurrentOutput._a + ",";
+  toSend += "MS:" + (String) mot.getSpeed() + ",";
+  toSend += "currentSyst:" + (String) currentSysteme ;
+
 
   return toSend;
 }
@@ -221,6 +226,12 @@ void commandProcess(String cmd){
   if (cmd.startsWith("Reboot"))
   {
     ESP.restart(); //TODO Gérer mieu que ça
+  }
+  if (cmd.startsWith("CpuFreq="))
+  {
+    cmd.replace("CpuFreq=","");
+    setCpuFrequencyMhz(cmd.toInt());
+    Serial.println("CpuFreq: "+ (String)getCpuFrequencyMhz());
   }
   
   if (cmd.startsWith("DeepSleep"))
@@ -297,6 +308,12 @@ void commandProcess(String cmd){
     cmd.replace("reboot","");
     ESP.restart();
   }
+  if (cmd.startsWith("SavePref"))
+  {
+    cmd.replace("SavePref","");
+    savePreferences();
+  }
+  
   
   
 }
@@ -327,6 +344,7 @@ bool initPreferences(){
   {
     return false;
   }
+  setCpuFrequencyMhz(pref.getInt("CpuFreq",240));
   mot.ouvertureMax = pref.getInt("ouvertureMax",mot.ouvertureMax);
 
   moteurKp = pref.getFloat("moteurKp",moteurKp);
@@ -350,6 +368,7 @@ bool initPreferences(){
 bool savePreferences(){
 
   Serial.println("save pref !");
+  pref.putInt("CpuFreq",getCpuFrequencyMhz());
   pref.putInt("ouvertureMax",mot.ouvertureMax);
   pref.putFloat("moteurKp",moteurKp);
   pref.putFloat("moteurKi",moteurKi);

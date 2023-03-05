@@ -7,15 +7,18 @@
 #include "TelegramCredentials.h"
 
 enum etangState{
+    UNDIFINED,
     VIDER,
     REMPLIR
 };
+String etangStateToString(etangState st);
 class basicController: public IController
 {
 private:
-    etangState etat = REMPLIR;
+    etangState previousEtat = REMPLIR;
     bool doChange = false;
 public:
+    etangState etat = REMPLIR;
     int niveauMin = 20;
     int niveauMax = 80;
 
@@ -27,7 +30,9 @@ public:
     ~basicController();
 
     void startMode() override;
-    void endMode() override ;
+
+    //void startMode() override;
+    void endMode()  override;
 
     void loop(void);
 

@@ -40,7 +40,8 @@ void WifiAppClass::notifyClients()
   message += dataTurbine.toJson() + ",";
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
-  message += EtangStatus.toJson();
+  message += EtangStatus.toJson() + ",";
+  message += nodeTest.toJson();
 
   message += "}}";
   // Serial.print("[WiFiAPP] notif: ");
@@ -175,7 +176,7 @@ String WifiAppClass::templateProcessor(const String &var)
 
   if (var == "AlertNivActif")
   {
-    Serial.println("sef" + (String) AlertNiv.active);
+    
     if (AlertNiv.active)
     {
       return "checked";
@@ -655,18 +656,25 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       
       
       
+      
     }
-    
-    if (dataStr.startsWith("DeepSleepServer"))
+    else if (dataStr.startsWith("NodeTest."))
+      {
+        Serial.println(dataStr);
+        dataStr.replace("NodeTest.","");
+        if (dataStr.startsWith("Active="))
+        {
+          dataStr.replace("Active=","");
+          nodeTest.active = dataStr.toInt();
+          Serial.println(nodeTest.active);
+        }
+        
+      }
+     else if (dataStr.startsWith("DeepSleepServer"))
     {
       startDeepSleep = millis() + 5000;
     }
-    
-
-    else
-    {
-      Serial.println("ah bon ??");
-    }
+  
 
     WifiApp.notifyClients();
   }
