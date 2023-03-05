@@ -105,16 +105,12 @@ unsigned long lastSaveData = 0;
 manuelController *manuelC = new manuelController();
 basicController *bC = new basicController();
 PIDController *pidC = new PIDController();
-
+int modeActuel = 0;
+LList<IController*> modes = LList<IController*>();
 
 WiFiUDP ntpUDP;
 const char* ntpServer = "europe.pool.ntp.org";
 NTPClient timeClient(ntpUDP,ntpServer,3600,3600);
-
-
-int modeActuel = 0;
-//IController *modes[] = {bC,pidC};
-LList<IController*> modes = LList<IController*>();
 
 const int pinAnalogTest = 6;
 
@@ -493,6 +489,8 @@ void displayData(){
       Ec.getDisplay()->printf("min: %i", bC->niveauMin);
       Ec.getDisplay()->setCursor(70,22);
       Ec.getDisplay()->printf("max: %i", bC->niveauMax);
+      Ec.getDisplay()->setCursor(70,32);
+      Ec.getDisplay()->printf("etat: %i", (String)etangStateToString(bC->etat));
       break;
     case typeController::PID :
       Ec.getDisplay()->setCursor(70,10);
@@ -538,6 +536,7 @@ bool initPref() {
     AlertNiv.active = Prefs.getBool("AlertNivActiv");
     AlertNiv.max = Prefs.getInt("AlertNivMax");
     AlertNiv.min = Prefs.getInt("AlertNivMin");
+    modeActuel = Prefs.getInt("modeVanne",0);
     return true;
   }
   return false;
@@ -548,6 +547,7 @@ bool savePref() {
   Prefs.putBool("AlertNivActiv", AlertNiv.active);
   Prefs.putInt("AlertNivMax", AlertNiv.max);
   Prefs.putInt("AlertNivMin", AlertNiv.min);
+  Prefs.putInt("modeVanne",modeActuel);
   WifiApp.monitorClients("Save Pref Ok");
   return true;
 }
@@ -696,6 +696,7 @@ void setup() {
 
   timerEnvoiWS.reset();
 
+  modes.get(modeActuel)->startMode();
 
 }
 
