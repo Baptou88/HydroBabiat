@@ -82,7 +82,6 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)dataTurbine.positionVanne;
   }
-
   if (var == "niveauEtang")
   {
     return (String)dataEtang.niveauEtang;
@@ -173,7 +172,6 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)MotorStateToString(dataTurbine.motorState);
   }
-
   if (var == "AlertNivActif")
   {
     
@@ -199,12 +197,106 @@ String WifiAppClass::templateProcessor(const String &var)
   return "templateProcesor default: " + var;
 }
 
+bool WifiAppClass::sendInternalServerError(AsyncWebServerRequest *request)
+{
+  String tempStr;
+  tempStr += "<html>";
+  tempStr += "<head>";
+  tempStr += "<link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css\" rel=\"stylesheet\"";
+  tempStr += "</head>";
+  tempStr += "<body>";
+  tempStr += "<div class=\"container\">";
+  tempStr += "<h1>500 Internal Server Error</h1>";
+  tempStr += "<button class=\" btn btn-outline-danger\" type=\"button\" onclick=\"sendRebootCmd(this)\">";
+  tempStr += "<span class=\"spinner-border spinner-border-sm visually-hidden\" role=\"status\" aria-hidden=\"true\"></span>";
+  tempStr += " Restart Esp";
+  tempStr += "</button>";
+  tempStr += "</div>";
+  tempStr += "</body>";
+  tempStr += "<script>";
+  tempStr += "function sendRebootCmd(element){\n";
+  tempStr += "element.disabled = true\n";
+  tempStr += "element.querySelector('.spinner-border').classList.remove('visually-hidden')\n";
+  tempStr += "fetch('/reboot')\n";
+  tempStr += ".then(response => {\n";
+  tempStr += "if (response.ok) {\n";
+  tempStr += "setTimeout(() => {\n";
+  tempStr += "window.location.href = window.location.href; // rediriger l'utilisateur vers la même page\n";
+  tempStr += "}, 5000); // attendre 5 secondes (5000 millisecondes) avant de rediriger\n";
+  tempStr += "}\n";
+  tempStr += "})\n";
+  tempStr += ".catch(error => {\n";
+  tempStr += "console.error('Une erreur est survenue :', error);\n";
+  tempStr += "})\n";
+  tempStr += ".finally( () => {\n";
+  tempStr += "element.disabled = false \n";
+  tempStr += "element.querySelector('.spinner-border').classList.add('visually-hidden')\n";
+  tempStr += "})\n";
+  tempStr += "}\n";
 
+
+  tempStr += "</script>";
+  tempStr += "</html>";
+  request->send(500,"text/html",tempStr);
+  return false;
+}
 
 void WifiAppClass::onNotFound(AsyncWebServerRequest *request)
 {
+  String retour;
   // Handle Unknown Request
-  request->send(404);
+  retour += ("NOT_FOUND: ");
+    if(request->method() == HTTP_GET)
+      retour += ("GET");
+    else if(request->method() == HTTP_POST)
+      retour += ("POST");
+    else if(request->method() == HTTP_DELETE)
+      retour += ("DELETE");
+    else if(request->method() == HTTP_PUT)
+      retour += ("PUT");
+    else if(request->method() == HTTP_PATCH)
+      retour += ("PATCH");
+    else if(request->method() == HTTP_HEAD)
+      retour += ("HEAD");
+    else if(request->method() == HTTP_OPTIONS)
+      retour += ("OPTIONS");
+    else
+      retour += ("UNKNOWN");
+
+    retour += "\n";
+
+    retour += " http://" + (String)request->host().c_str()+ request->url().c_str() +"\n";
+
+    if(request->contentLength()){
+      retour += "_CONTENT_TYPE: " + (String)request->contentType().c_str() + "\n";
+      retour += "_CONTENT_LENGTH: " + (String)request->contentLength() +"\n" ;
+    }
+
+    retour += "\n";
+    retour += "Headers: \n";
+    int headers = request->headers();
+    int i;
+    for(i=0;i<headers;i++){
+      AsyncWebHeader* h = request->getHeader(i);
+      retour += "_HEADER[" + (String)h->name().c_str() + "]: " + h->value().c_str() + "\n";
+    }
+
+    retour += "\n";
+    retour += "Params: \n";
+    int params = request->params();
+    for(i=0;i<params;i++){
+      AsyncWebParameter* p = request->getParam(i);
+      if(p->isFile()){
+        retour += "_FILE[" + (String)p->name().c_str() + "]: " + p->value().c_str() + ", size: " + p->size() + " \n" ;
+      } else if(p->isPost()){
+        retour += "_POST[" +  (String)p->name().c_str() +"]: " + p->value().c_str() + "\n";
+      } else {
+        retour += "_GET[" + (String)p->name().c_str() + "]:  " + p->value().c_str() + "\n";
+      }
+    }
+    
+  request->send(404,"text/plaintext",retour);
+  
 }
 
 bool WifiAppClass::begin()
@@ -215,6 +307,7 @@ bool WifiAppClass::begin()
     Serial.println("[WiFiApp] SPIFFS begin failed");
     return false;
   }
+  //WiFi.setHostname("Esp32S3_HydroBabiat");
   WiFi.begin(WIFISSID, WIFIPASSWORD);
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
@@ -232,7 +325,20 @@ bool WifiAppClass::begin()
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
   {
     //Serial.println("[SERVER] get root");
-    request->send(SPIFFS,"/home.html","text/html",false,WifiApp.templateProcessor); 
+    if (SPIFFS.exists("/home.html"))
+    {
+      request->send(SPIFFS,"/home.html","text/html",false,WifiApp.templateProcessor); 
+      
+    } else
+    {
+      sendInternalServerError(request);
+    }
+    
+    
+  });
+  server.on("/reboot",HTTP_GET,[](AsyncWebServerRequest *request){
+    startReboot = millis() + 2000;
+    request->send(200,"text/plaintext","ok");
   });
   server.on("/icons/hydro-elec-512.svg", HTTP_GET, [](AsyncWebServerRequest *request)
   { 
@@ -241,6 +347,10 @@ bool WifiAppClass::begin()
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
   { 
     request->send(SPIFFS, "/icons/favicon.ico"); 
+  });
+  server.on("/logo.png", HTTP_GET, [](AsyncWebServerRequest *request)
+  { 
+    request->send(SPIFFS, "/icons/favicon-192.png"); 
   });
 
   server.on("/mode", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -518,8 +628,10 @@ bool WifiAppClass::begin()
     
   });
 
-  server.onNotFound([](AsyncWebServerRequest *request)
-                    { return request->send(404); });
+  //server.onNotFound([](AsyncWebServerRequest *request)
+   //                 { return request->send(404); });
+
+  server.onNotFound(WifiApp.onNotFound);
 
   ws.onEvent(WifiApp.onEvent);
   server.addHandler(&ws);

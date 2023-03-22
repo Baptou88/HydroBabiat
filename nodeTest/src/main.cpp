@@ -4,6 +4,11 @@
 #include "Ecran.h"
 #include "LoRa.h"
 #include <SPIFFS.h>
+#include <Adafruit_BMP085.h>
+#include <wifiCredentials.h>
+#include <ESPAsyncWebServer.h>
+#include <WiFi.h>
+
 
 struct fileDescription_t
 {
@@ -42,6 +47,7 @@ String stateReceptiontoString(stateReception s){
     break;
   }
 }
+
 stateReception stater = NONE;
 Ecran Ec(&Wire);
 String file;
@@ -55,7 +61,16 @@ float vitesseTranfert = 0;
 unsigned long transfertTime = 0;
 unsigned long startTransfertTime = 0;
 
+Adafruit_BMP085 bmp;
 
+AsyncWebServer server(80);
+
+struct MYDATA
+{
+  int a = 12;
+  //String b = "abcd";
+};
+struct MYDATA mydata ;
 
 void LoRaMessage(LoRaPacket header, String msg)
 {
@@ -119,16 +134,104 @@ void LoRaMessage(LoRaPacket header, String msg)
     reponse = millis();
     break;
   default:
-  Serial.println("inconnu" + (String)header.Code);
+    Serial.println("LoRa msg code inconnu: " + (String)header.Code);
     break;
   }
 }
 
+void scanWiFi(void) {
+  int n = WiFi.scanNetworks();
+  if (n == 0) {
+        Serial.println("no networks found");
+    } else {
+        Serial.print(n);
+        Serial.println(" networks found");
+        Serial.println("Nr | SSID                             | RSSI | CH | Encryption");
+        for (int i = 0; i < n; ++i) {
+            // Print SSID and RSSI for each network found
+            Serial.printf("%2d",i + 1);
+            Serial.print(" | ");
+            Serial.printf("%-32.32s", WiFi.SSID(i).c_str());
+            Serial.print(" | ");
+            Serial.printf("%4d", WiFi.RSSI(i));
+            Serial.print(" | ");
+            Serial.printf("%2d", WiFi.channel(i));
+            Serial.print(" | ");
+            switch (WiFi.encryptionType(i))
+            {
+            case WIFI_AUTH_OPEN:
+                Serial.print("open");
+                break;
+            case WIFI_AUTH_WEP:
+                Serial.print("WEP");
+                break;
+            case WIFI_AUTH_WPA_PSK:
+                Serial.print("WPA");
+                break;
+            case WIFI_AUTH_WPA2_PSK:
+                Serial.print("WPA2");
+                break;
+            case WIFI_AUTH_WPA_WPA2_PSK:
+                Serial.print("WPA+WPA2");
+                break;
+            case WIFI_AUTH_WPA2_ENTERPRISE:
+                Serial.print("WPA2-EAP");
+                break;
+            case WIFI_AUTH_WPA3_PSK:
+                Serial.print("WPA3");
+                break;
+            case WIFI_AUTH_WPA2_WPA3_PSK:
+                Serial.print("WPA2+WPA3");
+                break;
+            case WIFI_AUTH_WAPI_PSK:
+                Serial.print("WAPI");
+                break;
+            default:
+                Serial.print("unknown");
+            }
+            Serial.println();
+            delay(10);
+        }
+    }
+    Serial.println("");
+
+    // Delete the scan result to free memory for code below.
+    WiFi.scanDelete();
+
+    // Wait a bit before scanning again.
+    delay(5000);
+
+}
+
+void setupWifiServer(void) {
+  WiFi.setHostname("Esp32 V2");
+
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+scanWiFi();
+  WiFi.begin(WIFISSID,WIFIPASSWORD);
+  
+  while (WiFi.status() != WL_CONNECTED){
+    Serial.println("Wifi Failed");
+  delay(5000);
+  }
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+  server.serveStatic("/",SPIFFS,"/");
+}
+
 void setup() {
   // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial.printf("%s %s\n",WIFISSID,WIFIPASSWORD);
+  //setupWifiServer();
   Wire.begin(4,15);
 
-  Serial.begin(115200);
+  Serial.write((const char*)mydata,sizeof(MYDATA));
+  if (!bmp.begin()) {
+	  Serial.println("Could not find a valid BMP085 sensor, check wiring!");
+	  while (1) {}
+  }
 
   if (!Ec.begin())
   {
@@ -156,13 +259,14 @@ void setup() {
   }
   Ec.getDisplay()->println("LoRa init Ok !");
   Ec.getDisplay()->display();
-  LoRa.sendData(0x01,LoRaMessageCode::DemandeStatut,"er");
+  //LoRa.sendData(0x01,LoRaMessageCode::DemandeStatut,"er");
   LoRa.getRadio().startReceive();
 
   if (!SPIFFS.begin(true))
   {
     Serial.println("Spiffs init failed");
   }
+  
 }
 
 
@@ -184,6 +288,7 @@ void loop() {
   Ec.getDisplay()->println((String)packetrecu + " / " + (String)fd.numberpacket);
   Ec.getDisplay()->println("speed :  " + (String)vitesseTranfert);
   Ec.getDisplay()->println("ota :  " + (String)fd.OtaUpdate);
+  Ec.getDisplay()->println("Temp :  " + (String)bmp.readTemperature());
 
   Ec.getDisplay()->display();
 

@@ -127,7 +127,7 @@ document.addEventListener('alpine:init', () => {
   })
 })
 
-document.addEventListener('DOMContentLoaded',function (){
+document.addEventListener('DOMContentLoaded',async function (){
   modes = document.querySelector("#modes")
   modes_li =  modes.querySelectorAll("li")
 
@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded',function (){
     ]
   };
 
-  Highcharts.ajax({
+   await Highcharts.ajax({
     url: 'data.csv',
     dataType: 'text',
     success: function (data) {
@@ -512,10 +512,10 @@ function onLoad(event) {
     })
   })
 
-param = document.querySelectorAll(".param")
+  param = document.querySelectorAll(".param")
   param.forEach(element =>{
     if (element.type == "text" || element.type == "number") {
-      element.addEventListener('change',  el =>{c
+      element.addEventListener('change',  el =>{
         let param = el.target.dataset.param;
         websocket.send(`${param}=${el.target.value}`)
       })

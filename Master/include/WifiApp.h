@@ -52,10 +52,11 @@ public:
 
     void monitorClients(String message);
 
-    void onNotFound(AsyncWebServerRequest *request);
+    static void onNotFound(AsyncWebServerRequest *request);
 
     static String templateProcessor(const String& var);
 
+    static bool sendInternalServerError(AsyncWebServerRequest *request);
 
     /// @brief main loop
     void loop();

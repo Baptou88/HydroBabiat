@@ -69,6 +69,7 @@ int maxDisplay = 4;
 bool ledNotif = false;
 
 unsigned long startDeepSleep = 0;
+unsigned long startReboot = 0;
 
 String bufferActionToSend;
 
@@ -80,6 +81,9 @@ dataEtang_t dataEtang;
 nodeStatus_t EtangStatus;
 
 nodeStatus_t nodeTest;
+
+LList<nodeStatus_t*> listNodes = LList<nodeStatus_t*>();
+int lastNode = 0;
 
 WiFiClientSecure telegramClient;
 AsyncTelegram2 TelegramBot(telegramClient);
@@ -199,7 +203,7 @@ bool saveDataCsV(void){
 	File myFile;
 	if (!SPIFFS.exists("/data.csv"))
 	{
-		
+		Serial.println("Creation data.csv");
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
 		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power");
 		myFile.close();
@@ -207,9 +211,15 @@ bool saveDataCsV(void){
 	}
 	myFile = SPIFFS.open("/data.csv",FILE_APPEND);
 	
-
-	myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
-	myFile.close();
+  
+	//myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
+	
+  size_t test;
+  
+  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f",timeClient.getEpochTime(),dataTurbine.tacky,dataEtang.ratioNiveauEtang,dataTurbine.targetPositionVanne,dataTurbine.positionVanne,dataTurbine.U,dataTurbine.I);
+  myFile.close();
+  
+  Serial.println("Sauvegarde : " + (String)test);
 	return true;
 }
 
@@ -465,6 +475,9 @@ void displayData(){
     Ec.getDisplay()->println("Battery: " + (String) batteryReadings);
     Ec.getDisplay()->println("Battery: " + (String) (batteryReadings * 0.025));
     
+    Ec.getDisplay()->printf("Spiffs: %i / %i\n" , SPIFFS.usedBytes(), SPIFFS.totalBytes() );
+    Ec.getDisplay()->printf("Spiffs: %f %\n" ,  (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) *100 );
+
     //Ec.getDisplay()->println(WifiApp.server.);
 
     break;
@@ -529,6 +542,10 @@ void initNodes(){
 
   nodeTest.addr = 0x04;
   nodeTest.Name = "NodeTest";
+
+  listNodes.add(&EtangStatus);
+  listNodes.add(&TurbineStatus);
+  listNodes.add(&nodeTest);
 }
 
 bool initPref() {
@@ -787,6 +804,8 @@ void loop() {
     {
       WifiApp.monitorClients("Demande statut lora");
       LoRa.sendData((i++%3)+2,LoRaMessageCode::DemandeStatut,"bonjour" + (String)random(0,100));
+      Serial.println("lastnode: " + (String)lastNode);
+      Serial.println(listNodes.get(lastNode=lastNode++%listNodes.size())->Name);
     }
     
   }
@@ -798,7 +817,9 @@ void loop() {
   // }
   
   TBMessage msg;
-  if (TelegramBot.getNewMessage(msg)) {
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    if (TelegramBot.getNewMessage(msg)) {
     Serial.printf("[telegram] %s\n",msg.text);
     switch (msg.messageType)
     {
@@ -843,6 +864,9 @@ void loop() {
     }
     
   }
+  }
+  
+  
   
   #ifdef USE_TFT
   if (TftTimer.isOver())
@@ -868,6 +892,12 @@ void loop() {
   
   displayData();
 
+  if (millis() > startReboot && startReboot != 0)
+  {
+    startReboot = 0;
+    ESP.restart();
+  }
+  
   if (millis() > startDeepSleep && startDeepSleep !=0)
   {
     startDeepSleep = 0;

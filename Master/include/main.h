@@ -8,6 +8,7 @@
 bool savePref();
 
 extern unsigned long startDeepSleep;
+extern unsigned long startReboot ;
 struct dataTurbine_t
 {
   float positionVanne = 0;
