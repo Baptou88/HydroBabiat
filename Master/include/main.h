@@ -4,11 +4,14 @@
 #include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
 #include "motorState.h"
+#include <Preferences.h>
 
 bool savePref();
 
 extern unsigned long startDeepSleep;
 extern unsigned long startReboot ;
+
+extern Preferences Prefs;
 struct dataTurbine_t
 {
   float positionVanne = 0;

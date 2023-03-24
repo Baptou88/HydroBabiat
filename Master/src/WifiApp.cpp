@@ -15,6 +15,7 @@ extern NTPClient timeClient;
 
 extern LList<ProgrammatedTask *> *ProgrammatedTasks;
 
+DNSServer dnsserver;
 
 #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
   Serial.println(#filename);                  \
@@ -22,6 +23,28 @@ extern LList<ProgrammatedTask *> *ProgrammatedTasks;
   server.on(#filename, HTTP_GET, [](AsyncWebServerRequest *request) { \
   Serial.println(#filename);\
         request->send(SPIFFS,#filename); });
+
+
+class CaptiveRequestHandler : public AsyncWebHandler {
+public:
+  CaptiveRequestHandler() {}
+  virtual ~CaptiveRequestHandler() {}
+
+  bool canHandle(AsyncWebServerRequest *request){
+    //request->addInterestingHeader("ANY");
+    return true;
+  }
+
+  void handleRequest(AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+    response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
+    response->print("<p>This is out captive portal front page.</p>");
+    response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+    response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
+    response->print("</body></html>");
+    request->send(response);
+  }
+};
 
 WifiAppClass::WifiAppClass(/* args */)
 {
@@ -307,21 +330,45 @@ bool WifiAppClass::begin()
     Serial.println("[WiFiApp] SPIFFS begin failed");
     return false;
   }
-  //WiFi.setHostname("Esp32S3_HydroBabiat");
-  WiFi.begin(WIFISSID, WIFIPASSWORD);
-  if (WiFi.waitForConnectResult() != WL_CONNECTED)
+  if (Prefs.isKey("WIFI_SSID") && Prefs.isKey("WIFI_PSSWD"))
   {
-    Serial.println("[WiFiApp] Wifi begin failed");
-    return false;
-  }
-  timeClient.begin();
+    WiFi.mode(WiFiMode_t::WIFI_MODE_STA);
+    WiFi.disconnect();
+    String SSID = Prefs.getString("WIFI_SSID","");
+    String PSSWD = Prefs.getString("WIFI_PSSWD","");
+    WiFi.begin(SSID.c_str(),PSSWD.c_str());
+  
+    //WiFi.setHostname("Esp32S3_HydroBabiat");
+    //WiFi.begin(WIFISSID, WIFIPASSWORD);
+    if (WiFi.waitForConnectResult() != WL_CONNECTED)
+    {
+      Serial.println("[WiFiApp] Wifi begin failed");
+      return false;
+    }
+    timeClient.begin();
   if (!timeClient.update())
   {
     timeClient.forceUpdate();
   }
-  Serial.println("Time: " + (String)timeClient.getFormattedTime());
-
+  Serial.println("Time: " + (String)timeClient.getFormattedDate() + " " + (String)timeClient.getFormattedTime());
   Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
+  } else
+  {
+    WiFi.mode(WiFiMode_t::WIFI_MODE_APSTA);
+    WiFi.softAP("HydroBabiat");
+    WiFi.scanNetworks();
+    dnsserver.start(53, "*", WiFi.softAPIP());
+    
+    Serial.println("[WiFiApp AP Ip:] " + (String)WiFi.softAPIP().toString());
+    // server.on("/",HTTP_ANY,[](AsyncWebServerRequest *req){
+    //   req->send(200,"text/html","Test");
+    // });
+    
+    //server.begin();
+    //return true;
+  }
+  
+  
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
   {
     //Serial.println("[SERVER] get root");
@@ -334,6 +381,96 @@ bool WifiAppClass::begin()
       sendInternalServerError(request);
     }
     
+    
+  }).setFilter(ON_STA_FILTER);
+  server.on("/",HTTP_GET,[](AsyncWebServerRequest * req){
+    Serial.println("////");
+    String retour;
+    retour += "<html><head>";
+    retour += R"(<style>
+		.container {
+			border: 1px solid black;
+			padding: 10px;
+			margin-bottom: 10px;
+			cursor: pointer;
+		}
+
+		.selected {
+			border: 2px solid blue;
+		}
+	</style>)";
+    retour += "</head><body>";
+    retour += "<form method=\"POST\" action =\"/wifi\">";
+    int n = WiFi.scanComplete();
+    for (size_t i = 0; i < n; i++)
+    {
+      retour += "<div class=\"container\" data-ssid=\""+ WiFi.SSID(i) +"\" onclick=\"selectElement(this)\">";
+      retour += "<h3>" + WiFi.SSID(i) + "</h3>";
+      retour += "<p>" + WiFi.SSID(i) + " " + (String)WiFi.RSSI(i) + " " + (String)WiFi.encryptionType(i) + "</p>\n";
+      retour += "</div>";
+    }
+    retour += R"(<input type="hidden" name="ssid" id="ssid">)";
+    retour += R"(<label for="psswd">Password:</label><br>
+  <input type="text" id="psswd" name="psswd" value=""><br>)";
+    retour += "</form>";
+    retour += R"(<script>
+		function selectElement(element) {
+			// Retirer la classe "selected" de tous les containers
+			let containers = document.getElementsByClassName("container");
+			for (let i = 0; i < containers.length; i++) {
+				containers[i].classList.remove("selected");
+			}
+
+			// Ajouter la classe "selected" au container sélectionné
+			element.classList.add("selected");
+
+			// Mettre à jour la valeur du champ caché
+			let selectedElement = document.getElementById("ssid");
+			selectedElement.value = element.dataset.ssid;
+		}
+	</script>)";
+    req->send(200,"text/html", retour);
+    
+
+  }).setFilter(ON_AP_FILTER);
+
+  server.on("/wifi",HTTP_ANY,[](AsyncWebServerRequest *request){
+    int params = request->params();
+    switch (request->method() )
+    {
+    case HTTP_GET:
+      
+      break;
+    case HTTP_POST:
+      for(int i=0;i<params;i++){
+        AsyncWebParameter* p = request->getParam(i);
+        if(p->isFile()){ //p->isPost() is also true
+          Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+        } else if(p->isPost()){
+          Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+        } else {
+          Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+        }
+
+      }
+      if (request->hasParam("ssid",true) && request->hasParam("psswd",true))  
+      {
+        Prefs.putString("WIFI_SSID",request->getParam("ssid",true)->value());
+        Prefs.putString("WIFI_PSSWD",request->getParam("psswd",true)->value());
+      }
+      
+      request->redirect("/");
+      break;
+    case HTTP_DELETE:
+      
+        Prefs.remove("WIFI_SSID");
+        Prefs.remove("WIFI_PSSWD");
+        request->send(200,"text/plaintext","ok");
+      
+      break;
+    default:
+      break;
+    }
     
   });
   server.on("/reboot",HTTP_GET,[](AsyncWebServerRequest *request){
@@ -635,6 +772,9 @@ bool WifiAppClass::begin()
 
   ws.onEvent(WifiApp.onEvent);
   server.addHandler(&ws);
+
+  server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
+
   server.begin();
   return true;
 }
@@ -800,11 +940,20 @@ void WifiAppClass::SPIFFS_provide_file(const char *filename)
 
 void WifiAppClass::loop()
 {
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA)
   {
-    timeClient.update();
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      timeClient.update();
+    }
+    ws.cleanupClients();
+  } else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
+  {
+    dnsserver.processNextRequest();
   }
-  ws.cleanupClients();
+  
+  
+  
 }
 
 WifiAppClass WifiApp;

@@ -26,7 +26,7 @@
 #include "LoRa.h"
 #include "Timer.h"
 #include <LList.h>
-#include <Preferences.h>
+
 #include <digitalInput.h>
 #include <parser.h>
 
@@ -469,7 +469,18 @@ void displayData(){
   case 2:
     Ec.getDisplay()->setCursor(0,0);
     Ec.getDisplay()->println("WifiStatus: " + (String)WiFi.status());
-    Ec.getDisplay()->println(WiFi.localIP().toString());
+    if (WiFi.getMode() == wifi_mode_t::WIFI_MODE_STA)
+    {
+      Ec.getDisplay()->println("STA" + (String) WiFi.localIP().toString());
+    } else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
+    {
+      Ec.getDisplay()->println("APSTA" + (String) WiFi.softAPIP().toString());
+      
+    }
+    
+    
+    
+    
     
     
     Ec.getDisplay()->println("Battery: " + (String) batteryReadings);
@@ -675,25 +686,30 @@ void setup() {
   Ec.getDisplay()->display();
 
 
-  Serial.println("fin setup");
+  
 
   WifiApp.begin();
 
   arduinoOtaSetup();
 
-  telegramClient.setCACert(telegram_cert);
-  TelegramBot.setTelegramToken(BOTtoken);
-  TelegramBot.setUpdateTime(2000);
-  TelegramBot.begin() ? Serial.println("[Telegram] begin OK") : Serial.println("[Telegram] begin NOK");
+  if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA)
+  {
+    telegramClient.setCACert(telegram_cert);
+    TelegramBot.setTelegramToken(BOTtoken);
+    TelegramBot.setUpdateTime(2000);
+    TelegramBot.begin() ? Serial.println("[Telegram] begin OK") : Serial.println("[Telegram] begin NOK");
 
-  myreplykbd.addButton("Button1");
-  myreplykbd.addButton("Button2");
-  myreplykbd.addRow();
-  myreplykbd.addButton("/hide_keyboard");
-  myreplykbd.enableResize();
+    myreplykbd.addButton("Button1");
+    myreplykbd.addButton("Button2");
+    myreplykbd.addRow();
+    myreplykbd.addButton("/hide_keyboard");
+    myreplykbd.enableResize();
 
-  myinlinekbd.addButton("ON","test", KeyboardButtonQuery);
-  myinlinekbd.addButton("GitHub", "https://github.com/cotestatnt/AsyncTelegram2/", KeyboardButtonURL);
+    myinlinekbd.addButton("ON","test", KeyboardButtonQuery);
+    myinlinekbd.addButton("GitHub", "https://github.com/cotestatnt/AsyncTelegram2/", KeyboardButtonURL);
+    
+  }
+  
 
   // Send a welcome message to user when ready
   // char welcome_msg[128];
@@ -715,6 +731,8 @@ void setup() {
 
   modes.get(modeActuel)->startMode();
 
+
+  Serial.println("fin setup");
 }
 
 // put your main code here, to run repeatedly:
@@ -817,7 +835,7 @@ void loop() {
   // }
   
   TBMessage msg;
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED && WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA)
   {
     if (TelegramBot.getNewMessage(msg)) {
     Serial.printf("[telegram] %s\n",msg.text);

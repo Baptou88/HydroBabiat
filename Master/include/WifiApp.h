@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <DNSServer.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
@@ -20,11 +21,13 @@
 #include <LList.h>
 #include "AlertNiveau.h"
 
+extern DNSServer dnsserver;
 
 extern int potValue;
 extern bool ledNotif;
 extern int modeActuel;
 extern LList<IController*> modes;
+
 
 // #define WIFIAPP_SERVER_PROVIDE_FILE(filename) \
 // server.on("#filename" ,HTTP_GET,[](AsyncWebServerRequest *request) { \
