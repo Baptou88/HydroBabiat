@@ -1,6 +1,8 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+//#define ASYNC_TCP_SSL_ENABLED 1
+
 #include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
 #include "motorState.h"

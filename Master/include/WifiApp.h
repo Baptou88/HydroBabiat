@@ -1,6 +1,8 @@
 #ifndef WIFIAPP_H
 #define WIFIAPP_H
 
+
+
 #include <Arduino.h>
 #include <WiFi.h>
 #include <DNSServer.h>
@@ -20,6 +22,7 @@
 #include <PIDController.h>
 #include <LList.h>
 #include "AlertNiveau.h"
+
 
 extern DNSServer dnsserver;
 
@@ -41,7 +44,11 @@ private:
              void *arg, uint8_t *data, size_t len);
     static void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 
+    #ifdef ASYNC_TCP_SSL_ENABLED
+    AsyncWebServer server= AsyncWebServer(5555);
+    #else
     AsyncWebServer server= AsyncWebServer(80);
+    #endif
     AsyncWebSocket ws = AsyncWebSocket("/ws");
     void SPIFFS_provide_file(const char* filename);
 public:

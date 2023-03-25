@@ -770,12 +770,37 @@ bool WifiAppClass::begin()
 
   server.onNotFound(WifiApp.onNotFound);
 
+  #ifdef  ASYNC_TCP_SSL_ENABLED 
+    #pragma message "tcp ssl"
+    server.onSslFileRequest([](void * arg, const char *filename, uint8_t **buf) -> int {
+      Serial.printf("SSL File: %s\n", filename);
+      File file = SPIFFS.open(filename, "r");
+      if(file){
+        size_t size = file.size();
+        uint8_t * nbuf = (uint8_t*)malloc(size);
+        if(nbuf){
+          size = file.read(nbuf, size);
+          file.close();
+          *buf = nbuf;
+          return size;
+        }
+        file.close();
+      }
+      *buf = 0;
+      return 0;
+    }, NULL);
+  #endif
+
   ws.onEvent(WifiApp.onEvent);
   server.addHandler(&ws);
 
   server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
 
-  server.begin();
+  #ifdef ASYNC_TCP_SSL_ENABLED
+    server.beginSecure("Cert.pem","Key.pem",NULL);
+  #else
+    server.begin();
+  #endif
   return true;
 }
 
