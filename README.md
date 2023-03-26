@@ -11,6 +11,12 @@ graph TD;
 
 # Master
 # Turbine
+i2c 
+ina260 0x40
+ina219 0x44 
+ads1115 0x48
+bmp180 0x77
+ssd1306 0x3C
 # Etang
 
 ## VL53L1X

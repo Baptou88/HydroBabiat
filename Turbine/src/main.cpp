@@ -92,7 +92,7 @@ AnalogInput VoltageOutput(PIN_VOLTAGE_OUTPUT,voltage_coefA,voltage_base);
 AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,current_coefA,current_base);
 
 Adafruit_INA260 ina260 = Adafruit_INA260(); 
-Adafruit_INA219 ina219 = Adafruit_INA219(); 
+Adafruit_INA219 ina219(0x44);
 float currentSysteme = 0;
 
 bool ledNotif = true;
@@ -262,7 +262,7 @@ void commandProcess(String cmd){
   }
   if (cmd.startsWith("ZC")) //set Zero to Current mesure
   {
-    VoltageOutput.setZero();
+    CurrentOutput.setZero();
   }
   if (cmd.startsWith("AV="))
   {
@@ -275,17 +275,6 @@ void commandProcess(String cmd){
     CurrentOutput.changeAparam(cmd.toFloat());
   }
   
-  if (cmd.startsWith("DS"))
-  {
-    //TODO
-    esp_sleep_enable_timer_wakeup(10 * us_to_s_factor);
-    pref.putDouble("posMot",mot._position);
-    Serial.println(mot._position);
-    delay(100);
-    
-    Ec.setSleep();
-    esp_deep_sleep_start();
-  }
   if (cmd.startsWith("OM"))
   {
     int om = 5000;
@@ -345,6 +334,7 @@ bool initPreferences(){
     return false;
   }
   setCpuFrequencyMhz(pref.getInt("CpuFreq",240));
+  Serial.printf("cpu freq: %i \n",getCpuFrequencyMhz());
   mot.ouvertureMax = pref.getInt("ouvertureMax",mot.ouvertureMax);
 
   moteurKp = pref.getFloat("moteurKp",moteurKp);
@@ -393,7 +383,7 @@ void acquisitionEntree(){
   encodeurDT.loop();
   encodeurSW.loop();
 
-  currentSCT = ads.readADC_Differential_2_3();
+  currentSCT = ads.readADC_Differential_2_3()*0.0625f*30;
   mot.updateIntensiteMoteur(ina260.readCurrent());
   VoltageOutput.loop();
   CurrentOutput.loop();
@@ -486,6 +476,15 @@ void menuWifiServerCalleback(Adafruit_SSD1306* display,bool firstTime)
 
 }
 
+void CallibrateAnalogSensor(int numReadings = 20){
+  int sumVoltage = 0;
+
+  for (size_t i = 0; i < numReadings; i++)
+  {
+    //sum
+  }
+  
+}
 // put your setup code here, to run once:
 void setup() {
 
@@ -500,6 +499,11 @@ void setup() {
   encodeurSW.begin();
 
   pinMode(LED_BUILTIN,OUTPUT);
+
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  Serial.println(WiFi.setSleep(true)?"Wifi in sleep Mode":"Wifi NOT in sleep Mode");
+  Serial.println(btStop()?"Bluetooth in sleep Mode":"Bluetooth NOT in sleep Mode");
 
   VoltageOutput.begin();
   CurrentOutput.begin();
