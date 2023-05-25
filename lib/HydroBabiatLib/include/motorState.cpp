@@ -24,8 +24,14 @@ String MotorStateToString(MotorState state){
     case FERMETURE_TOTALE:
         return "FERMETURE_TOTALE";
         break;
+    case OVERSPEED:
+        return "OVERSPEED";
+        break;
+    case AUTOTUNE:
+        return "Autotune";
+        break;
     default:
-        return "Default motorStateToString";
+        return "Default motorStateToString" + (String)state;
         break;
     }
 }

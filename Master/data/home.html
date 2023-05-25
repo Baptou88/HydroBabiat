@@ -360,6 +360,8 @@
                     </div>
                     <div class="btn-group" role="group" aria-label="Sommeil">
                         <button class="computed btn btn-secondary" data-node="TURBINE"
+                            data-action="LightSleep">LightSleep</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE"
                             data-action="DeepSleep">DeepSleep</button>
                         <button type="button" class="btn btn-outline-warning computed" data-node="TURBINE"
                             data-action="Reboot">Reboot</button>
@@ -371,6 +373,18 @@
                     <div class="btn-group" role="group" aria-label="Zero Current">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZC">Zero
                             Courant</button>
+                    </div>
+
+                    <div x-data="{selected:%CpuFreq%,CpuFreqs:[240,160,80,40,20,10]}">
+                        <select class="form-select form-select-sm computed-range" name="Turbine_CpuFreq" data-node="TURBINE" data-action="CpuFreq">
+                            <template x-for="CpuFreq in CpuFreqs" :key="CpuFreq">
+                                <option :value="CpuFreq" :selected="selected == CpuFreq" x-text="CpuFreq + ' MHz'"></option>
+                            </template>
+                        </select>
+
+                    </div>
+                    <div class="btn-group" role="group" aria-label="">
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="SavePref">SavePref</button>
                     </div>
                 </div>
             </div>

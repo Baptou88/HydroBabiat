@@ -216,6 +216,10 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)AlertNiv.min;
   }
+  if (var == "CpuFreq")
+  {
+    return (String)getCpuFrequencyMhz();
+  }
   
   return "templateProcesor default: " + var;
 }

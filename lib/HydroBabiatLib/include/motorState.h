@@ -8,7 +8,11 @@ enum MotorState{
     INIT_POS_MAX,
     WAIT_INIT,
     UNKOWN,
-    FERMETURE_TOTALE
+    FERMETURE_TOTALE,
+
+    //rotation turbine trop Importante
+    OVERSPEED,
+    AUTOTUNE
 };
 
 String MotorStateToString(MotorState state);

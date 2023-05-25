@@ -37,6 +37,7 @@
 #include <NTPClient.h>
 #include <ProgrammatedTasks.h>
 
+#include <EnergieMeter.h>
 
 #define LED 7
 #define POT  6
@@ -102,6 +103,10 @@ Ecran Ec(&Wire);
 
 Timer TftTimer (2500);
 
+const char* EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power,Energie";
+
+EnergieMeter Em;
+
 //sauvegarde des données
 unsigned long lastSaveData = 0;
 
@@ -118,7 +123,6 @@ NTPClient timeClient(ntpUDP,ntpServer,3600,3600);
 
 const int pinAnalogTest = 6;
 
-int i = 0;
 
 bool OtaUpdate = false;
 
@@ -205,7 +209,7 @@ bool saveDataCsV(void){
 	{
 		Serial.println("Creation data.csv");
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power");
+		myFile.print(EnteteCSV);
 		myFile.close();
 		
 	}
@@ -216,7 +220,7 @@ bool saveDataCsV(void){
 	
   size_t test;
   
-  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f",timeClient.getEpochTime(),dataTurbine.tacky,dataEtang.ratioNiveauEtang,dataTurbine.targetPositionVanne,dataTurbine.positionVanne,dataTurbine.U,dataTurbine.I);
+  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",timeClient.getEpochTime(),dataTurbine.tacky,dataEtang.ratioNiveauEtang,dataTurbine.targetPositionVanne,dataTurbine.positionVanne,dataTurbine.U,dataTurbine.I, Em.getEnergie());
   myFile.close();
   
   Serial.println("Sauvegarde : " + (String)test);
@@ -237,7 +241,9 @@ void LoRaMessage(LoRaPacket header, String msg)
     LoRaFileUpl.nextPacket();
     return;
     break;
-  
+  case LoRaMessageCode::DataReponse:
+    WifiApp.monitorClients(msg);
+    break;
   default:
     break;
   }
@@ -293,6 +299,7 @@ void LoRaMessage(LoRaPacket header, String msg)
         dataTurbine.motorState = (MotorState)val.toInt();
       }
     }
+    Em.update(dataTurbine.I * dataTurbine.U);
 
   } else if (header.Emetteur == ETANG)
   {
@@ -601,6 +608,8 @@ void setup() {
   initNodes();
 
   initPref();
+
+  Em.begin();
   
   if (!Ec.begin())
   {
@@ -676,7 +685,7 @@ void setup() {
 	{
 		
 		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print("Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power");
+		myFile.print(EnteteCSV);
 		myFile.close();
 		
 	}
@@ -820,10 +829,18 @@ void loop() {
   {
     if (timerEnvoi.isOver())
     {
-      WifiApp.monitorClients("Demande statut lora");
-      LoRa.sendData((i++%3)+2,LoRaMessageCode::DemandeStatut,"bonjour" + (String)random(0,100));
-      Serial.println("lastnode: " + (String)lastNode);
-      Serial.println(listNodes.get(lastNode=lastNode++%listNodes.size())->Name);
+      WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+      //i = (i++%3)+2;
+      if (!listNodes.get(lastNode)->active)
+      {
+        lastNode++;
+        lastNode = lastNode % listNodes.size();
+        WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+      }
+      
+      LoRa.sendData(listNodes.get(lastNode)->addr,LoRaMessageCode::DemandeStatut,"demandeStatut");
+      lastNode++;
+      lastNode = lastNode % listNodes.size();
     }
     
   }

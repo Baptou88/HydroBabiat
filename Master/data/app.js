@@ -514,7 +514,7 @@ function onLoad(event) {
 
   param = document.querySelectorAll(".param")
   param.forEach(element =>{
-    if (element.type == "text" || element.type == "number") {
+    if (element.type == "text" || element.type == "number" || element.type == "select-one") {
       element.addEventListener('change',  el =>{
         let param = el.target.dataset.param;
         websocket.send(`${param}=${el.target.value}`)

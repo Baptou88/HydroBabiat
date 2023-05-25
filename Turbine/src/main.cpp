@@ -36,6 +36,10 @@ AsyncWebServer server(80);
 unsigned long wifiActivation = 0;
 unsigned long receptionMessage = 0;
 unsigned long dernierMessage = 0;
+
+unsigned long messageReponse = 0;
+String msgReponse = "";
+
 float msgRSSI = 0;
 float msgSNR = 0;
 
@@ -50,6 +54,8 @@ Moteur mot;
 Preferences pref;
 
 Tachymetre tachy;
+/// @brief vitesse max de la turbine
+int maxSpeed = 400;
 
 enum displayMode_e{
   AFFICHAGE_DEFAULT,
@@ -61,6 +67,9 @@ displayMode_e displayMode = AFFICHAGE_DEFAULT;
 
 menunu* menuParam;
 menuItemList* menuRoot;
+
+int16_t rawCurrentADS = 0;
+int16_t rawTensionADS = 0;
 
 #if defined(LED_BUILTIN)
   #undef LED_BUILTIN
@@ -141,6 +150,9 @@ void displayData(){
     Ec.getDisplay()->println((String)((millis()-dernierMessage)/1000) + " s");
     Ec.getDisplay()->println("RSSI: " + (String)(msgRSSI) + " dbm");
     Ec.getDisplay()->println("SNR : " + (String)(msgSNR) + " db");
+
+    Ec.getDisplay()->println("Tension ADS: " + (String)((rawTensionADS - 40)/63.9));
+    Ec.getDisplay()->println("Current ADS: " + (String)((rawCurrentADS - 13705)/356.25));
     break;
   case 2:
     Ec.getDisplay()->setCursor(0,0);
@@ -203,6 +215,12 @@ void LoRaMessage(LoRaPacket header, String msg){
 
   commandProcess(msg);
 
+  if (header.Code == LoRaMessageCode::Data)
+  {
+    messageReponse = millis() + 100;
+    
+  }
+  
  
 }
 
@@ -223,6 +241,7 @@ void printWakeUpReason(){
 }
 
 void commandProcess(String cmd){
+  
   if (cmd.startsWith("Reboot"))
   {
     ESP.restart(); //TODO Gérer mieu que ça
@@ -232,11 +251,12 @@ void commandProcess(String cmd){
     cmd.replace("CpuFreq=","");
     setCpuFrequencyMhz(cmd.toInt());
     Serial.println("CpuFreq: "+ (String)getCpuFrequencyMhz());
+    msgReponse += "CpuFreq:" +(String)getCpuFrequencyMhz();
   }
   
   if (cmd.startsWith("DeepSleep"))
   {
-    // delai avant de dormir default 10 secondes
+    // delai avant de dormir, default 10 secondes
     int delayUs = 10e6; 
     cmd.replace("DeepSleep","");
     if (cmd.startsWith("="))
@@ -247,6 +267,17 @@ void commandProcess(String cmd){
     timeDeepSleeping = delayUs;
     
   }
+  if (cmd.startsWith("LightSleep"))
+  {
+    Serial.println("Exec Light Sleep");
+    digitalWrite(LED_BUILTIN,HIGH);
+    //esp_sleep_enable_ext0_wakeup(GPIO_NUM_14,HIGH);
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,HIGH);
+    esp_light_sleep_start();
+    digitalWrite(LED_BUILTIN,LOW);
+    Serial.println("Finish Light Sleep");
+  }
+  
   
   if (cmd.startsWith("TargetVanne="))
   {
@@ -258,11 +289,13 @@ void commandProcess(String cmd){
   
   if (cmd.startsWith("ZV")) //set Zero to Voltage mesure
   {
-    VoltageOutput.setZero();
+    // VoltageOutput.setZero();
+    VoltageOutput.calibrate();
   }
   if (cmd.startsWith("ZC")) //set Zero to Current mesure
   {
-    CurrentOutput.setZero();
+    //CurrentOutput.setZero();
+    CurrentOutput.calibrate();
   }
   if (cmd.startsWith("AV="))
   {
@@ -274,6 +307,13 @@ void commandProcess(String cmd){
     cmd.replace("AC=","");
     CurrentOutput.changeAparam(cmd.toFloat());
   }
+  if (cmd.startsWith("calibrate"))
+  {
+    Serial.println("calibrate: ");
+    VoltageOutput.calibrate();
+    CurrentOutput.calibrate();
+  }
+  
   
   if (cmd.startsWith("OM"))
   {
@@ -303,7 +343,57 @@ void commandProcess(String cmd){
     savePreferences();
   }
   
+  if (cmd.startsWith("initVanne"))
+  {
+    mot.setState(MotorState::INIT_POS_MIN);
+  }
+  if (cmd.startsWith("idle"))
+  {
+    mot.setState(MotorState::IDLE);
+  }
+  if (cmd.startsWith("autotune"))
+  {
+    mot.setState(MotorState::AUTOTUNE);
+  }
+  if (cmd.startsWith("PID"))
+  {
+    cmd.replace("PID","");
+    
+    Serial.printf("P %f I %f D %f\n", mot.PIDMoteur.GetKp(), mot.PIDMoteur.GetKi(), mot.PIDMoteur.GetKd());
+    if (cmd.startsWith("P"))
+    {
+      cmd.replace("P","");
+      moteurKp = cmd.toFloat();
+      mot.PIDMoteur.SetTunings(moteurKp,moteurKi,moteurKd);
+      Serial.printf("P %f I %f D %f\n", mot.PIDMoteur.GetKp(), mot.PIDMoteur.GetKi(), mot.PIDMoteur.GetKd());
+    }
+    if (cmd.startsWith("I"))
+    {
+      cmd.replace("I","");
+      moteurKi = cmd.toFloat();
+      mot.PIDMoteur.SetTunings(moteurKp,moteurKi,moteurKd);
+      Serial.printf("P %f I %f D %f\n", mot.PIDMoteur.GetKp(), mot.PIDMoteur.GetKi(), mot.PIDMoteur.GetKd());
+    }
+    if (cmd.startsWith("D"))
+    {
+      cmd.replace("D","");
+      moteurKd = cmd.toFloat();
+      mot.PIDMoteur.SetTunings(moteurKp,moteurKi,moteurKd);
+      Serial.printf("P %f I %f D %f\n", mot.PIDMoteur.GetKp(), mot.PIDMoteur.GetKi(), mot.PIDMoteur.GetKd());
+    }
+    
+  }
+   if (cmd.startsWith("IMM")) //intensité max moteur
+  {
+    cmd.replace("IMM","");
+    Serial.printf("IMM %f\n",mot.maxItensiteMoteur);
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      mot.maxItensiteMoteur = cmd.toFloat();
+    }
   
+  }
   
 }
 
@@ -334,12 +424,15 @@ bool initPreferences(){
     return false;
   }
   setCpuFrequencyMhz(pref.getInt("CpuFreq",240));
+  
   Serial.printf("cpu freq: %i \n",getCpuFrequencyMhz());
   mot.ouvertureMax = pref.getInt("ouvertureMax",mot.ouvertureMax);
 
   moteurKp = pref.getFloat("moteurKp",moteurKp);
   moteurKi = pref.getFloat("moteurKi",moteurKi);
   moteurKd = pref.getFloat("moteurKd",moteurKd);
+  mot.setPID(moteurKp,moteurKi,moteurKd);
+
   ledNotif = pref.getBool("ledNotif", ledNotif);
 
   VoltageOutput._a = pref.getFloat("voltage_coefA",voltage_coefA);
@@ -351,6 +444,7 @@ bool initPreferences(){
 
   mot.maxItensiteMoteur = pref.getFloat("MaxIMot",mot.maxItensiteMoteur);
   
+  maxSpeed = pref.getInt("maxSpeed",maxSpeed);
 
   return true;
 }
@@ -360,9 +454,9 @@ bool savePreferences(){
   Serial.println("save pref !");
   pref.putInt("CpuFreq",getCpuFrequencyMhz());
   pref.putInt("ouvertureMax",mot.ouvertureMax);
-  pref.putFloat("moteurKp",moteurKp);
-  pref.putFloat("moteurKi",moteurKi);
-  pref.putFloat("moteurKd",moteurKd);
+  pref.putFloat("moteurKp",mot.PIDMoteur.GetKp());
+  pref.putFloat("moteurKi",mot.PIDMoteur.GetKi());
+  pref.putFloat("moteurKd",mot.PIDMoteur.GetKd());
   pref.putBool("ledNotif", ledNotif);
 
   pref.putFloat("voltage_coefA",VoltageOutput._a);
@@ -371,6 +465,8 @@ bool savePreferences(){
   pref.putFloat("current_base",CurrentOutput._b);
 
   pref.putFloat("MaxIMot",mot.maxItensiteMoteur);
+
+  pref.putInt("maxSpeed", maxSpeed);
 
   return true;
 }
@@ -389,6 +485,9 @@ void acquisitionEntree(){
   CurrentOutput.loop();
   VoltageBattery = ina260.readBusVoltage();
   currentSysteme = ina219.getCurrent_mA();
+
+  rawTensionADS = ads.readADC_SingleEnded(0);
+  rawCurrentADS = ads.readADC_SingleEnded(1);
   
 }
 
@@ -525,7 +624,7 @@ void setup() {
   
   mot.begin(pinMoteurCW,pinMoteurCCW);
   mot.setPID(2.2,0,0.4);
-  mot.setSpeedLimit(30,100);
+  mot.setSpeedLimit(20,100);
   mot.setEndstop(&FCF,&FCO);
 
   
@@ -533,7 +632,7 @@ void setup() {
   printWakeUpReason();
 
 #ifdef PIN_TACHY
-tachy.setTimeout(2E6);
+  tachy.setTimeout(2E6);
   pinMode(PIN_TACHY,INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(PIN_TACHY),[](){
     //ets_printf("Interrupt");
@@ -595,6 +694,10 @@ tachy.setTimeout(2E6);
     Serial.println("Failed to initialize ADS.");
     while (1);
   }
+  
+  //TODO Essayer de regler l'ADS plus finement , réglage du gain, echantillonage ...
+  //ads.setgain();
+
   Ec.getDisplay()->println("ok init ads");
   Ec.getDisplay()->display();
 
@@ -621,7 +724,7 @@ tachy.setTimeout(2E6);
 
   Serial.println("CPU  Freq: " + (String)getCpuFrequencyMhz());
   Serial.println("XTAL Freq: " + (String)getXtalFrequencyMhz());
-  //setCpuFrequencyMhz(80);
+
   Serial.println("CPU Freq: " + (String)getCpuFrequencyMhz());
   
 }
@@ -725,50 +828,59 @@ void loop() {
   }
   
 
-
-
+  if (tachy.getRPM()>maxSpeed)
+  {
+    mot.setState(MotorState::OVERSPEED);
+  }
+  
+  if (millis() > messageReponse && messageReponse != 0)
+  {
+    messageReponse = 0;
+    LoRa.sendData(MASTER,LoRaMessageCode::DataReponse,msgReponse);
+  }
+  
 
   switch ( displayMode)
   {
-  case AFFICHAGE_DEFAULT:
-    displayData();
-    break;
-  case MENU:
+    case AFFICHAGE_DEFAULT:
+      displayData();
+      break;
+    case MENU:
 
-    if (encodeurCLK.frontDesceandant() && encodeurDT.isReleased())
-    {
+      if (encodeurCLK.frontDesceandant() && encodeurDT.isReleased())
+      {
+        
+        menuParam->next();
+      }
+      if (encodeurCLK.isReleased() && encodeurDT.frontDesceandant())
+      {
+        
+        menuParam->prev();
+      }
+      if (encodeurSW.frontDesceandant())
+      {
+        
+        menuParam->select();
+      }
       
-      menuParam->next();
-    }
-    if (encodeurCLK.isReleased() && encodeurDT.frontDesceandant())
-    {
-      
-      menuParam->prev();
-    }
-    if (encodeurSW.frontDesceandant())
-    {
-      
-      menuParam->select();
-    }
+      if (menuParam == NULL)
+      {
+        Serial.println("null");
+        return;
+      }
+      //Serial.println("menuloop");
+      Ec.getDisplay()->clearDisplay();
+      menuParam->loop();
+      Ec.getDisplay()->display();
     
-    if (menuParam == NULL)
-    {
-      Serial.println("null");
-      return;
-    }
-    //Serial.println("menuloop");
-    Ec.getDisplay()->clearDisplay();
-    menuParam->loop();
-    Ec.getDisplay()->display();
-  
-    break;
-  case displayMode_e::InitPos:
-    Ec.getDisplay()->clearDisplay();
-    Ec.getDisplay()->println("Init Moteur");
-    Ec.getDisplay()->display();
-    break;
-  default:
-    break;
+      break;
+    case displayMode_e::InitPos:
+      Ec.getDisplay()->clearDisplay();
+      Ec.getDisplay()->println("Init Moteur");
+      Ec.getDisplay()->display();
+      break;
+    default:
+      break;
   }
   
 }

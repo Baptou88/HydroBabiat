@@ -2,9 +2,10 @@
 #define __MOTEUR_H__
 #include "Arduino.h"
 #include "driver/mcpwm.h"
-#include "PID_v1.h"
+#include "PID_v2.h"
 #include "digitalInput.h"
 #include "Encoder.h"
+#include "pidautotuner.h"
 
 #include "motorState.h"
 
@@ -26,9 +27,9 @@ private:
     void stopMoteur();
     
     MotorState _state = MotorState::WAIT_INIT;
-    PID PIDMoteur = PID(&_position,&_speed,&_target,0,0,0,DIRECT);
 
 public:
+    PID PIDMoteur = PID(&_position,&_speed,&_target,0,0,0,DIRECT);
     float maxItensiteMoteur = 9000;
     double _position = 0;
     int ouvertureMax = 5000;
@@ -41,6 +42,8 @@ public:
     void setSpeed(int speed);
     void setSpeedLimit(int vmin, int vmax);
     void loop();
+    
+    void autotune();
     int getTarget();
     float getTargetP();
     void setTarget(int Target);

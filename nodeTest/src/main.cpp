@@ -65,12 +65,31 @@ Adafruit_BMP085 bmp;
 
 AsyncWebServer server(80);
 
+int previous_etat_btn = HIGH;
+int etat_btn = HIGH;
+
 struct MYDATA
 {
   int a = 12;
   //String b = "abcd";
 };
 struct MYDATA mydata ;
+
+void print_wakeup_reason(){
+  esp_sleep_wakeup_cause_t wakeup_reason;
+
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
+    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  }
+}
 
 void LoRaMessage(LoRaPacket header, String msg)
 {
@@ -211,9 +230,9 @@ void setupWifiServer(void) {
 scanWiFi();
   WiFi.begin(WIFISSID,WIFIPASSWORD);
   
-  while (WiFi.status() != WL_CONNECTED){
+  if (WiFi.status() != WL_CONNECTED){
     Serial.println("Wifi Failed");
-  delay(5000);
+    //delay(5000);
   }
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
@@ -223,11 +242,14 @@ scanWiFi();
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  print_wakeup_reason();
+
   Serial.printf("%s %s\n",WIFISSID,WIFIPASSWORD);
   //setupWifiServer();
   Wire.begin(4,15);
 
-  Serial.write((const char*)mydata,sizeof(MYDATA));
+  pinMode(0,INPUT_PULLUP);
+
   if (!bmp.begin()) {
 	  Serial.println("Could not find a valid BMP085 sensor, check wiring!");
 	  while (1) {}
@@ -273,6 +295,20 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   LoRa.loop();
+
+  etat_btn = digitalRead(0);
+  if (etat_btn == HIGH && previous_etat_btn == LOW)
+  {
+    Serial.println("Exec Light Sleep");
+    Serial.flush();
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_26,HIGH);
+    LoRa.getRadio().startReceive();
+    Ec.setSleep();
+    esp_light_sleep_start();
+    Serial.println("Exec Light Sleep");
+    Ec.wakeUp();
+  }
+  previous_etat_btn = etat_btn;
 
   if (millis() > reponse + 50 && reponse != 0)
   {

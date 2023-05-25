@@ -5,6 +5,7 @@
 
 Moteur::Moteur(/* args */)
 {
+    PIDMoteur.SetSampleTime(50);
 }
 
 Moteur::~Moteur()
@@ -56,6 +57,10 @@ void Moteur::setSpeedLimits(){
     if (_speed < 0 && _speed > -_minSpeed) _speed = 0;
     
     
+    // if (_speed != 0)
+    // {
+    //     Serial.println("speed Moteur " + (String)_speed);
+    // }
     
 
 }
@@ -81,6 +86,7 @@ float Moteur::getTargetP()
 void Moteur::setTarget(int Target)
 {
     _target = Target;
+    
 }
 
 void Moteur::setEndstop(digitalInput *fcf, digitalInput *fco)
@@ -113,7 +119,7 @@ void Moteur::loop(){
         // }
         
         PIDMoteur.Compute();
-
+        
         setSpeedLimits();
 
 
@@ -154,6 +160,8 @@ void Moteur::loop(){
     case FERMETURE_TOTALE:
         if (_fcf->isPressed())
         {
+            stopMoteur();
+            delay(10);
             _state = MotorState::IDLE;
             _target = _position;
             break;
@@ -163,10 +171,104 @@ void Moteur::loop(){
         fermeeVanne();
 
         break;
+    case OVERSPEED:
+        if (_fcf->isPressed())
+        {
+            stopMoteur();
+        }
+        fermeeVanne();
+        
+        break;
+    case AUTOTUNE:
+        autotune();
+        break;
     default:
         break;
     }
     
+}
+
+void Moteur::autotune()
+{
+    PIDAutotuner tuner = PIDAutotuner();
+
+    Serial.println("Starting autotune ");
+    // Set the target value to tune to
+    // This will depend on what you are tuning. This should be set to a value within
+    // the usual range of the setpoint. For low-inertia systems, values at the lower
+    // end of this range usually give better results. For anything else, start with a
+    // value at the middle of the range.
+    tuner.setTargetInputValue(2000);
+
+    // Set the loop interval in microseconds
+    // This must be the same as the interval the PID control loop will run at
+    tuner.setLoopInterval(50000);
+
+    // Set the output range
+    // These are the minimum and maximum possible output values of whatever you are
+    // using to control the system (Arduino analogWrite, for example, is 0-255)
+    tuner.setOutputRange(-100, 100);
+
+    // Set the Ziegler-Nichols tuning mode
+    // Set it to either PIDAutotuner::ZNModeBasicPID, PIDAutotuner::ZNModeLessOvershoot,
+    // or PIDAutotuner::ZNModeNoOvershoot. Defaults to ZNModeNoOvershoot as it is the
+    // safest option.
+    tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+
+    // This must be called immediately before the tuning loop
+    // Must be called with the current time in microseconds
+    tuner.startTuningLoop(micros());
+    
+    // Run a loop until tuner.isFinished() returns true
+    long microseconds;
+    while (!tuner.isFinished()) {
+
+        // This loop must run at the same speed as the PID control loop being tuned
+        long prevMicroseconds = microseconds;
+        microseconds = micros();
+
+        // Get input value here (temperature, encoder position, velocity, etc)
+
+        double input = EncoderVanne::getPos();
+        Serial.println("position " + (String)input);
+
+        // Call tunePID() with the input value and current time in microseconds
+        double output = tuner.tunePID(input, microseconds);
+
+        // Set the output - tunePid() will return values within the range configured
+        // by setOutputRange(). Don't change the value or the tuning results will be
+        // incorrect.
+        //doSomethingToSetOutput(output);
+        _speed = output;
+        setSpeedLimits();
+
+
+        if (_speed>0)
+        {
+            ouvrirVanne(_speed);
+        } else if (_speed<0)
+        {
+            fermeeVanne(abs(_speed));
+        }else 
+        {
+            stopMoteur();
+        }
+
+        // This loop must run at the same speed as the PID control loop being tuned
+        while (micros() - microseconds < 50000) delayMicroseconds(1);
+    }
+
+    // Turn the output off here.
+    //doSomethingToSetOutput(0);
+    stopMoteur();
+
+    // Get PID gains - set your PID controller's gains to these
+    double kp = tuner.getKp();
+    double ki = tuner.getKi();
+    double kd = tuner.getKd();
+    Serial.printf("Autotune results: kp %f ki %f kd %f \n ",kp , ki,kd);
+
+    _state = MotorState::IDLE;
 }
 
 MotorState Moteur::getState(void)
@@ -237,6 +339,7 @@ void Moteur::initPosMin(){
     case 2:
         //fin 
         stopMoteur();
+        delay(100);
         EncoderVanne::setZeroPos();
         _state = MotorState::IDLE;
     default:

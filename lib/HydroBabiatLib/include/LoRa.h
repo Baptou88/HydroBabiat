@@ -51,6 +51,8 @@ enum LoRaMessageCode{
     FilePacket,
     FileAck,
     FileEnd,
+
+    DataReponse,
 };
 
 struct LoRaPacket{
