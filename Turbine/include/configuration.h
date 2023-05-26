@@ -24,10 +24,10 @@
 
 
 //Tension de sortie
-#define PIN_VOLTAGE_OUTPUT 3
+//#define PIN_VOLTAGE_OUTPUT 3
 
 //Intensite de sortie
-#define PIN_CURRENT_OUTPUT 2
+//#define PIN_CURRENT_OUTPUT 2
 
 // Encodeur 
 #define PIN_ROTARY_CLK 4

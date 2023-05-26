@@ -14,7 +14,7 @@
 #include <menu/menunu.h>
 
 #include "digitalInput.h"
-#include "AnalogInput.h"
+//#include "AnalogInput.h"
 
 
 #include "LoRa.h"
@@ -55,7 +55,7 @@ Preferences pref;
 
 Tachymetre tachy;
 /// @brief vitesse max de la turbine
-int maxSpeed = 400;
+int maxSpeed = 300;
 
 enum displayMode_e{
   AFFICHAGE_DEFAULT,
@@ -80,11 +80,15 @@ float moteurKp = 2.2;
 float moteurKi = 0;
 float moteurKd = 0.4;
 
-float voltage_coefA = 1;
-float voltage_base = 0;
+#define VOLTAGE_ADS_CHANNEL 0
+float voltage_coefA = 1/63.9f;
+float voltage_base = -40;
+float voltageOutput = 0;
 
-float current_coefA = 0.0245f;
-float current_base = -2048;
+#define CURRENT_ADS_CHANNEL 1
+float current_coefA = 1/356.25f;
+float current_base = -13705;
+float currentOutput = 0;
 
 //Fin de course Fermee
 digitalInput FCF(PIN_FC_F,INPUT_PULLUP);
@@ -97,8 +101,8 @@ digitalInput encodeurDT(PIN_ROTARY_DT,INPUT_PULLUP);
 digitalInput encodeurCLK(PIN_ROTARY_CLK,INPUT_PULLUP);
 digitalInput encodeurSW(PIN_ROTARY_SW,INPUT_PULLUP);
 
-AnalogInput VoltageOutput(PIN_VOLTAGE_OUTPUT,voltage_coefA,voltage_base);
-AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,current_coefA,current_base);
+//AnalogInput VoltageOutput(PIN_VOLTAGE_OUTPUT,voltage_coefA,voltage_base);
+//AnalogInput CurrentOutput(PIN_CURRENT_OUTPUT,current_coefA,current_base);
 
 Adafruit_INA260 ina260 = Adafruit_INA260(); 
 Adafruit_INA219 ina219(0x44);
@@ -159,8 +163,8 @@ void displayData(){
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getRPM() + " rpm");
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getHz() + " hz");
 
-    Ec.getDisplay()->println("U: " + (String)VoltageOutput.getValue() + " V");
-    Ec.getDisplay()->println("I: " + (String)CurrentOutput.getValue() + " A");
+    Ec.getDisplay()->println("U: " + (String)voltageOutput + " V");
+    Ec.getDisplay()->println("I: " + (String)currentOutput + " A");
     Ec.getDisplay()->println("UB: " + (String)VoltageBattery + " mV");
     Ec.getDisplay()->println("Isysteme: " + (String)currentSysteme + " mA");
     
@@ -180,15 +184,15 @@ String LoRaMesageStatut(){
   toSend += "PM:" + (String) EncoderVanne::getPos() + ",";
   toSend += "PV:" + (String) transmission::ratiOuverture(mot) + ",";
   toSend += "target:" + (String) mot.getTargetP() + ",";
-  toSend += "U:" + (String) VoltageOutput.getValue() + ",";
-  toSend += "I:" + (String) CurrentOutput.getValue() + ",";
+  toSend += "U:" + (String) voltageOutput + ",";
+  toSend += "I:" + (String) currentOutput + ",";
   toSend += "tachy:" + (String) tachy.getRPM() + ",";
   toSend += "UB:" + (String) VoltageBattery + ",";
   toSend += "motorState:" + (String) mot.getState() + ",";
-  toSend += "ZV:" + (String) VoltageOutput._b + ",";
-  toSend += "AV:" + (String) VoltageOutput._a + ",";
-  toSend += "ZC:" + (String) CurrentOutput._b + ",";
-  toSend += "AC:" + (String) CurrentOutput._a + ",";
+  toSend += "ZV:" + (String) voltage_base + ",";
+  toSend += "AV:" + (String) voltage_coefA + ",";
+  toSend += "ZC:" + (String) current_base + ",";
+  toSend += "AC:" + (String) current_coefA + ",";
   toSend += "MS:" + (String) mot.getSpeed() + ",";
   toSend += "currentSyst:" + (String) currentSysteme ;
 
@@ -222,6 +226,22 @@ void LoRaMessage(LoRaPacket header, String msg){
   }
   
  
+}
+
+float calibrateADS(int channel,int sample = 20)
+{
+  ads.readADC_SingleEnded(channel);
+  
+
+  int sum = 0;
+  for (size_t i = 0; i < sample; i++)
+  {
+      sum += ads.readADC_SingleEnded(channel);
+      delay(5);
+
+  }
+  float average = sum / sample;
+  return average;
 }
 
 void printWakeUpReason(){
@@ -290,28 +310,50 @@ void commandProcess(String cmd){
   if (cmd.startsWith("ZV")) //set Zero to Voltage mesure
   {
     // VoltageOutput.setZero();
-    VoltageOutput.calibrate();
+    //VoltageOutput.calibrate();
   }
-  if (cmd.startsWith("ZC")) //set Zero to Current mesure
+  // if (cmd.startsWith("ZC")) //set Zero to Current mesure
+  // {
+  //   //CurrentOutput.setZero();
+  //   CurrentOutput.calibrate();
+  // }
+  if (cmd.startsWith("AV"))
   {
-    //CurrentOutput.setZero();
-    CurrentOutput.calibrate();
+    cmd.replace("AV","");
+    Serial.printf("voltage coef: %f \n", voltage_coefA); 
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      voltage_coefA = cmd.toFloat();
+      Serial.printf("voltage coef: %f \n", voltage_coefA); 
+    }
+    
   }
-  if (cmd.startsWith("AV="))
+  if (cmd.startsWith("AC"))
   {
-    cmd.replace("AV=",""); 
-    VoltageOutput.changeAparam(cmd.toFloat());
+    cmd.replace("AC","");
+    Serial.printf("current coef: %f \n", current_coefA); 
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      current_coefA = cmd.toFloat();
+      Serial.printf("current coef: %f \n", current_coefA); 
+    }
+    
   }
-  if (cmd.startsWith("AC="))
-  {
-    cmd.replace("AC=","");
-    CurrentOutput.changeAparam(cmd.toFloat());
-  }
+  // if (cmd.startsWith("AC="))
+  // {
+  //   cmd.replace("AC=","");
+  //   CurrentOutput.changeAparam(cmd.toFloat());
+  // }
   if (cmd.startsWith("calibrate"))
   {
     Serial.println("calibrate: ");
-    VoltageOutput.calibrate();
-    CurrentOutput.calibrate();
+    voltage_base = - calibrateADS(VOLTAGE_ADS_CHANNEL);
+
+    current_base = -calibrateADS(CURRENT_ADS_CHANNEL);
+    //VoltageOutput.calibrate();
+    //CurrentOutput.calibrate();
   }
   
   
@@ -383,7 +425,8 @@ void commandProcess(String cmd){
     }
     
   }
-   if (cmd.startsWith("IMM")) //intensité max moteur
+
+  if (cmd.startsWith("IMM")) //intensité max moteur
   {
     cmd.replace("IMM","");
     Serial.printf("IMM %f\n",mot.maxItensiteMoteur);
@@ -394,6 +437,20 @@ void commandProcess(String cmd){
     }
   
   }
+
+  if (cmd.startsWith("MaxSpeed"))
+  {
+    cmd.replace("MaxSpeed","");
+    Serial.println("Turbine MaxSpeed: " + (String)maxSpeed);
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      maxSpeed = cmd.toInt(); 
+      Serial.println("Turbine MaxSpeed: " + (String)maxSpeed);
+    }
+    
+  }
+  
   
 }
 
@@ -435,10 +492,10 @@ bool initPreferences(){
 
   ledNotif = pref.getBool("ledNotif", ledNotif);
 
-  VoltageOutput._a = pref.getFloat("voltage_coefA",voltage_coefA);
-  VoltageOutput._b = pref.getFloat("voltage_base",voltage_base);
-  CurrentOutput._a = pref.getFloat("current_coefA",current_coefA);
-  CurrentOutput._b = pref.getFloat("current_base",current_base);
+  voltage_coefA = pref.getFloat("voltage_coefA",voltage_coefA);
+  voltage_base = pref.getFloat("voltage_base",voltage_base);
+  current_coefA = pref.getFloat("current_coefA",current_coefA);
+  current_base = pref.getFloat("current_base",current_base);
 
 
 
@@ -459,10 +516,10 @@ bool savePreferences(){
   pref.putFloat("moteurKd",mot.PIDMoteur.GetKd());
   pref.putBool("ledNotif", ledNotif);
 
-  pref.putFloat("voltage_coefA",VoltageOutput._a);
-  pref.putFloat("voltage_base",VoltageOutput._b);
-  pref.putFloat("current_coefA",CurrentOutput._a);
-  pref.putFloat("current_base",CurrentOutput._b);
+  pref.putFloat("voltage_coefA",voltage_coefA);
+  pref.putFloat("voltage_base",voltage_base);
+  pref.putFloat("current_coefA",current_coefA);
+  pref.putFloat("current_base",current_base);
 
   pref.putFloat("MaxIMot",mot.maxItensiteMoteur);
 
@@ -479,16 +536,19 @@ void acquisitionEntree(){
   encodeurDT.loop();
   encodeurSW.loop();
 
-  currentSCT = ads.readADC_Differential_2_3()*0.0625f*30;
+  //currentSCT = ads.readADC_Differential_2_3()*0.0625f*30;
   mot.updateIntensiteMoteur(ina260.readCurrent());
-  VoltageOutput.loop();
-  CurrentOutput.loop();
+  // VoltageOutput.loop();
+  // CurrentOutput.loop();
   VoltageBattery = ina260.readBusVoltage();
   currentSysteme = ina219.getCurrent_mA();
 
-  rawTensionADS = ads.readADC_SingleEnded(0);
-  rawCurrentADS = ads.readADC_SingleEnded(1);
-  
+
+  rawTensionADS= ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL);
+  voltageOutput = voltage_coefA * (rawTensionADS +voltage_base) ;
+  rawCurrentADS = ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL);
+  currentOutput = current_coefA * (rawCurrentADS +current_base) ;
+
 }
 
 void menuSaveCalleback(Adafruit_SSD1306* display,bool firstTime){
@@ -522,7 +582,7 @@ void menuSavePosMotCalleback(Adafruit_SSD1306* display,bool firstTime){
 void menuVZCalleback(Adafruit_SSD1306* display,bool firstTime){
   if (firstTime)
   {
-    VoltageOutput.setZero();
+    voltage_base = - calibrateADS(VOLTAGE_ADS_CHANNEL);
   }
   
   display->clearDisplay();
@@ -535,7 +595,7 @@ void menuVZCalleback(Adafruit_SSD1306* display,bool firstTime){
 void menuCZCalleback(Adafruit_SSD1306* display,bool firstTime){
   if (firstTime)
   {
-    CurrentOutput.setZero();
+     current_base = - calibrateADS(CURRENT_ADS_CHANNEL);
   }
   
   display->clearDisplay();
@@ -604,8 +664,8 @@ void setup() {
   Serial.println(WiFi.setSleep(true)?"Wifi in sleep Mode":"Wifi NOT in sleep Mode");
   Serial.println(btStop()?"Bluetooth in sleep Mode":"Bluetooth NOT in sleep Mode");
 
-  VoltageOutput.begin();
-  CurrentOutput.begin();
+  //VoltageOutput.begin();
+  //CurrentOutput.begin();
 
   if (!Ec.begin())
   {
@@ -697,6 +757,8 @@ void setup() {
   
   //TODO Essayer de regler l'ADS plus finement , réglage du gain, echantillonage ...
   //ads.setgain();
+  ads.setDataRate(128);
+  Serial.println("ADS datat rate: " + (String) ads.getDataRate());
 
   Ec.getDisplay()->println("ok init ads");
   Ec.getDisplay()->display();
@@ -709,10 +771,10 @@ void setup() {
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kp ",&moteurKp,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Ki ",&moteurKi,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"moteur Kd ",&moteurKd,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage ka ",&VoltageOutput._a,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage z ",&VoltageOutput._b,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current ka ",&CurrentOutput._a,0,100));
-  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current z ",&CurrentOutput._b,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage ka ",&voltage_coefA,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"voltage z ",&voltage_base,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current ka ",&current_coefA,0,100));
+  menuRoot->addItem(menuParam,new menuItemFloat((char*)"current z ",&current_base,0,100));
   menuRoot->addItem(menuParam,new menuItemFloat((char*)"Max It Mot ",&mot.maxItensiteMoteur,0,100));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"voltage set z",menuVZCalleback));
   menuRoot->addItem(menuParam,new menuItemCalleback((char*)"current set z",menuCZCalleback));
