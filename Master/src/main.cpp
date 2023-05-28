@@ -156,6 +156,7 @@ String timeElapsedToString(unsigned long timeS){
 void arduinoOtaSetup(void){
   ArduinoOTA
     .onStart([]() {
+      Ec.wakeUp();
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
         type = "sketch";

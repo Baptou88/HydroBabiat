@@ -46,6 +46,7 @@ float msgSNR = 0;
 int timeDeepSleeping = 0;
 
 Adafruit_ADS1115 ads;
+bool calibrationADS = false;
 
 Ecran Ec = Ecran();
 
@@ -349,9 +350,8 @@ void commandProcess(String cmd){
   if (cmd.startsWith("calibrate"))
   {
     Serial.println("calibrate: ");
-    voltage_base = - calibrateADS(VOLTAGE_ADS_CHANNEL);
-
-    current_base = -calibrateADS(CURRENT_ADS_CHANNEL);
+    calibrationADS = true;
+    
     //VoltageOutput.calibrate();
     //CurrentOutput.calibrate();
   }
@@ -902,6 +902,14 @@ void loop() {
   }
   
 
+  if (calibrationADS)
+  {
+    calibrationADS = false; 
+    voltage_base = - calibrateADS(VOLTAGE_ADS_CHANNEL);
+
+    current_base = -calibrateADS(CURRENT_ADS_CHANNEL);
+  }
+  
   switch ( displayMode)
   {
     case AFFICHAGE_DEFAULT:
