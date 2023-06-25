@@ -8,7 +8,7 @@
 #include <wifiCredentials.h>
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
-
+#include <Update.h>
 
 struct fileDescription_t
 {
@@ -110,6 +110,11 @@ void LoRaMessage(LoRaPacket header, String msg)
     separator = msg.indexOf(',',separator+1);
     fd.OtaUpdate = msg.substring(separator +1).toInt();
     
+    if (fd.OtaUpdate)
+    {
+      Update.begin();
+    }
+    
     nexfile = SPIFFS.open(fd.fileName, FILE_WRITE);
     reponse = millis();
     startTransfertTime = millis();
@@ -119,7 +124,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     Serial.println("data : " + (String)msg);
     if (fd.OtaUpdate)
     {
-      
+      Update.
       Serial.println("OTA : " + (String)msg);
     }
     
@@ -140,6 +145,12 @@ void LoRaMessage(LoRaPacket header, String msg)
       break;
     }
     packetrecu++;
+    if (fd.OtaUpdate)
+    {
+      uint8_t *msg2;
+      msg2 = (uint8_t) msg.c_str();
+      Update.write(msg2,sizeof(msg2));
+    }
     
     Serial.println("data : " + (String)msg);
     break;
@@ -151,6 +162,15 @@ void LoRaMessage(LoRaPacket header, String msg)
     vitesseTranfert = (float) fd.fileSize / transfertTime *1000;
     Serial.println("Speed: "+ String(vitesseTranfert));
     reponse = millis();
+    if (fd.fileName)
+    {
+      if(Update.end(true)){
+        Serial.printf("Update Success: B\n" );
+      } else {
+        Update.printError(Serial);
+      }
+    }
+    
     break;
   default:
     Serial.println("LoRa msg code inconnu: " + (String)header.Code);

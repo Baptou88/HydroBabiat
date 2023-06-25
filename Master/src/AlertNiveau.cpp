@@ -19,14 +19,15 @@ void AlertNiveau::updateNiveau(int niveau)
     {
         _millis = millis();
 
-        if (niveau < min && previousNiveau > min)
+        if (niveau < min && previousNiveau > min && initialized)
         {
-            TelegramBot.sendTo(CHAT_ID,"Alert: Niveau Min Déclanché");
+            TelegramBot.sendTo(CHAT_ID,"Alert: Niveau Min Déclanché " + String(niveau) + " " + String(previousNiveau) + " " + String(min) );
         }
-        if (niveau > max && previousNiveau < max)
+        if (niveau > max && previousNiveau < max && initialized)
         {
-            TelegramBot.sendTo(CHAT_ID,"Alert: Niveau Max Déclanché");
+            TelegramBot.sendTo(CHAT_ID,"Alert: Niveau Max Déclanché " + String(niveau) + " " + String(previousNiveau) + " " + String(max));
         }
+        initialized = true;
         previousNiveau = niveau;
     }
     

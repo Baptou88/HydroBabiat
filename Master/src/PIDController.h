@@ -9,7 +9,7 @@ class PIDController: public IController
 private:
     unsigned long _millis = 0;
     // intervalle en ms
-    int intervallCalcul = 10000;
+    int intervallCalcul = 60000;
 
     
     

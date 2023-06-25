@@ -142,7 +142,7 @@ void LoRaClass::loop()
                     }
                 }else
                 {
-                    LORACLASS_DEBUG_PRINTLN("[LoRa] pas pour moi");
+                    //LORACLASS_DEBUG_PRINTLN("[LoRa] pas pour moi");
                 }
                 
                 

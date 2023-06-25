@@ -171,6 +171,10 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)bC->niveauMax;
   }
+  if (var == "bc.target")
+  {
+    return (String)bC->vanneMax;
+  }
   if (var == "tacky")
   {
     return (String)dataTurbine.tacky;
@@ -191,9 +195,13 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)dataTurbine.getPower();
   }
-  if (var == "motorState")
+  if (var == "motorStateStr")
   {
     return (String)MotorStateToString(dataTurbine.motorState);
+  }
+  if (var == "motorState")
+  {
+    return (String)dataTurbine.motorState;
   }
   if (var == "AlertNivActif")
   {
@@ -897,7 +905,12 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       if (dataStr.startsWith("max="))
       {
         dataStr.replace("max=", "");
-        bC->niveauMin = dataStr.toInt();
+        bC->niveauMax = dataStr.toInt();
+      }
+      if (dataStr.startsWith("target="))
+      {
+        dataStr.replace("target=", "");
+        bC->vanneMax = dataStr.toInt();
       }
     }
     else if (dataStr.startsWith("testNotif"))

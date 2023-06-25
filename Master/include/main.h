@@ -7,6 +7,7 @@
 #include "TelegramCredentials.h"
 #include "motorState.h"
 #include <Preferences.h>
+#include "motorState.h"
 
 bool savePref();
 
@@ -31,6 +32,7 @@ struct dataTurbine_t
     message += "\"tacky\":" +  (String)tacky +",";
     message += "\"tension\":" +  (String)U + ",";
     message += "\"tensionBatterie\":" +  (String)UB + ",";
+    message += "\"motorStateStr\":\"" +  (String)MotorStateToString(motorState) + "\",";
     message += "\"motorState\":" +  (String)motorState + ",";
     message += "\"power\":" +  (String)getPower() + ",";
     message += "\"intensite\":" +  (String)I;

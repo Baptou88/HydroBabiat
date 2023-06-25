@@ -281,13 +281,18 @@
             </div>
             <div class="container  border rounded" data-modee="1">m1
                 <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">target vanne</span>
+                    <input type="number" class="form-control param" name="bctarget" id="bc.target" value="%bc.target%"
+                        data-param="bc.target">
+                </div>
+                <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">min</span>
-                    <input type="number" class="form-control" name="bcmin" id="bc.min" value="%bc.min%"
+                    <input type="number" class="form-control param" name="bcmin" id="bc.min" value="%bc.min%"
                         data-param="bc.min">
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">max</span>
-                    <input type="number" class="form-control" name="bcmax" id="bc.max" value="%bc.max%"
+                    <input type="number" class="form-control param" name="bcmax" id="bc.max" value="%bc.max%"
                         data-param="bc.max">
                 </div>
             </div>
@@ -352,7 +357,7 @@
                     <p>Intensite <span id="intensite">%intensite% </span> A</p>
                     <p>Puissance <span id="power">%power% </span> W</p>
                     <p>Tension Batterie <span id="tensionBatterie">%tensionBatterie% </span> V</p>
-                    <p>motorState <span id="motorState">%motorState% </span> </p>
+                    <p>motorState <span id="motorStateStr">%motorStateStr% </span> </p>
                     <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="button" class="btn btn-secondary">Fermeture Totale</button>
                         <!-- <button type="button" class="btn btn-secondary">Middle</button> -->
