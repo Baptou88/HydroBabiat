@@ -126,6 +126,28 @@ const int pinAnalogTest = 6;
 
 bool OtaUpdate = false;
 
+//battery mesure
+
+#define FBattery 3700 //The default battery is 3700mv when the battery is fully charged.
+float XS = 0.0025f;
+uint16_t MMUL = 1000;
+uint16_t MUL = 100;
+
+
+void VextON(void)
+{
+  pinMode(Vext,OUTPUT);
+  digitalWrite(Vext, LOW);
+}
+float readBatLevel() {
+  pinMode(37,OUTPUT);
+  digitalWrite(37, LOW);
+  delay(10); // let GPIO stabilize
+  int analogValue = analogRead(1);
+  float voltage = 0.00403532794741887 * analogValue;
+  return voltage;
+}
+
 String timeElapsedToString(unsigned long timeS){
   
 
@@ -479,10 +501,10 @@ void displayData(){
     Ec.getDisplay()->println("WifiStatus: " + (String)WiFi.status());
     if (WiFi.getMode() == wifi_mode_t::WIFI_MODE_STA)
     {
-      Ec.getDisplay()->println("STA" + (String) WiFi.localIP().toString());
+      Ec.getDisplay()->println("STA " + (String) WiFi.localIP().toString());
     } else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
     {
-      Ec.getDisplay()->println("APSTA" + (String) WiFi.softAPIP().toString());
+      Ec.getDisplay()->println("APSTA " + (String) WiFi.softAPIP().toString());
       
     }
     
@@ -491,8 +513,11 @@ void displayData(){
     
     
     
-    Ec.getDisplay()->println("Battery: " + (String) batteryReadings);
-    Ec.getDisplay()->println("Battery: " + (String) (batteryReadings * 0.025));
+    Ec.getDisplay()->println("Battery   : " + (String) readBatLevel());
+    
+    
+    // Ec.getDisplay()->println("Battery: " + (String) analogRead(36));
+    // Ec.getDisplay()->println("Battery: " + (String) (analogRead(36) * 0.769 +150));
     
     Ec.getDisplay()->printf("Spiffs: %i / %i\n" , SPIFFS.usedBytes(), SPIFFS.totalBytes() );
     Ec.getDisplay()->printf("Spiffs: %f %\n" ,  (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) *100 );
@@ -522,7 +547,7 @@ void displayData(){
       Ec.getDisplay()->setCursor(70,22);
       Ec.getDisplay()->printf("max: %i", bC->niveauMax);
       Ec.getDisplay()->setCursor(70,32);
-      Ec.getDisplay()->printf("etat: %i", (String)etangStateToString(bC->etat));
+      Ec.getDisplay()->printf("etat: %s", (String)etangStateToString(bC->etat));
       break;
     case typeController::PID :
       Ec.getDisplay()->setCursor(70,10);
@@ -588,8 +613,22 @@ bool savePref() {
   return true;
 }
 
+void setupAnalogMesure()
+{
+  //analogSetClockDiv(255); // 1338mS
+  //analogSetCycles(8);                   // Set number of cycles per sample, default is 8 and provides an optimal result, range is 1 - 255
+  //analogSetSamples(1);                  // Set number of samples in the range, default is 1, it has an effect on sensitivity has been multiplied
+   
+  // analogSetClockDiv(1);                 // Set the divider for the ADC clock, default is 1, range is 1 - 255
+  // analogSetAttenuation(ADC_11db);       // Sets the input attenuation for ALL ADC inputs, default is ADC_11db, range is ADC_0db, ADC_2_5db, ADC_6db, ADC_11db
+  // analogSetPinAttenuation(36,ADC_11db); // Sets the input attenuation, default is ADC_11db, range is ADC_0db, ADC_2_5db, ADC_6db, ADC_11db
+  // analogSetPinAttenuation(37,ADC_11db);
+}
+
+
 // put your setup code here, to run once:
 void setup() {
+  VextON();
   Serial.begin(115200);
   Wire.begin(SDA_OLED,SCL_OLED,400000);
   //scanI2C(&Wire);
@@ -649,7 +688,8 @@ void setup() {
 #endif
 
 #ifdef pinBattery
-  pinMode(pinBattery, INPUT);
+  //pinMode(pinBattery, INPUT);
+  //pinMode(36,ANALOG);
 #endif
 
   pinMode(pinAnalogTest,INPUT);
@@ -741,16 +781,18 @@ void setup() {
 
   modes.get(modeActuel)->startMode();
 
+  setupAnalogMesure();
+
 
   Serial.println("fin setup");
 }
 
 // put your main code here, to run repeatedly:
 void loop() {
-
+  //Serial.println("readBatlevel " + (String)readBatLevel());
   ArduinoOTA.handle();
 
-  batteryReadings = analogRead(pinBattery);
+  //batteryReadings = analogRead(pinBattery);
   btnPRG.loop();
   LoRa.loop();
   Ec.loop();
