@@ -27,7 +27,7 @@ int LoRaClass::begin(){
 
 
     #ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
-        radio.setDio0Action(LoRaClass::setFlag);
+        radio.setDio0Action(LoRaClass::setFlag, RISING);
     #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
         radio.setDio1Action(LoRaClass::setFlag);
     #else
@@ -46,7 +46,7 @@ void LoRaClass::loop()
         
         reponseStatue = false;
         String toSend = MessageStatut();
-        Serial.println("reponse");
+        Serial.println("[LORA] reponse");
         LoRa.sendData(0x01,LoRaMessageCode::Data,toSend);
     }
     // if (reponseStatue)
@@ -102,7 +102,7 @@ void LoRaClass::loop()
                 if (packet.Emetteur == lastSend.id)
                 {
                     lastSend.id= 0;
-                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse" + String(float((millis() - lastSend.sendingTime) /1000.0)))
+                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse " + String(float((millis() - lastSend.sendingTime) /1000.0)))
                 }
                 
 
@@ -150,7 +150,7 @@ void LoRaClass::loop()
             }
             else
             {
-                LORACLASS_DEBUG_PRINTLN("[LORA] Reception failed");
+                LORACLASS_DEBUG_PRINTLN("[LORA] Reception failed "  + (String)state);
             }
             
         }
@@ -211,7 +211,7 @@ void LoRaClass::setNodeID(byte id)
 }
 
 void LoRaClass::checkReply(){
-    if (lastSend.id != 0 && millis()>lastSend.sendingTime + REPLY_TIMEOUT)
+    if (lastSend.id != 0 && lastSend.id != 1 && millis()>lastSend.sendingTime + REPLY_TIMEOUT)
     {
         LORACLASS_DEBUG_PRINTLN("[LORA] pas eu de reponse de: " + (String)lastSend.id)
         if (noReplyCalleback != NULL)

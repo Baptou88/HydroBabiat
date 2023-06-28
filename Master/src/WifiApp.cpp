@@ -865,6 +865,13 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       Serial.println("ws changement led");
       ledNotif != ledNotif;
     }
+    else if (dataStr.startsWith("LedNotif"))
+    {
+      ledNotif = !ledNotif;
+      
+      Prefs.putBool("LedNotif", ledNotif);
+    }
+    
     else if (dataStr.startsWith("RangePosVanneTarget"))
     {
       dataStr.replace("RangePosVanneTarget ", "");
@@ -964,7 +971,7 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
           dataStr.replace("Active=","");
           nodeTest.active = dataStr.toInt();
           Serial.println(nodeTest.active);
-          Serial.println("efs: " + (String)Prefs.putBool(nodeTest.Name.c_str(),nodeTest.active)) ; //TODO logic à deplacer
+          Prefs.putBool(nodeTest.Name.c_str(),nodeTest.active) ; //TODO logic à deplacer
         }
         
       }

@@ -62,7 +62,7 @@ float batteryReadings ;
 //Adafruit_SSD1306* display;
 int potRaw = 0;
 int potValue = 0;
-unsigned long receptionMessage = 0;
+unsigned long ledReceptionMessage = 0;
 
 int displayNum = 0;
 int maxDisplay = 4;
@@ -85,7 +85,7 @@ dataNodeTest_t dataNodeTest;
 nodeStatus_t nodeTest;
 
 LList<nodeStatus_t*> listNodes = LList<nodeStatus_t*>();
-int lastNode = 0;
+int lastNode = -1;
 
 WiFiClientSecure telegramClient;
 AsyncTelegram2 TelegramBot(telegramClient);
@@ -206,7 +206,7 @@ void arduinoOtaSetup(void){
       
       Ec.getDisplay()->println("OTA Update");
       Ec.getDisplay()->printf("Progress: %u%%\r\n", (progress / (total / 100)));
-      Ec.getDisplay()->println(ArduinoOTA.getCommand() == U_FLASH ? "sketck":"fs");
+      Ec.getDisplay()->println(ArduinoOTA.getCommand() == U_FLASH ? "sketch":"fs");
 
       Ec.getDisplay()->display();
     })
@@ -260,7 +260,7 @@ String LoRaOnMsgStatut(){
 
 void LoRaMessage(LoRaPacket header, String msg)
 {
-  receptionMessage = millis();
+  ledReceptionMessage = millis();
   switch (header.Code)
   {
   case LoRaMessageCode::FileAck :
@@ -412,7 +412,7 @@ void LoRaMessage(LoRaPacket header, String msg)
 
       if (key == "temp"){
         dataNodeTest.temp = val.toFloat();
-        Serial.println("erzeg " + (String)dataNodeTest.temp);
+        
       }
     }
   }
@@ -421,8 +421,9 @@ void LoRaMessage(LoRaPacket header, String msg)
   
 }
 
-void LoRaNoReply(byte address){
-  if (address == LoRaFileUpl.id && LoRaFileUpl.initialized)
+void LoRaNoReply(lastSend_t* packet){
+  //byte emetteur = packet->id;
+  if (packet->id == LoRaFileUpl.id && LoRaFileUpl.initialized)
   {
     Serial.println("NoReply");
     LoRaFileUpl.sendPacket();
@@ -494,13 +495,13 @@ void displayData(){
     // Ec.getDisplay()->println(dataTurbine.targetPositionVanne);
 
     Ec.getDisplay()->println("[" + String(EtangStatus.active?"x":" ") +"] Etang  : " + (String)EtangStatus.RSSI);
-    Ec.getDisplay()->print(lastNode == 1 ? ".":" ");
+    Ec.getDisplay()->print(lastNode == 0 ? (String)LoRa.lastSend.attempt:" ");
     Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - EtangStatus.dernierMessage)/1000));
     Ec.getDisplay()->println("[" + String(TurbineStatus.active?"x":" ") +"] Turbine: " + (String)TurbineStatus.RSSI);
-    Ec.getDisplay()->print(lastNode == 2 ? ".":" ");
+    Ec.getDisplay()->print(lastNode == 1 ? (String)LoRa.lastSend.attempt:" ");
     Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - TurbineStatus.dernierMessage)/1000));
     Ec.getDisplay()->println("[" + String(nodeTest.active?"x":" ") +"] Node Test: " + (String)nodeTest.RSSI);
-    Ec.getDisplay()->print(lastNode == 0 ? ".":" ");
+    Ec.getDisplay()->print(lastNode == 2 ? (String)LoRa.lastSend.attempt:" ");
     Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - nodeTest.dernierMessage)/1000));
     Ec.getDisplay()->println("num " + (String)lastNode);
     
@@ -621,6 +622,7 @@ bool initPref() {
     AlertNiv.max = Prefs.getInt("AlertNivMax");
     AlertNiv.min = Prefs.getInt("AlertNivMin");
     modeActuel = Prefs.getInt("modeVanne",0);
+    ledNotif = Prefs.getBool("LedNotif",ledNotif);
     if (Prefs.isKey(nodeTest.Name.c_str()))
     {
       nodeTest.active = Prefs.getBool(nodeTest.Name.c_str(),true);
@@ -636,6 +638,7 @@ bool savePref() {
   Prefs.putInt("AlertNivMax", AlertNiv.max);
   Prefs.putInt("AlertNivMin", AlertNiv.min);
   Prefs.putInt("modeVanne",modeActuel);
+  Prefs.putInt("LedNotif",ledNotif);
   WifiApp.monitorClients("Save Pref Ok");
   return true;
 }
@@ -863,7 +866,7 @@ void setup() {
   ProgTasks.begin(&timeClient);
   ProgTasks.initTask();
 
-  timerEnvoi.reset();
+  //timerEnvoi.reset();
 
   timerEnvoiWS.reset();
 
@@ -936,9 +939,9 @@ void loop() {
     
   }
     
-  if (millis()> receptionMessage +300 && receptionMessage != 0)
+  if (millis()> ledReceptionMessage +300 && ledReceptionMessage != 0)
   {
-    receptionMessage = 0;
+    ledReceptionMessage = 0;
     digitalWrite(LEDNOTIF,LOW);
   }
   
@@ -966,18 +969,19 @@ void loop() {
   {
     if (timerEnvoi.isOver())
     {
-      WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
-      //i = (i++%3)+2;
-      if (!listNodes.get(lastNode)->active)
-      {
-        lastNode++;
-        lastNode = lastNode % listNodes.size();
-        WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
-      }
-      
-      LoRa.sendData(listNodes.get(lastNode)->addr,LoRaMessageCode::DemandeStatut,"demandeStatut");
       lastNode++;
       lastNode = lastNode % listNodes.size();
+      //i = (i++%3)+2;
+      if (listNodes.get(lastNode)->active)
+      {
+        WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+        //Serial.println("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+        //lastNode++;
+        lastNode = lastNode % listNodes.size();
+        
+        LoRa.sendData(listNodes.get(lastNode)->addr,LoRaMessageCode::DemandeStatut,"demandeStatut");
+      }
+      
     }
     
   }

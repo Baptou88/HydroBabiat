@@ -11,7 +11,7 @@ extern LoRaClass LoRa;
 #define NODEID 0x4
 #define LED_DEBUG true
 
-unsigned long receptionMessage = 0;
+unsigned long ledReceptionMessage = 0;
 unsigned long dernierMessage = 0;
 float msgRSSI = 0;
 float msgSNR = 0;
@@ -42,7 +42,7 @@ String LoRaMesageStatut(){
 }
 
 void LoRaMessage(LoRaPacket header, String msg){
-  receptionMessage = millis();
+  ledReceptionMessage = millis();
   dernierMessage = millis();
   msgRSSI= header.RSSI;
   msgSNR= header.SNR;
@@ -90,9 +90,9 @@ void setup() {
 void loop() {
   LoRa.loop();
   
-  if (millis()> receptionMessage + 200 && receptionMessage != 0)
+  if (millis()> ledReceptionMessage + 200 && ledReceptionMessage != 0)
   {
-    receptionMessage = 0;
+    ledReceptionMessage = 0;
     digitalWrite(LED_BUILTIN,LOW);
   }
 

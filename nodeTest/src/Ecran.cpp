@@ -4,7 +4,7 @@
 
 Ecran::Ecran(TwoWire* iic)
 {
-    #pragma message RST_OLED
+  
     _iic = iic;
 
     _display = new Adafruit_SSD1306 (128,64,_iic,RST_OLED);

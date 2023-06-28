@@ -26,7 +26,7 @@ float consoCourrant = 0;
 
 bool ledNotif = false;
 
-unsigned long receptionMessage = 0;
+unsigned long ledReceptionMessage = 0;
 String message = "Default";
 
 Adafruit_SSD1306* display;
@@ -167,7 +167,7 @@ void executeCmd(String msg) {
 }
 
 void LoRaMessage(LoRaPacket header, String msg){
-  receptionMessage = millis();
+  ledReceptionMessage = millis();
   message = msg;
   if (ledNotif)
   {
@@ -451,9 +451,9 @@ void loop() {
     
   }
   
-  if (millis()> receptionMessage + 200 && receptionMessage != 0)
+  if (millis()> ledReceptionMessage + 200 && ledReceptionMessage != 0)
   {
-    receptionMessage = 0;
+    ledReceptionMessage = 0;
     digitalWrite(LED_BUILTIN,LOW);
   }
   

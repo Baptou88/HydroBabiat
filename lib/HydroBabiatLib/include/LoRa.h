@@ -8,6 +8,7 @@
 
 #define WAIT_TO_RESPONSE 80
 #define REPLY_TIMEOUT 3000
+#define MAX_ATTEMPT 2
 
 #define LORACLASS_DEBUG_STREAM Serial
 #ifdef LORACLASS_DEBUG_STREAM
@@ -67,6 +68,8 @@ struct LoRaPacket{
 struct lastSend_t{
     byte id;
     unsigned long sendingTime =0;
+    String msg;
+    int attempt = 0;
 
 };
 
@@ -99,7 +102,7 @@ private:
 
     void(*messageCalleBack)(LoRaPacket header, String Message);
     String(*MessageStatut)();
-    void(*noReplyCalleback)(byte address);
+    void(*noReplyCalleback)(lastSend_t* address);
 
     void checkReply();
 public:
@@ -114,10 +117,11 @@ public:
     SXClass getRadio(void);
 
     int sendData(byte address,LoRaMessageCode code,String Data);
+    int reSendData();
 
     void onMessage(void(*cb)(LoRaPacket header, String message));
     void onMessageStatut(String(*cb)());
-    void onNoReply(void(*cb)(byte address));
+    void onNoReply(void(*cb)(lastSend_t* address));
 
     void setNodeID(byte id);
 

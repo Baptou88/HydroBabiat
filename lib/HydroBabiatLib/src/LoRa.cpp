@@ -150,7 +150,7 @@ void LoRaClass::loop()
             }
             else
             {
-                LORACLASS_DEBUG_PRINTLN("[LORA] Reception failed");
+                LORACLASS_DEBUG_PRINTLN("[LORA] Reception failed. Error Code: " + (String) state);
             }
             
         }
@@ -185,11 +185,27 @@ int LoRaClass::sendData(byte address,LoRaMessageCode code, String Data)
 {
     transmitFlag = true;
     String msg = String(nodeID) + "," + String(address)+"," + String(code)+",|"+String(Data);
+
     lastSend.id = address;
     lastSend.sendingTime = millis();
+    lastSend.msg = msg;
+    lastSend.attempt = 0;
 
     LORACLASS_DEBUG_PRINTLN("[LORA] send msg " + (String)msg)
     int16_t retour = radio.startTransmit(msg);
+    if (retour != RADIOLIB_ERR_NONE)
+    {
+        LORACLASS_DEBUG_PRINTLN("[LORA] send msg error: " + retour)
+    }
+    
+    return retour;
+}
+int LoRaClass::reSendData(){
+    LORACLASS_DEBUG_PRINTLN("[LORA] ReSend msg " + (String)lastSend.msg)
+    lastSend.attempt++;
+    lastSend.sendingTime = millis();
+    LORACLASS_DEBUG_PRINTLN("[LORA] Tentative N° " + (String)lastSend.attempt)
+    int16_t retour = radio.startTransmit(lastSend.msg);
     if (retour != RADIOLIB_ERR_NONE)
     {
         LORACLASS_DEBUG_PRINTLN("[LORA] send msg error: " + retour)
@@ -207,7 +223,7 @@ void LoRaClass::onMessageStatut(String(*cb)())
     MessageStatut = cb;
 }
 
-void LoRaClass::onNoReply(void(*cb)(byte address)){
+void LoRaClass::onNoReply(void(*cb)(lastSend_t* address)){
     noReplyCalleback = cb;
 }
 
@@ -222,9 +238,15 @@ void LoRaClass::checkReply(){
         LORACLASS_DEBUG_PRINTLN("[LORA] pas eu de reponse de: " + (String)lastSend.id)
         if (noReplyCalleback != NULL)
         {
-            noReplyCalleback(lastSend.id);
+            noReplyCalleback(&lastSend);
         }
-        lastSend.id = 0;
+        reSendData();
+        if (lastSend.attempt >= MAX_ATTEMPT)
+        {
+            
+            lastSend.id = 0;
+        }
+        
         
     }
     
