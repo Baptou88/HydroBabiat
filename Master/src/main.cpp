@@ -81,6 +81,7 @@ nodeStatus_t TurbineStatus;
 dataEtang_t dataEtang;
 nodeStatus_t EtangStatus;
 
+dataNodeTest_t dataNodeTest;
 nodeStatus_t nodeTest;
 
 LList<nodeStatus_t*> listNodes = LList<nodeStatus_t*>();
@@ -89,6 +90,7 @@ int lastNode = 0;
 WiFiClientSecure telegramClient;
 AsyncTelegram2 TelegramBot(telegramClient);
 unsigned long telegramBot_lastTime = 0;
+bool telegramCheckMessage = true;
 ReplyKeyboard myreplykbd;
 InlineKeyboard myinlinekbd;
 bool iskeyboardactive = false;
@@ -188,6 +190,7 @@ void arduinoOtaSetup(void){
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
       Serial.println("Start updating " + type);
       OtaUpdate = true;
+      WifiApp.monitorClients("OTA UPDATE: " + type);
     })
     .onEnd([]() {
       Serial.println("\nEnd");
@@ -394,6 +397,24 @@ void LoRaMessage(LoRaPacket header, String msg)
     nodeTest.RSSI = header.RSSI;
     nodeTest.dernierMessage = millis();
     nodeTest.SNR = header.SNR;
+    String key;
+    String val;
+    
+    int posSeparat = msg.indexOf(",");
+    while (msg.indexOf(",") != -1)
+    {
+      int posDeli = msg.indexOf(":");
+      posSeparat = msg.indexOf(",");
+      key = msg.substring(0,posDeli);
+      val = msg.substring(posDeli +1,posSeparat);
+      //Serial.printf("key: %s val: %s\n",key ,val);
+      msg.remove(0,posSeparat+1);
+
+      if (key == "temp"){
+        dataNodeTest.temp = val.toFloat();
+        Serial.println("erzeg " + (String)dataNodeTest.temp);
+      }
+    }
   }
   
   WifiApp.notifyClients();
@@ -473,13 +494,15 @@ void displayData(){
     // Ec.getDisplay()->println(dataTurbine.targetPositionVanne);
 
     Ec.getDisplay()->println("[" + String(EtangStatus.active?"x":" ") +"] Etang  : " + (String)EtangStatus.RSSI);
-    //Ec.getDisplay()->println("  : " + (String)((millis() - EtangStatus.dernierMessage)/1000));
-    Ec.getDisplay()->println("  : " + timeElapsedToString((millis() - EtangStatus.dernierMessage)/1000));
+    Ec.getDisplay()->print(lastNode == 1 ? ".":" ");
+    Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - EtangStatus.dernierMessage)/1000));
     Ec.getDisplay()->println("[" + String(TurbineStatus.active?"x":" ") +"] Turbine: " + (String)TurbineStatus.RSSI);
-    Ec.getDisplay()->println("  : " + timeElapsedToString((millis() - TurbineStatus.dernierMessage)/1000));
+    Ec.getDisplay()->print(lastNode == 2 ? ".":" ");
+    Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - TurbineStatus.dernierMessage)/1000));
     Ec.getDisplay()->println("[" + String(nodeTest.active?"x":" ") +"] Node Test: " + (String)nodeTest.RSSI);
-    Ec.getDisplay()->println("  : " + timeElapsedToString((millis() - nodeTest.dernierMessage)/1000));
-    
+    Ec.getDisplay()->print(lastNode == 0 ? ".":" ");
+    Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - nodeTest.dernierMessage)/1000));
+    Ec.getDisplay()->println("num " + (String)lastNode);
     
     break;
   case 1:
@@ -598,6 +621,10 @@ bool initPref() {
     AlertNiv.max = Prefs.getInt("AlertNivMax");
     AlertNiv.min = Prefs.getInt("AlertNivMin");
     modeActuel = Prefs.getInt("modeVanne",0);
+    if (Prefs.isKey(nodeTest.Name.c_str()))
+    {
+      nodeTest.active = Prefs.getBool(nodeTest.Name.c_str(),true);
+    }
     return true;
   }
   return false;
@@ -625,7 +652,68 @@ void setupAnalogMesure()
   // analogSetPinAttenuation(37,ADC_11db);
 }
 
+void TelegramGetMessage() {
+  if (!telegramCheckMessage)
+  {
+    return;
+  }
+  
+  TBMessage msg;
+  if (WiFi.status() != WL_CONNECTED && WiFi.getMode() != WiFiMode_t::WIFI_MODE_STA)
+  {
+    return;
+  }
+  
+  
+  telegramBot_lastTime = millis();
+  
+  if (TelegramBot.getNewMessage(msg)) {
+    Serial.printf("[telegram] %s\n",msg.text);
+    switch (msg.messageType)
+    {
+      case MessageText:
+        if (msg.text.equalsIgnoreCase("/html"))
+        {
+          TelegramBot.setFormattingStyle(AsyncTelegram2::FormatStyle::HTML);
+          TelegramBot.sendMessage(msg,"<a href=\"http://www.example.com/\">inline URL</a>");
+        }
+        // check if is show keyboard command
+        if (msg.text.equalsIgnoreCase("/reply_keyboard")) {
+          // the user is asking to show the reply keyboard --> show it
+          TelegramBot.sendMessage(msg, "This is reply keyboard:", myreplykbd);
+          iskeyboardactive = true;
+        }
+        else if (msg.text.equalsIgnoreCase("/inline_keyboard")) {
+          TelegramBot.sendMessage(msg, "This is inline keyboard:", myinlinekbd);
+        }
 
+        // check if the reply keyboard is active
+        else if (iskeyboardactive) {
+          // is active -> manage the text messages sent by pressing the reply keyboard buttons
+          if (msg.text.equalsIgnoreCase("/hide_keyboard")) {
+            // sent the "hide keyboard" message --> hide the reply keyboard
+            TelegramBot.removeReplyKeyboard(msg, "Reply keyboard removed");
+            iskeyboardactive = false;
+          } else {
+            // print every others messages received
+            TelegramBot.sendMessage(msg, msg.text);
+          }
+        }
+      break;
+
+      case MessageQuery:
+        if (msg.callbackQueryData.equalsIgnoreCase("test"))
+        {
+          TelegramBot.endQuery(msg,"test,true");
+        }
+        
+        
+      break;
+    }
+    
+  
+  }
+}
 // put your setup code here, to run once:
 void setup() {
   VextON();
@@ -746,7 +834,7 @@ void setup() {
   {
     telegramClient.setCACert(telegram_cert);
     TelegramBot.setTelegramToken(BOTtoken);
-    TelegramBot.setUpdateTime(2000);
+    TelegramBot.setUpdateTime(4000);
     TelegramBot.begin() ? Serial.println("[Telegram] begin OK") : Serial.println("[Telegram] begin NOK");
 
     myreplykbd.addButton("Button1");
@@ -806,6 +894,12 @@ void loop() {
       LoRaFileUpl.beginTransmit("/testTransmitt.txt",4);
 
     }
+    if (cmd.startsWith("T"))
+    {
+      telegramCheckMessage = !telegramCheckMessage;
+      Serial.println("[Telegram] check message " + (String) telegramCheckMessage);
+    }
+    
     
   }
   
@@ -894,55 +988,8 @@ void loop() {
   //   WifiApp.notifyClients();
   // }
   
-  TBMessage msg;
-  if (WiFi.status() == WL_CONNECTED && WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA)
-  {
-    if (TelegramBot.getNewMessage(msg)) {
-    Serial.printf("[telegram] %s\n",msg.text);
-    switch (msg.messageType)
-    {
-      case MessageText:
-        if (msg.text.equalsIgnoreCase("/html"))
-        {
-          TelegramBot.setFormattingStyle(AsyncTelegram2::FormatStyle::HTML);
-          TelegramBot.sendMessage(msg,"<a href=\"http://www.example.com/\">inline URL</a>");
-        }
-        // check if is show keyboard command
-        if (msg.text.equalsIgnoreCase("/reply_keyboard")) {
-          // the user is asking to show the reply keyboard --> show it
-          TelegramBot.sendMessage(msg, "This is reply keyboard:", myreplykbd);
-          iskeyboardactive = true;
-        }
-        else if (msg.text.equalsIgnoreCase("/inline_keyboard")) {
-          TelegramBot.sendMessage(msg, "This is inline keyboard:", myinlinekbd);
-        }
-
-        // check if the reply keyboard is active
-        else if (iskeyboardactive) {
-          // is active -> manage the text messages sent by pressing the reply keyboard buttons
-          if (msg.text.equalsIgnoreCase("/hide_keyboard")) {
-            // sent the "hide keyboard" message --> hide the reply keyboard
-            TelegramBot.removeReplyKeyboard(msg, "Reply keyboard removed");
-            iskeyboardactive = false;
-          } else {
-            // print every others messages received
-            TelegramBot.sendMessage(msg, msg.text);
-          }
-        }
-      break;
-
-      case MessageQuery:
-        if (msg.callbackQueryData.equalsIgnoreCase("test"))
-        {
-          TelegramBot.endQuery(msg,"test,true");
-        }
-        
-        
-      break;
-    }
-    
-  }
-  }
+  TelegramGetMessage();
+  
   
   
   

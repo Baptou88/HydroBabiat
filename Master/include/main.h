@@ -91,13 +91,28 @@ struct dataEtang_t
   }
 };
 
+struct dataNodeTest_t
+{
+  float temp = 0;
+  
+  String toJson(){
+    String message = "";
+    message += "\"temp\":" +  (String)temp ;
+    
+    return message;
+  }
+};
+
 extern String bufferActionToSend;
 
 extern dataTurbine_t dataTurbine;
 extern nodeStatus_t TurbineStatus;
+
 extern dataEtang_t dataEtang;
 extern nodeStatus_t EtangStatus;
+
 extern nodeStatus_t nodeTest;
+extern dataNodeTest_t dataNodeTest;
 
 extern AsyncTelegram2 TelegramBot;
 

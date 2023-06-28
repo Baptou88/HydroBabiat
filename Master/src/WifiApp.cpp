@@ -64,6 +64,7 @@ void WifiAppClass::notifyClients()
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
   message += EtangStatus.toJson() + ",";
+  message += dataNodeTest.toJson() + ",";
   message += nodeTest.toJson();
 
   message += "}}";
@@ -81,7 +82,9 @@ void WifiAppClass::notifyClient(uint32_t clientId)
   message += dataTurbine.toJson() + ",";
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
-  message += EtangStatus.toJson();
+  message += EtangStatus.toJson() + ",";
+  message += dataNodeTest.toJson() + ",";
+  message += nodeTest.toJson();
 
   message += "}}";
   // Serial.print("[WiFiAPP] notif: ");
@@ -961,6 +964,7 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
           dataStr.replace("Active=","");
           nodeTest.active = dataStr.toInt();
           Serial.println(nodeTest.active);
+          Serial.println("efs: " + (String)Prefs.putBool(nodeTest.Name.c_str(),nodeTest.active)) ; //TODO logic à deplacer
         }
         
       }

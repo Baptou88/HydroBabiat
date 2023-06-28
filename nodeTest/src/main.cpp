@@ -90,7 +90,12 @@ void print_wakeup_reason(){
     default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
   }
 }
-
+String LoRaMesageStatut(){
+  Serial.println("DemandeStatut");
+  String toSend = "";
+  toSend += "temp:" + (String) bmp.readTemperature() + ",";
+  return toSend;
+}
 void LoRaMessage(LoRaPacket header, String msg)
 {
   //Serial.println(msg);
@@ -124,7 +129,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     Serial.println("data : " + (String)msg);
     if (fd.OtaUpdate)
     {
-      Update.
+      //Update.
       Serial.println("OTA : " + (String)msg);
     }
     
@@ -148,8 +153,8 @@ void LoRaMessage(LoRaPacket header, String msg)
     if (fd.OtaUpdate)
     {
       uint8_t *msg2;
-      msg2 = (uint8_t) msg.c_str();
-      Update.write(msg2,sizeof(msg2));
+      //msg2 = (uint8_t) msg.c_str();
+      //Update.write(msg2,sizeof(msg2));
     }
     
     Serial.println("data : " + (String)msg);
@@ -291,6 +296,7 @@ void setup() {
 
   LoRa.setNodeID(0x04);
   LoRa.onMessage(LoRaMessage);
+  LoRa.onMessageStatut(LoRaMesageStatut);
   if (LoRa.begin()!= RADIOLIB_ERR_NONE)
   {
     Serial.println("Error init loRa");
