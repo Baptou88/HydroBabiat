@@ -564,7 +564,7 @@ function createToast(title, textContent, etat) {
     default:
       break;
   }
-  toastImgHeader.classList.add(['bi'],['bi-circle-fill']);
+  toastImgHeader.classList.add('bi','bi-circle-fill','me-2');
   toastImgHeader.setAttribute('style',`color: ${color}`)
 
   var toastTitle = document.createElement("strong");

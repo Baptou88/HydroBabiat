@@ -701,9 +701,9 @@ void setup() {
   modes.add(pidC);
 
 
+  initPref();
   initNodes();
 
-  initPref();
 
   Em.begin();
   

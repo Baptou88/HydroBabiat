@@ -3,6 +3,8 @@
 #include <WiFiClientSecure.h>
 #include <TelegramCredentials.h>
 
+#include "main.h"
+
 #pragma once
 
 #ifndef NOTIFIER_H

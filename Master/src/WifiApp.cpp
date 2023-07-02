@@ -61,6 +61,8 @@ void WifiAppClass::notifyClients()
 
   message += "\"Mode\":" + (String)modeActuel + ",";
   message += "\"freeheap\":" + (String)ESP.getFreeHeap() + ",";
+  message += "\"Notification\":" + (String)Notifi.NotifyIndividuel + ",";
+  message += "\"NotificationGroup\":" + (String)Notifi.NotifyGroup + ",";
   message += dataTurbine.toJson() + ",";
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
@@ -80,6 +82,8 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 
   message += "\"Mode\":" + (String)modeActuel + ",";
   message += "\"freeheap\":" + (String)ESP.getFreeHeap() + ",";
+  message += "\"Notification\":" + (String)Notifi.NotifyIndividuel + ",";
+  message += "\"NotificationGroup\":" + (String)Notifi.NotifyGroup + ",";
   message += dataTurbine.toJson() + ",";
   message += TurbineStatus.toJson() + ",";
   message += dataEtang.toJson() + ",";
@@ -1013,11 +1017,13 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     {
       dataStr.replace("NotificationGroup=","");
       Notifi.NotifyGroup = ! Notifi.NotifyGroup;
+      Prefs.putBool("NotifGroup",Notifi.NotifyGroup);
     }
     else if (dataStr.startsWith("Notification="))
     {
       dataStr.replace("Notification=","");
       Notifi.NotifyIndividuel= ! Notifi.NotifyIndividuel;
+      Prefs.putBool("Notif",Notifi.NotifyIndividuel);
     }
     
     else if (dataStr.startsWith("Etang."))

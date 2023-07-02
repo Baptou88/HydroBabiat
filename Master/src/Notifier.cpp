@@ -13,6 +13,8 @@ bool Notifier::begin()
     TelegramBot.setTelegramToken(BOTtoken);
     TelegramBot.setUpdateTime(4000);
 
+    Notifi.NotifyIndividuel = Prefs.getBool("Notif",true);
+    Notifi.NotifyGroup = Prefs.getBool("NotifGroup",true);
     return TelegramBot.begin();
 }
 
