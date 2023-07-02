@@ -18,7 +18,7 @@ void IController::output()
         int out = map(vanne,0,100,0,255);
         ledcWrite(1,out);
         bufferActionToSend +=  "TURBINE:TargetVanne=" + (String)vanne + ";";
-        TelegramBot.sendTo(CHAT_ID,"[IController] nouvelle consigne ouverture Vanne: " + (String)vanne + "%");
+        Notifi.send("[IController] nouvelle consigne ouverture Vanne: " + (String)vanne + "%");
     }
     
 }

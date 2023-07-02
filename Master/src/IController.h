@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "main.h"
 
+
 extern String bufferActionToSend;
 
 enum typeController{

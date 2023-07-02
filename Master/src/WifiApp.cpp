@@ -4,12 +4,13 @@
 #include <AsyncJson.h>
 #include <NTPClient.h>
 #include <ProgrammatedTask.h>
+#include "main.h"
 
 extern int modeActuel;
 extern PIDController *pidC;
 extern manuelController *manuelC;
 extern basicController *bC;
-extern AsyncTelegram2 TelegramBot;
+
 
 extern NTPClient timeClient;
 
@@ -95,6 +96,20 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 void WifiAppClass::monitorClients(String message)
 {
   String msg = "{\"monitor\":\" "+ message + "\"}";
+  WifiApp.ws.textAll(msg);
+}
+void WifiAppClass::toastClients(String title,String message,String type)
+{
+  String msg = "";
+  StaticJsonDocument<96> doc;
+
+  JsonObject toast = doc.createNestedObject("toast");
+  toast["title"] = title;
+  toast["desc"] = message;
+  toast["type"] = type;
+  Serial.print(msg);
+  serializeJson(doc, msg);
+
   WifiApp.ws.textAll(msg);
 }
 
@@ -231,6 +246,15 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)getCpuFrequencyMhz();
   }
+  if (var == "Notification")
+  {
+    return (String) Notifi.NotifyIndividuel;
+  }
+  if (var == "NotificationGroup")
+  {
+    return (String) Notifi.NotifyGroup;
+  }
+  
   
   return "templateProcesor default: " + var;
 }
@@ -516,7 +540,7 @@ bool WifiAppClass::begin()
       
       AsyncWebParameter* p = request->getParam("modeNum");
       Serial.println("mode num : "+ (String) p->value().toInt());
-      TelegramBot.sendTo(CHAT_ID,"Changement de Mode");
+      Notifi.send("Changement de Mode");
 
       modes.get(modeActuel)->endMode();
       modeActuel=p->value().toInt();
@@ -780,6 +804,24 @@ bool WifiAppClass::begin()
     
   });
 
+  server.on("/cmd",HTTP_GET,[](AsyncWebServerRequest *request) {
+    if(!request->authenticate("bapt", "000"))
+        return request->requestAuthentication();
+    request->send(200, "text/plain", "Login Success!");
+    
+  });
+  server.on("/cmd2",HTTP_GET,[](AsyncWebServerRequest *request) {
+    if(request->authenticate("bapt", "000"))
+      {request->send(200, "text/plain", "Login Success! bapt");}
+    else if(request->authenticate("bapt2", "000"))
+      {request->send(200, "text/plain", "Login Success! bapt2");}
+    else
+      {return request->requestAuthentication();}
+    
+  });
+  server.on("/logout",HTTP_GET,[](AsyncWebServerRequest *req) {
+    req->send(401,"text/plain","deco");
+  });
   //server.onNotFound([](AsyncWebServerRequest *request)
    //                 { return request->send(404); });
 
@@ -884,6 +926,11 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       dataStr.replace("Action:", "");
       Serial.println("Action: " + dataStr);
       bufferActionToSend += dataStr;
+      if (dataStr.startsWith("NODETEST:DEEPSLEEP"))
+      {
+        startDeepSleep = millis()+1500;
+      }
+      
     }
     else if (dataStr.startsWith("pidc."))
     {
@@ -923,9 +970,13 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
         bC->vanneMax = dataStr.toInt();
       }
     }
+    else if (dataStr.startsWith("testNotifGroup"))
+    {
+      Notifi.sendToChannel("TestNotifGroup");
+    }
     else if (dataStr.startsWith("testNotif"))
     {
-      TelegramBot.sendTo(CHAT_ID,"TestNotif");
+      Notifi.send("TestNotif");
     }
     else if (dataStr.startsWith("SavePref"))
     {
@@ -956,12 +1007,38 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
         dataStr.replace("Max=","");
         AlertNiv.max = dataStr.toInt();
       }
-      
-      
-      
-      
-      
+
+    } 
+    else if (dataStr.startsWith("NotificationGroup="))
+    {
+      dataStr.replace("NotificationGroup=","");
+      Notifi.NotifyGroup = ! Notifi.NotifyGroup;
     }
+    else if (dataStr.startsWith("Notification="))
+    {
+      dataStr.replace("Notification=","");
+      Notifi.NotifyIndividuel= ! Notifi.NotifyIndividuel;
+    }
+    
+    else if (dataStr.startsWith("Etang."))
+    {
+      dataStr.replace("Etang.","");
+      if (dataStr.startsWith("Active="))
+      {
+        dataStr.replace("Active=","");
+        EtangStatus.active = dataStr.toInt();
+      }
+    }
+    else if (dataStr.startsWith("Turbine."))
+    {
+      dataStr.replace("Turbine.","");
+      if (dataStr.startsWith("Active="))
+      {
+        dataStr.replace("Active=","");
+        TurbineStatus.active = dataStr.toInt();
+      }
+    }
+    
     else if (dataStr.startsWith("NodeTest."))
       {
         Serial.println(dataStr);

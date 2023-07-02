@@ -3,11 +3,10 @@
 
 //#define ASYNC_TCP_SSL_ENABLED 1
 
-#include "AsyncTelegram2.h"
-#include "TelegramCredentials.h"
 #include "motorState.h"
 #include <Preferences.h>
 #include "motorState.h"
+#include "Notifier.h"
 
 bool savePref();
 
@@ -114,7 +113,7 @@ extern nodeStatus_t EtangStatus;
 extern nodeStatus_t nodeTest;
 extern dataNodeTest_t dataNodeTest;
 
-extern AsyncTelegram2 TelegramBot;
+
 
 
 

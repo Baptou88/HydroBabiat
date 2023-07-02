@@ -130,7 +130,7 @@ void ProgrammatedTasksClass::loop()
         if (NtpCli->getHours() == tache->h && NtpCli->getMinutes() == tache->m)
         {
           Serial.println("exec Tache: " + (String)tache->name);
-          TelegramBot.sendTo(CHAT_ID,"Exec Tache: " + (String)tache->name);
+          Notifi.send("Exec Tache: " + (String)tache->name);
           
           // TODO Gerer Execution Tache
 

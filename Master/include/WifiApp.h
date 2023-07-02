@@ -62,6 +62,8 @@ public:
 
     void monitorClients(String message);
 
+    void toastClients(String title,String message,String type);
+
     static void onNotFound(AsyncWebServerRequest *request);
 
     static String templateProcessor(const String& var);

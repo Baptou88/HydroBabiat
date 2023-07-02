@@ -2,7 +2,7 @@
 #include <configuration.h>
 #include <configGeneral.h>
 #include <configVariables.h>
-#include <AsyncTelegram2.h>
+
 #include "main.h"
 #include "motorState.h"
 #include "AlertNiveau.h"
@@ -65,7 +65,7 @@ int potValue = 0;
 unsigned long ledReceptionMessage = 0;
 
 int displayNum = 0;
-int maxDisplay = 4;
+int maxDisplay = 6;
 
 bool ledNotif = false;
 
@@ -87,13 +87,6 @@ nodeStatus_t nodeTest;
 LList<nodeStatus_t*> listNodes = LList<nodeStatus_t*>();
 int lastNode = -1;
 
-WiFiClientSecure telegramClient;
-AsyncTelegram2 TelegramBot(telegramClient);
-unsigned long telegramBot_lastTime = 0;
-bool telegramCheckMessage = true;
-ReplyKeyboard myreplykbd;
-InlineKeyboard myinlinekbd;
-bool iskeyboardactive = false;
 
 Preferences Prefs;
 
@@ -268,7 +261,10 @@ void LoRaMessage(LoRaPacket header, String msg)
     return;
     break;
   case LoRaMessageCode::DataReponse:
-    WifiApp.monitorClients(msg);
+    // WifiApp.monitorClients(msg);
+    // delay(100);
+    Serial.println("par la");
+    WifiApp.toastClients("DataReponse",msg,"warning");
     break;
   default:
     break;
@@ -481,29 +477,40 @@ void displayData(){
   {
     return;
   }
+  
   Ec.getDisplay()->clearDisplay();
+    Ec.getDisplay()->setCursor(0,0);
+  
+  if (LoRaFileUpl.initialized)
+  {
+    Ec.wakeUp();
+    
+    Ec.getDisplay()->println((String)LoRaFileUpl.getPacketNum() + "/" + (String)LoRaFileUpl.getPacketTotal());
+    Ec.getDisplay()->display();
+    return;
+  }
+  
   switch (displayNum)
   {
   case 0:
-    Ec.getDisplay()->setCursor(0,0);
-    // Ec.getDisplay()->print("PV: ");
-    // Ec.getDisplay()->println(dataTurbine.positionVanne);
+    
 
-
-    // Ec.getDisplay()->setCursor(0,12);
-    // Ec.getDisplay()->print("target: ");
-    // Ec.getDisplay()->println(dataTurbine.targetPositionVanne);
-
-    Ec.getDisplay()->println("[" + String(EtangStatus.active?"x":" ") +"] Etang  : " + (String)EtangStatus.RSSI);
-    Ec.getDisplay()->print(lastNode == 0 ? (String)LoRa.lastSend.attempt:" ");
-    Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - EtangStatus.dernierMessage)/1000));
-    Ec.getDisplay()->println("[" + String(TurbineStatus.active?"x":" ") +"] Turbine: " + (String)TurbineStatus.RSSI);
-    Ec.getDisplay()->print(lastNode == 1 ? (String)LoRa.lastSend.attempt:" ");
-    Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - TurbineStatus.dernierMessage)/1000));
-    Ec.getDisplay()->println("[" + String(nodeTest.active?"x":" ") +"] Node Test: " + (String)nodeTest.RSSI);
-    Ec.getDisplay()->print(lastNode == 2 ? (String)LoRa.lastSend.attempt:" ");
-    Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - nodeTest.dernierMessage)/1000));
-    Ec.getDisplay()->println("num " + (String)lastNode);
+    for (size_t i = 0; i < listNodes.size()  ; i++)
+    {
+      Ec.getDisplay()->println("[" + String(listNodes.get(i)->active?"x":" ") +"] " + (String)listNodes.get(i)->Name.substring(0,6) + "  : " + (String)listNodes.get(i)->RSSI);
+      if (LoRa.AttenteReponse() && lastNode == i)
+      {
+        Ec.getDisplay()->print((String)LoRa.lastSend.attempt);
+      } else
+      {
+        Ec.getDisplay()->print("  ");
+        
+      }
+      
+      
+      Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - listNodes.get(i)->dernierMessage)/1000));
+    }
+    
     
     break;
   case 1:
@@ -533,15 +540,8 @@ void displayData(){
     }
     
     
-    
-    
-    
-    
     Ec.getDisplay()->println("Battery   : " + (String) readBatLevel());
     
-    
-    // Ec.getDisplay()->println("Battery: " + (String) analogRead(36));
-    // Ec.getDisplay()->println("Battery: " + (String) (analogRead(36) * 0.769 +150));
     
     Ec.getDisplay()->printf("Spiffs: %i / %i\n" , SPIFFS.usedBytes(), SPIFFS.totalBytes() );
     Ec.getDisplay()->printf("Spiffs: %f %\n" ,  (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) *100 );
@@ -549,9 +549,8 @@ void displayData(){
     //Ec.getDisplay()->println(WifiApp.server.);
 
     break;
-  default:
-    //Ec.drawVProgressBar(30,4,10,40,(50));
-    //Ec.drawBVProgressBar(60,4,10,40,(50));
+  case 3:
+
     Ec.getDisplay()->setCursor(0,0);
     Ec.getDisplay()->println(modes.get(modeActuel)->name);
     for (size_t i = 0; i < modes.size(); i++)
@@ -592,6 +591,14 @@ void displayData(){
     Ec.getDisplay()->println("Vanne " + (String)modes.get(modeActuel)->vanne);
     
     break;
+  case 4:
+    Ec.getDisplay()->println("Notification");
+    Ec.getDisplay()->println("[" + (Notifi.NotifyIndividuel? (String)"x": (String)" ") + "]Individuel ");
+    Ec.getDisplay()->println("[" + (Notifi.NotifyGroup? (String)"x": (String)" ") + "] Group");
+    break;
+  default:
+
+    break;
   }
 
   Ec.getDisplay()->display();
@@ -608,7 +615,7 @@ void initNodes(){
   TurbineStatus.addr = TURBINE;
   TurbineStatus.Name = "Turbine";
 
-  nodeTest.addr = 0x04;
+  nodeTest.addr = NODETEST;
   nodeTest.Name = "NodeTest";
 
   listNodes.add(&EtangStatus);
@@ -655,72 +662,30 @@ void setupAnalogMesure()
   // analogSetPinAttenuation(37,ADC_11db);
 }
 
-void TelegramGetMessage() {
-  if (!telegramCheckMessage)
-  {
-    return;
-  }
-  
-  TBMessage msg;
-  if (WiFi.status() != WL_CONNECTED && WiFi.getMode() != WiFiMode_t::WIFI_MODE_STA)
-  {
-    return;
-  }
-  
-  
-  telegramBot_lastTime = millis();
-  
-  if (TelegramBot.getNewMessage(msg)) {
-    Serial.printf("[telegram] %s\n",msg.text);
-    switch (msg.messageType)
-    {
-      case MessageText:
-        if (msg.text.equalsIgnoreCase("/html"))
-        {
-          TelegramBot.setFormattingStyle(AsyncTelegram2::FormatStyle::HTML);
-          TelegramBot.sendMessage(msg,"<a href=\"http://www.example.com/\">inline URL</a>");
-        }
-        // check if is show keyboard command
-        if (msg.text.equalsIgnoreCase("/reply_keyboard")) {
-          // the user is asking to show the reply keyboard --> show it
-          TelegramBot.sendMessage(msg, "This is reply keyboard:", myreplykbd);
-          iskeyboardactive = true;
-        }
-        else if (msg.text.equalsIgnoreCase("/inline_keyboard")) {
-          TelegramBot.sendMessage(msg, "This is inline keyboard:", myinlinekbd);
-        }
 
-        // check if the reply keyboard is active
-        else if (iskeyboardactive) {
-          // is active -> manage the text messages sent by pressing the reply keyboard buttons
-          if (msg.text.equalsIgnoreCase("/hide_keyboard")) {
-            // sent the "hide keyboard" message --> hide the reply keyboard
-            TelegramBot.removeReplyKeyboard(msg, "Reply keyboard removed");
-            iskeyboardactive = false;
-          } else {
-            // print every others messages received
-            TelegramBot.sendMessage(msg, msg.text);
-          }
-        }
-      break;
+void print_wakeup_reason(){
+  esp_sleep_wakeup_cause_t wakeup_reason;
 
-      case MessageQuery:
-        if (msg.callbackQueryData.equalsIgnoreCase("test"))
-        {
-          TelegramBot.endQuery(msg,"test,true");
-        }
-        
-        
-      break;
-    }
-    
-  
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
+    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
   }
 }
+
 // put your setup code here, to run once:
 void setup() {
   VextON();
   Serial.begin(115200);
+
+  print_wakeup_reason();
+
   Wire.begin(SDA_OLED,SCL_OLED,400000);
   //scanI2C(&Wire);
   pinMode(LEDNOTIF,OUTPUT);
@@ -766,6 +731,8 @@ void setup() {
   if (LoRa.begin()!= RADIOLIB_ERR_NONE)
   {
     Serial.println("Error init loRa");
+    Ec.getDisplay()->println("LoRa init Failed !");
+    Ec.getDisplay()->display();
     while (true)
     {
     }
@@ -773,6 +740,7 @@ void setup() {
   }
   Ec.getDisplay()->println("LoRa init Ok !");
   Ec.getDisplay()->display();
+  delay(100);
 
 #ifdef PINTONE
   pinMode(PINTONE, OUTPUT);
@@ -801,10 +769,9 @@ void setup() {
   
 #endif
   
-  Ec.getDisplay()->setCursor(0,10);
-  Ec.getDisplay()->print("LoRa Ok");
-  Ec.getDisplay()->setCursor(60,10);
-  Ec.getDisplay()->println("!");
+  
+
+
   
   Ec.getDisplay()->display();
   
@@ -835,32 +802,13 @@ void setup() {
 
   if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA)
   {
-    telegramClient.setCACert(telegram_cert);
-    TelegramBot.setTelegramToken(BOTtoken);
-    TelegramBot.setUpdateTime(4000);
-    TelegramBot.begin() ? Serial.println("[Telegram] begin OK") : Serial.println("[Telegram] begin NOK");
 
-    myreplykbd.addButton("Button1");
-    myreplykbd.addButton("Button2");
-    myreplykbd.addRow();
-    myreplykbd.addButton("/hide_keyboard");
-    myreplykbd.enableResize();
+   
+    Notifi.begin() ? Serial.println("[Notifier] begin OK") : Serial.println("[Telegram] begin NOK");
 
-    myinlinekbd.addButton("ON","test", KeyboardButtonQuery);
-    myinlinekbd.addButton("GitHub", "https://github.com/cotestatnt/AsyncTelegram2/", KeyboardButtonURL);
-    
+
   }
   
-
-  // Send a welcome message to user when ready
-  // char welcome_msg[128];
-  // snprintf(welcome_msg, sizeof(welcome_msg),
-  //         "BOT @%s online.\n/help for command list.\n/inline_keyboard",
-  //         TelegramBot.getBotName());
-
-  // // Check the userid with the help of bot @JsonDumpBot or @getidsbot (work also with groups)
-  // // https://t.me/JsonDumpBot  or  https://t.me/getidsbot
-  // TelegramBot.sendTo(CHAT_ID, welcome_msg);
 
   //lireTacheProgrammer();
   ProgTasks.begin(&timeClient);
@@ -897,12 +845,6 @@ void loop() {
       LoRaFileUpl.beginTransmit("/testTransmitt.txt",4);
 
     }
-    if (cmd.startsWith("T"))
-    {
-      telegramCheckMessage = !telegramCheckMessage;
-      Serial.println("[Telegram] check message " + (String) telegramCheckMessage);
-    }
-    
     
   }
   
@@ -934,7 +876,11 @@ void loop() {
       {
         LoRa.sendData(TURBINE,LoRaMessageCode::Data,action);
         
+      } else if (node == "NODETEST")
+      {
+        LoRa.sendData(NODETEST, LoRaMessageCode::Data, action);
       }
+      
     }
     
   }
@@ -978,7 +924,7 @@ void loop() {
         //Serial.println("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
         //lastNode++;
         lastNode = lastNode % listNodes.size();
-        
+
         LoRa.sendData(listNodes.get(lastNode)->addr,LoRaMessageCode::DemandeStatut,"demandeStatut");
       }
       
@@ -992,10 +938,7 @@ void loop() {
   //   WifiApp.notifyClients();
   // }
   
-  TelegramGetMessage();
-  
-  
-  
+
   
   #ifdef USE_TFT
   if (TftTimer.isOver())
@@ -1032,7 +975,9 @@ void loop() {
     startDeepSleep = 0;
 
     WifiApp.close();
-
+    
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_14,1);
+    //esp_sleep_enable_ext1_wakeup(0x400,ESP_EXT1_WAKEUP_ANY_HIGH);
     esp_sleep_enable_timer_wakeup(10e6);
     esp_deep_sleep_start();
   }

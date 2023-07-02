@@ -2,7 +2,7 @@
 
 #include <RadioLib.h>
 #include "Ecran.h"
-#include "LoRa.h"
+#include <LoRa.h>
 #include <SPIFFS.h>
 #include <Adafruit_BMP085.h>
 #include <wifiCredentials.h>
@@ -51,7 +51,7 @@ String stateReceptiontoString(stateReception s){
 stateReception stater = NONE;
 Ecran Ec(&Wire);
 String file;
-File nexfile;
+
 int separator ;
 
 int packetrecu = 0;
@@ -65,8 +65,17 @@ Adafruit_BMP085 bmp;
 
 AsyncWebServer server(80);
 
+File fileUpload;
+
 int previous_etat_btn = HIGH;
 int etat_btn = HIGH;
+
+bool blink = false;
+unsigned long lastblink = 0;
+bool blinkState = false;
+
+String msgReponse= "";
+unsigned long tMsgReponse = 0;
 
 struct MYDATA
 {
@@ -96,6 +105,23 @@ String LoRaMesageStatut(){
   toSend += "temp:" + (String) bmp.readTemperature() + ",";
   return toSend;
 }
+void displaySpiffs(){
+  File root = SPIFFS.open("/");
+  Ec.getDisplay()->clearDisplay();
+  Ec.getDisplay()->setCursor(0,0);
+  Serial.println("display Spiffs: ");
+  File file = root.openNextFile();
+  while (file)
+  {
+    Ec.getDisplay()->print((String)file.name() + " " + (String)file.size() + "\n");
+    Serial.print((String)file.name() + " " + (String)file.size() + "\n");
+    Ec.getDisplay()->display();
+    delay(600);
+    file = root.openNextFile();
+  }
+  
+
+}
 void LoRaMessage(LoRaPacket header, String msg)
 {
   //Serial.println(msg);
@@ -110,27 +136,64 @@ void LoRaMessage(LoRaPacket header, String msg)
     fd.fileName =  msg.substring(0,separator);
     fd.fileSize = msg.substring(separator+1,  msg.indexOf(',',separator+1)).toInt();
     separator = msg.indexOf(',',separator+1);
-    Serial.println("sep "+ (String)separator);
+    
     fd.numberpacket = msg.substring(separator+1,  msg.indexOf(',',separator+1)).toInt();
     separator = msg.indexOf(',',separator+1);
     fd.OtaUpdate = msg.substring(separator +1).toInt();
+    
+    fileUpload =  SPIFFS.open(fd.fileName,FILE_WRITE,true);
+    
     
     if (fd.OtaUpdate)
     {
       Update.begin();
     }
     
-    nexfile = SPIFFS.open(fd.fileName, FILE_WRITE);
+    
     reponse = millis();
     startTransfertTime = millis();
     break;
   case LoRaMessageCode::Data :
-
+    msgReponse = "";
     Serial.println("data : " + (String)msg);
     if (fd.OtaUpdate)
     {
       //Update.
       Serial.println("OTA : " + (String)msg);
+    }
+    tMsgReponse = millis()+100;
+
+    if (msg.startsWith("blink"))
+    {
+      msg.replace("blink","");
+      blink = !blink;
+      msgReponse += "blink:" + (String)blink;
+      lastblink = millis();
+      if (!blink)
+      {
+        digitalWrite(LED_BUILTIN,LOW);
+      }
+      
+    }
+    if (msg.startsWith("DEEPSLEEP"))
+    {
+      msg.replace("DEEPSLEEP","");
+      tMsgReponse +=5000; // delai supplementaire pour laisser le Master s'endormir avant d'envoyer un msg pour le reveiller
+      msgReponse += "OK";
+    }
+    if (msg.startsWith("ToggleScreen"))
+    {
+      msg.replace("ToggleScreen","");
+      if (Ec.getState() == EcranState_IDLE)
+      {
+        Ec.setSleep();
+      } else
+      {
+        Ec.wakeUp();
+      }
+      
+      
+      msgReponse += "OK";
     }
     
     break;
@@ -156,7 +219,8 @@ void LoRaMessage(LoRaPacket header, String msg)
       //msg2 = (uint8_t) msg.c_str();
       //Update.write(msg2,sizeof(msg2));
     }
-    
+    Serial.println("print size " + (String)fileUpload.print(msg));
+
     Serial.println("data : " + (String)msg);
     break;
   
@@ -167,7 +231,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     vitesseTranfert = (float) fd.fileSize / transfertTime *1000;
     Serial.println("Speed: "+ String(vitesseTranfert));
     reponse = millis();
-    if (fd.fileName)
+    if (fd.OtaUpdate)
     {
       if(Update.end(true)){
         Serial.printf("Update Success: B\n" );
@@ -175,8 +239,10 @@ void LoRaMessage(LoRaPacket header, String msg)
         Update.printError(Serial);
       }
     }
-    
+    fileUpload.close();
+    displaySpiffs();
     break;
+  
   default:
     Serial.println("LoRa msg code inconnu: " + (String)header.Code);
     break;
@@ -264,6 +330,66 @@ scanWiFi();
   server.serveStatic("/",SPIFFS,"/");
 }
 
+// perform the actual update from a given stream
+void performUpdate(Stream &updateSource, size_t updateSize) {
+   if (Update.begin(updateSize)) {      
+      size_t written = Update.writeStream(updateSource);
+      if (written == updateSize) {
+         Serial.println("Written : " + String(written) + " successfully");
+      }
+      else {
+         Serial.println("Written only : " + String(written) + "/" + String(updateSize) + ". Retry?");
+      }
+      if (Update.end()) {
+         Serial.println("OTA done!");
+         if (Update.isFinished()) {
+            Serial.println("Update successfully completed. Rebooting.");
+         }
+         else {
+            Serial.println("Update not finished? Something went wrong!");
+         }
+      }
+      else {
+         Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+      }
+
+   }
+   else
+   {
+      Serial.println("Not enough space to begin OTA");
+   }
+}
+
+// check given FS for valid update.bin and perform update if available
+void updateFromFS(fs::FS &fs) {
+   File updateBin = fs.open("/update.bin");
+   if (updateBin) {
+      if(updateBin.isDirectory()){
+         Serial.println("Error, update.bin is not a file");
+         updateBin.close();
+         return;
+      }
+
+      size_t updateSize = updateBin.size();
+
+      if (updateSize > 0) {
+         Serial.println("Try to start update");
+         performUpdate(updateBin, updateSize);
+      }
+      else {
+         Serial.println("Error, file is empty");
+      }
+
+      updateBin.close();
+    
+      // whe finished remove the binary from sd card to indicate end of the process
+      fs.remove("/update.bin");      
+   }
+   else {
+      Serial.println("Could not load update.bin from sd root");
+   }
+}
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -274,6 +400,7 @@ void setup() {
   Wire.begin(4,15);
 
   pinMode(0,INPUT_PULLUP);
+  pinMode(LED_BUILTIN,OUTPUT);
 
   if (!bmp.begin()) {
 	  Serial.println("Could not find a valid BMP085 sensor, check wiring!");
@@ -289,6 +416,8 @@ void setup() {
     }
     
   }
+  
+  
   Ec.getDisplay()->display();
   Ec.getDisplay()->println("esgrg");
   Ec.getDisplay()->display();
@@ -315,6 +444,8 @@ void setup() {
     Serial.println("Spiffs init failed");
   }
   
+  updateFromFS(SPIFFS);
+
 }
 
 
@@ -354,4 +485,23 @@ void loop() {
 
   Ec.getDisplay()->display();
 
+  if (blink)
+  {
+    if (millis() > lastblink +300)
+    {
+      
+      lastblink = millis();
+      blinkState = !blinkState;
+      digitalWrite(LED_BUILTIN, blinkState);
+    }
+    
+  }
+
+  if (tMsgReponse !=0 && millis()>tMsgReponse)
+  {
+    tMsgReponse = 0;
+    LoRa.sendData(0x01,LoRaMessageCode::DataReponse,msgReponse);
+  }
+  
+  
 }

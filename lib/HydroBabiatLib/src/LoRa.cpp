@@ -46,7 +46,6 @@ void LoRaClass::loop()
         
         reponseStatue = false;
         String toSend = MessageStatut();
-        Serial.println("reponse");
         LoRa.sendData(0x01,LoRaMessageCode::Data,toSend);
     }
     // if (reponseStatue)
@@ -64,7 +63,11 @@ void LoRaClass::loop()
     //     LoRa.sendData(0x01,LoRaMessageCode::Data,toSend);
     // }
 
-    checkReply();
+     if (nodeID == 0x01)
+    {
+        checkReply();
+        
+    }
     
     if (operationDone)
     {
@@ -250,5 +253,8 @@ void LoRaClass::checkReply(){
         
     }
     
+}
+bool LoRaClass::AttenteReponse(){
+    return lastSend.id != 0;
 }
 LoRaClass LoRa;

@@ -125,6 +125,8 @@ public:
 
     void setNodeID(byte id);
 
+    bool AttenteReponse();
+
     lastSend_t lastSend;
 };
 

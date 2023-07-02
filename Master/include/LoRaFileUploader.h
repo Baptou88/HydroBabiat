@@ -22,18 +22,19 @@ class LoRaFileUploader
 private:
     String FileName;
     long fileOffset = 0;
-    int maxPaacketSize = 24;
+    int maxPaacketSize = 128;
     int fileLength = 0;
-    int numPacket = 0;
+    
+    int numPacket = 0;  //Nombre Total de Packet
     File file;
     unsigned long _millis;
-    int delay_ms = 50;
-    int packetNum = 0;
+    int delay_ms = 2500;
     bool endMessage = false;
     bool hasJustStarted = false;
     int attempt = 0;
     int maxAttempt = 3;
     bool stop = false;
+    int packetNum = 0;  //Packet en cours d'envoi;
 public:
     bool initialized = false;
     byte id;
@@ -44,6 +45,9 @@ public:
     void beginTransmit(String fileName, byte addr, bool OtaUpdate = false);
     void sendPacket();
     void nextPacket();
+
+    int getPacketNum();
+    int getPacketTotal();
 };
 
 extern LoRaFileUploader LoRaFileUpl;

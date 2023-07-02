@@ -106,7 +106,7 @@ void basicController::loop(void)
         default:
             break;
         }
-        TelegramBot.sendTo((int64_t)CHAT_ID, "Basic Controller: changement mode:" + etangStateToString(etat) + "\n ratio vanne Appliqué: " + String(vanne) + " %");
+        Notifi.send( "Basic Controller: changement mode:" + etangStateToString(etat) + "\n ratio vanne Appliqué: " + String(vanne) + " %");
         //bufferActionToSend += "TURBINE:TargetVanne=" + (String)vanne + ";";
         _millis = millis();
         output();

@@ -105,7 +105,6 @@ void LoRaFileUploader::sendPacket()
     if (bytesRead < maxPaacketSize)
     {
         
-        Serial.printf("[LoRaUploader] - fin1\n");
         endMessage = true;
     }
     //LoRa.getRadio().startTransmit(buffer, sizeof(buffer));
@@ -141,6 +140,16 @@ void LoRaFileUploader::nextPacket()
     }
     fileOffset += maxPaacketSize;
     packetNum++;
+}
+
+int LoRaFileUploader::getPacketNum()
+{
+    return packetNum;
+}
+
+int LoRaFileUploader::getPacketTotal()
+{
+    return numPacket;
 }
 
 LoRaFileUploader LoRaFileUpl;

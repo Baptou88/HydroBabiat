@@ -473,6 +473,9 @@ function onMessage(event) {
     console.log(data.monitor);
     terminalAdd("info",data.monitor)
   }
+  if (data.toast) {
+    createToast(data.toast.title,data.toast.desc,data.toast.type)
+  }
 }
 function sendAction(node,action) {
   console.log("sendAction: " , node , action);
@@ -529,4 +532,59 @@ function onLoad(event) {
   
 }
 
+function logout() {
+  fetch("logout")
+}
+
+function createToast(title, textContent, etat) {
+  // Créer l'élément toast
+  var toast = document.createElement('div');
+  toast.classList.add('toast');
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'assertive');
+  toast.setAttribute('aria-atomic', 'true');
+
+  // Créer le contenu du toast
+  var toastHeader = document.createElement('div');
+  toastHeader.classList.add('toast-header');
+  var toastImgHeader = document.createElement('i');
+
+  var color;
+    
+  switch (etat) {
+    case "success":
+      color = "green";
+      break;
+    case "warning":
+      color = "yellow"
+      break;
+    case "error":
+      color = "red"
+      break;
+    default:
+      break;
+  }
+  toastImgHeader.classList.add(['bi'],['bi-circle-fill']);
+  toastImgHeader.setAttribute('style',`color: ${color}`)
+
+  var toastTitle = document.createElement("strong");
+  toastTitle.innerText = title
+  var toastContent = document.createElement('div');
+  toastContent.classList.add('toast-body');
+  toastContent.textContent = textContent;
+
+  // Ajouter le contenu au toast
+  toastHeader.appendChild(toastImgHeader);
+  toastHeader.appendChild(toastTitle);
+  toast.appendChild(toastHeader);
+  toast.appendChild(toastContent);
+
+  // Ajouter le toast à la page
+  var toastContainer = document.getElementById('toastContainer');
+  toastContainer.appendChild(toast);
+
+  // Afficher le toast
+  var bootstrapToast = new bootstrap.Toast(toast);
+  bootstrapToast.show();
+}
 

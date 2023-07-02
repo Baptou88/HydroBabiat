@@ -17,17 +17,17 @@ int LoRaClass::begin(){
     radio = new Module(SS, 26, RST_LoRa, 33);
 #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
     radio = new Module(LoRa_SS, 14, LoRa_RST, 13);
-    SPI.begin(LoRa_SCK,LoRa_MISO,LoRa_MOSI,LoRa_SS);
 #else
     #error UnImplemented
 #endif
 
+    SPI.begin(LoRa_SCK,LoRa_MISO,LoRa_MOSI,LoRa_SS);
     
 
 
 
     #ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
-        radio.setDio0Action(LoRaClass::setFlag, RISING);
+        radio.setDio0Action(LoRaClass::setFlag);
     #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
         radio.setDio1Action(LoRaClass::setFlag);
     #else
@@ -46,7 +46,7 @@ void LoRaClass::loop()
         
         reponseStatue = false;
         String toSend = MessageStatut();
-        Serial.println("[LORA] reponse");
+
         LoRa.sendData(0x01,LoRaMessageCode::Data,toSend);
     }
     // if (reponseStatue)
@@ -63,8 +63,12 @@ void LoRaClass::loop()
         
     //     LoRa.sendData(0x01,LoRaMessageCode::Data,toSend);
     // }
-
-    checkReply();
+    if (nodeID == 0x01)
+    {
+        checkReply();
+        
+    }
+    
     
     if (operationDone)
     {
@@ -102,7 +106,7 @@ void LoRaClass::loop()
                 if (packet.Emetteur == lastSend.id)
                 {
                     lastSend.id= 0;
-                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse " + String(float((millis() - lastSend.sendingTime) /1000.0)))
+                    LORACLASS_DEBUG_PRINTLN("[LORA] Reponse " + String(float((millis() - lastSend.sendingTime) /1000.0)) + "s")
                 }
                 
 
@@ -140,17 +144,17 @@ void LoRaClass::loop()
                     {
                         messageCalleBack(packet,str);
                     }
-                }else
-                {
-                    //LORACLASS_DEBUG_PRINTLN("[LoRa] pas pour moi");
-                }
+                } //else
+                // {
+                //     LORACLASS_DEBUG_PRINTLN("[LoRa] pas pour moi");
+                // }
                 
                 
                 
             }
             else
             {
-                LORACLASS_DEBUG_PRINTLN("[LORA] Reception failed "  + (String)state);
+                LORACLASS_DEBUG_PRINTLN("[LORA] Reception failed. Error Code: " + (String) state);
             }
             
         }
@@ -158,6 +162,7 @@ void LoRaClass::loop()
         
         operationDone = false;
         radio.startReceive();
+        
         //LORACLASS_DEBUG_PRINTLN("[LoRa] op done "+(String) operationDone);
     }
     
@@ -184,12 +189,33 @@ int LoRaClass::sendData(byte address,LoRaMessageCode code, String Data)
 {
     transmitFlag = true;
     String msg = String(nodeID) + "," + String(address)+"," + String(code)+",|"+String(Data);
+
     lastSend.id = address;
     lastSend.sendingTime = millis();
-    
-    
+    lastSend.msg = msg;
+    lastSend.attempt = 0;
+
     LORACLASS_DEBUG_PRINTLN("[LORA] send msg " + (String)msg)
-    return radio.startTransmit(msg);
+    int16_t retour = radio.startTransmit(msg);
+    if (retour != RADIOLIB_ERR_NONE)
+    {
+        LORACLASS_DEBUG_PRINTLN("[LORA] send msg error: " + retour)
+    }
+    
+    return retour;
+}
+int LoRaClass::reSendData(){
+    LORACLASS_DEBUG_PRINTLN("[LORA] ReSend msg " + (String)lastSend.msg)
+    lastSend.attempt++;
+    lastSend.sendingTime = millis();
+    LORACLASS_DEBUG_PRINTLN("[LORA] Tentative N° " + (String)lastSend.attempt)
+    int16_t retour = radio.startTransmit(lastSend.msg);
+    if (retour != RADIOLIB_ERR_NONE)
+    {
+        LORACLASS_DEBUG_PRINTLN("[LORA] send msg error: " + retour)
+    }
+    
+    return retour;
 }
 
 void LoRaClass::onMessage(void(*cb)(LoRaPacket header, String message))
@@ -201,7 +227,7 @@ void LoRaClass::onMessageStatut(String(*cb)())
     MessageStatut = cb;
 }
 
-void LoRaClass::onNoReply(void(*cb)(byte address)){
+void LoRaClass::onNoReply(void(*cb)(lastSend_t* address)){
     noReplyCalleback = cb;
 }
 
@@ -211,16 +237,25 @@ void LoRaClass::setNodeID(byte id)
 }
 
 void LoRaClass::checkReply(){
-    if (lastSend.id != 0 && lastSend.id != 1 && millis()>lastSend.sendingTime + REPLY_TIMEOUT)
+    if (lastSend.id != 0 && millis()>lastSend.sendingTime + REPLY_TIMEOUT)
     {
         LORACLASS_DEBUG_PRINTLN("[LORA] pas eu de reponse de: " + (String)lastSend.id)
         if (noReplyCalleback != NULL)
         {
-            noReplyCalleback(lastSend.id);
+            noReplyCalleback(&lastSend);
         }
-        lastSend.id = 0;
+        reSendData();
+        if (lastSend.attempt >= MAX_ATTEMPT)
+        {
+            
+            lastSend.id = 0;
+        }
+        
         
     }
     
+}
+bool LoRaClass::AttenteReponse(){
+    return lastSend.id != 0;
 }
 LoRaClass LoRa;
