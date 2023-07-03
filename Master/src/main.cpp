@@ -128,6 +128,9 @@ float XS = 0.0025f;
 uint16_t MMUL = 1000;
 uint16_t MUL = 100;
 
+unsigned long lastBatteryNotification = 0;
+float voltageBatteryMin = 3.9;
+float voltageBattery = 0;
 
 void VextON(void)
 {
@@ -540,7 +543,7 @@ void displayData(){
     }
     
     
-    Ec.getDisplay()->println("Battery   : " + (String) readBatLevel());
+    Ec.getDisplay()->println("Battery: " + (String) voltageBattery + " / " + (String)voltageBatteryMin);
     
     
     Ec.getDisplay()->printf("Spiffs: %i / %i\n" , SPIFFS.usedBytes(), SPIFFS.totalBytes() );
@@ -828,7 +831,7 @@ void setup() {
 
 // put your main code here, to run repeatedly:
 void loop() {
-  //Serial.println("readBatlevel " + (String)readBatLevel());
+  voltageBattery = readBatLevel();
   ArduinoOTA.handle();
 
   //batteryReadings = analogRead(pinBattery);
@@ -981,6 +984,13 @@ void loop() {
     esp_sleep_enable_timer_wakeup(10e6);
     esp_deep_sleep_start();
   }
+
+  if (voltageBattery < voltageBatteryMin && millis()> lastBatteryNotification + 30 * 60 * 1000 ) // toute les 30 min
+  {
+    lastBatteryNotification = millis();
+    Notifi.send("J'ai plus de battery :(");
+  }
+  
   
   delay(10);
 }
