@@ -10,6 +10,7 @@
 #include <Wire.h>
 #include <Adafruit_INA219.h>
 #include <digitalInput.h>
+#include <Adafruit_BMP280.h>
 
 
 #include "Ecran.h"
@@ -19,7 +20,11 @@ Preferences pref;
 
 Ecran Ec(&Wire);
 Adafruit_INA219 ina219;
+
 Adafruit_VL53L1X vl53 = Adafruit_VL53L1X(12,13);
+const int ledvl53 = 13;
+bool ledvl53state = false;
+
 
 float consoCourrant = 0;
 //#define RADIOLIB_DEBUG
@@ -40,9 +45,15 @@ int16_t NiveauEtang = 0;
 int numDisplay = 0;
 int maxDisplay = 2;
 
+String msgReponse= "";
+unsigned long tMsgReponse = 0;
 
+unsigned long rebootTime = 0;
 
 digitalInput btnPRG(0,INPUT_PULLUP);
+
+
+Adafruit_BMP280 bmp;
 
 String LoRaMesageStatut(){
   Serial.println("DemandeStatut");
@@ -75,7 +86,8 @@ String LoRaMesageStatut(){
 void executeCmd(String msg) {
   if (msg.startsWith("Reboot"))
   {
-    ESP.restart(); //TODO Gérer mieu que ça
+    rebootTime = millis()+500;
+    msgReponse = "Redemarrage en cours !";
   }
   
   if (msg.startsWith("setNiveauFull"))
@@ -89,7 +101,7 @@ void executeCmd(String msg) {
     {
       niveauEtangRempli = NiveauEtang;
     }
-    
+    msgReponse += "setNiveauFull "+ (String)niveauEtangRempli; 
   }
   if (msg.startsWith("setNiveauEmpty"))
   {
@@ -102,7 +114,7 @@ void executeCmd(String msg) {
     {
       niveauEtangVide = NiveauEtang;
     }
-    
+    msgReponse += "setNiveauEmpty "+ (String)niveauEtangVide; 
   }
   if (msg.startsWith("setNiveauTP"))
   {
@@ -115,6 +127,7 @@ void executeCmd(String msg) {
     {
       niveauEtangTropPlein = NiveauEtang;
     }
+    msgReponse += "setNiveauTP "+ (String)niveauEtangTropPlein; 
   }
 
   if (msg.startsWith("CpuFreq"))
@@ -127,6 +140,7 @@ void executeCmd(String msg) {
       Serial.printf("Changement CpuFreq : %i MHz \n" , msg.toInt());
       
     } 
+    msgReponse += "CpuFreq "+ (String)getCpuFrequencyMhz(); 
   }
   
   
@@ -134,10 +148,28 @@ void executeCmd(String msg) {
   {
     msg.replace("TimingBudget=","");
     Serial.println(vl53.setTimingBudget(msg.toInt()));
+    msgReponse += "TimingBudget "+ (String)vl53.getTimingBudget(); 
   }
   if (msg.startsWith("DistanceMode="))
   {
     vl53.VL53L1X_SetDistanceMode(msg.toInt());
+  }
+  
+  if (msg.startsWith("LedVL53"))
+  {
+    msg.replace("LedVL53","");
+    if (msg.startsWith("="))
+    {
+      msg.replace("=","");
+      ledvl53state = msg.toInt();
+    } else
+    {
+      ledvl53state = !ledvl53state;
+    }
+    
+    digitalWrite(ledvl53,ledvl53state);
+    msgReponse += "LedVL53 " + (String) ledvl53state;
+    
   }
   
   
@@ -148,6 +180,7 @@ void executeCmd(String msg) {
   if (msg.startsWith("savePref"))
   {
     SauvegardePref();
+    msgReponse += "savePref Ok"; 
   }
   if (msg.startsWith("RoiC="))
   {
@@ -169,14 +202,27 @@ void executeCmd(String msg) {
 void LoRaMessage(LoRaPacket header, String msg){
   ledReceptionMessage = millis();
   message = msg;
+  
   if (ledNotif)
   {
     digitalWrite(LED_BUILTIN,HIGH);
   }
   
   Serial.println("RSSI : " + (String)header.RSSI);
-
+  
+    msgReponse ="";
   executeCmd(msg);
+
+  switch (header.Code)
+  {
+  case LoRaMessageCode::Data :
+    tMsgReponse = millis()+100;
+
+    break;
+  
+  default:
+    break;
+  }
   
   
 }
@@ -185,6 +231,7 @@ void acquisition(){
   btnPRG.loop();
 
   consoCourrant = ina219.getCurrent_mA();
+  //Serial.printf("Temp %f °C\n",bmp.readTemperature());
 }
 
 void scanI2C(){
@@ -199,8 +246,8 @@ void scanI2C(){
 		Wire.beginTransmission(address);
 		error = Wire.endTransmission();
 
-//		Wire1.beginTransmission(address);
-//		error = Wire1.endTransmission();
+    //Wire1.beginTransmission(address);
+    //error = Wire1.endTransmission();
 
 		if (error == 0)
 		{
@@ -233,7 +280,7 @@ void loadPref(){
   niveauEtangTropPlein = pref.getInt("levelTp", niveauEtangTropPlein);
   ledNotif = pref.getBool("ledNotif");
   
-  
+  ledvl53state = pref.getBool("LedVL53", false);
 
   Serial.println("load pref !");
 }
@@ -250,10 +297,25 @@ void SauvegardePref(){
   pref.putInt("distanceMode",distanceMode);
   Serial.println("save Prek ok");
   
+  pref.putBool("LedVL53",ledvl53state);
 }
 
 float ratioEtang(){
   return (float(niveauEtangVide - NiveauEtang)) / (float(niveauEtangVide - niveauEtangRempli));
+}
+
+void displayNiveauEtang() {
+    Ec.getDisplay()->drawRect(114,10,14,54,SSD1306_WHITE);
+    int16_t posy = 14 +( 1- ratioEtang())*54;
+    Ec.getDisplay()->drawLine(114,posy,124,posy,SSD1306_WHITE);
+    Ec.getDisplay()->setCursor(50,10);
+    Ec.getDisplay()->println("R : " + (String)niveauEtangRempli);
+    Ec.getDisplay()->setCursor(50,22);
+    Ec.getDisplay()->println("TP: " + (String)niveauEtangTropPlein);
+    Ec.getDisplay()->setCursor(50,50);
+    Ec.getDisplay()->println("V: " + (String)niveauEtangVide);
+    Ec.getDisplay()->setCursor(10,35);
+    Ec.getDisplay()->println("%: " + (String)(ratioEtang()*100));
 }
 void displayData(void){
 
@@ -280,15 +342,8 @@ void displayData(void){
     
     break;
   case 1:
-    Ec.getDisplay()->drawRect(114,10,14,54,SSD1306_WHITE);
-    Ec.getDisplay()->setCursor(50,10);
-    Ec.getDisplay()->println("R : " + (String)niveauEtangRempli);
-    Ec.getDisplay()->setCursor(50,22);
-    Ec.getDisplay()->println("TP: " + (String)niveauEtangTropPlein);
-    Ec.getDisplay()->setCursor(50,50);
-    Ec.getDisplay()->println("TP: " + (String)niveauEtangVide);
-    Ec.getDisplay()->setCursor(10,30);
-    Ec.getDisplay()->println("%: " + (String)ratioEtang());
+    displayNiveauEtang();
+    
     break;
   default:
     break;
@@ -326,6 +381,9 @@ void setup() {
   
   loadPref();
   
+  pinMode(ledvl53,OUTPUT);
+  digitalWrite(ledvl53,ledvl53state);
+
   Ec.getDisplay()->println("Ok Init Preference !");
   Ec.getDisplay()->display();
 
@@ -374,6 +432,28 @@ void setup() {
   Serial.println("INA219 init ok");
   Ec.getDisplay()->println("Ok Init INA219 !");
   Ec.getDisplay()->display();
+  
+  unsigned status;
+  //status = bmp.begin(BMP280_ADDRESS_ALT, BMP280_CHIPID);
+  status = bmp.begin(BMP280_ADDRESS_ALT);
+  if (!status) {
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+                      "try a different address!"));
+    Serial.print("SensorID was: 0x"); Serial.println(bmp.sensorID(),16);
+    Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+    Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
+    Serial.print("        ID of 0x60 represents a BME 280.\n");
+    Serial.print("        ID of 0x61 represents a BME 680.\n");
+    //while (1) delay(10);
+  }
+  
+  /* Default settings from datasheet. */
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+
 
   LoRa.setNodeID(NODEID);
   LoRa.onMessageStatut(LoRaMesageStatut);
@@ -429,6 +509,10 @@ void loop() {
     {
       Ec.getDisplay()->startscrollleft(0x00,0x0f);
     }
+    if (str.startsWith("I2C"))
+    {
+      scanI2C();
+    }
     
   }
   
@@ -472,7 +556,18 @@ void loop() {
     //Serial.println("Distance: " +(String) distance);
   }
 
+  if (tMsgReponse !=0 && millis()>tMsgReponse)
+  {
+    tMsgReponse = 0;
+    LoRa.sendData(0x01,LoRaMessageCode::DataReponse,msgReponse);
+  }
 
+  if (rebootTime != 0 && millis()>rebootTime)
+  {
+    rebootTime=0;
+    ESP.restart();
+  }
+  
   displayData();
   LoRa.loop();
   delay(50);

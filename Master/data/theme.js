@@ -28,11 +28,11 @@
       const svgOfActiveBtn = btnToActive.querySelector('svg use').getAttribute('href')
   
       document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
-        console.log("remove" ,element);
         element.classList.remove('active')
       })
-        console.log(btnToActive);
+        
       btnToActive.classList.add('active')
+      
       console.log(svgOfActiveBtn);
       activeThemeIcon.setAttribute('href', svgOfActiveBtn)
     }

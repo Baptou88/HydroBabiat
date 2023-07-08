@@ -267,7 +267,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     // WifiApp.monitorClients(msg);
     // delay(100);
     Serial.println("par la");
-    WifiApp.toastClients("DataReponse",msg,"warning");
+    WifiApp.toastClients("DataReponse",msg,"success");
     break;
   default:
     break;
@@ -426,6 +426,10 @@ void LoRaNoReply(lastSend_t* packet){
   {
     Serial.println("NoReply");
     LoRaFileUpl.sendPacket();
+  }
+  if (packet->code == LoRaMessageCode::Data)
+  {
+    WifiApp.toastClients("Not Send",packet->msg,"error");
   }
   
   
@@ -600,7 +604,14 @@ void displayData(){
     Ec.getDisplay()->println("[" + (Notifi.NotifyGroup? (String)"x": (String)" ") + "] Group");
     break;
   default:
-
+    Ec.getDisplay()->println("Programmateur   " + (String)ProgTasks.ListTasks->size());
+    for (size_t i = 0; i < ProgTasks.ListTasks->size(); i++)
+    {
+      ProgrammatedTask *tache = ProgTasks.ListTasks->get(i);
+      Ec.getDisplay()->println("[" + (String) (String)(tache->isActive()?"x":" ") + "] " + (String)tache->name);
+      Ec.getDisplay()->println( (String)tache->getHours()+ " " + (String)tache->getMinutes() + "  Ouverture: " + (String)tache->targetVanne);
+    }
+    
     break;
   }
 

@@ -21,7 +21,7 @@ bool ProgrammatedTasksClass::initTask()
 {
   if (!SPIFFS.exists(ProgrammatedTaskFile))
   {
-    return true;
+    return false;
   }
 
   File fichier = SPIFFS.open(ProgrammatedTaskFile, "r");

@@ -125,6 +125,13 @@ document.addEventListener('alpine:init', () => {
           this.etablished = ! this.etablished
       }
   })
+  Alpine.store('Etang', {
+    niveauRempli: 0,
+    send(e){
+      Alpine.store('Etang').niveauRempli = e.target.value;
+      sendAction('ETANG','setNiveauFull=' + e.target.value)
+    }
+  })
 })
 
 document.addEventListener('DOMContentLoaded',async function (){
@@ -427,7 +434,12 @@ function wsData(d) {
       if(typeof(el) != 'undefined' && el != null){
         if (el.type == "checkbox") {
           el.checked = d[element]
-        } else {
+        } else if (el.type == "range") {
+          console.log("input srgd ",el, d[element]);
+          el.value = d[element]
+        } 
+        
+        else {
           el.innerHTML = d[element];
         }
       }else{
@@ -455,6 +467,9 @@ function wsData(d) {
       if (element == "tacky") {
         chartTurbine.series[2].addPoint([dt, d[element]],true ,false,true);
         el.value = d[element]
+      }
+      if (element == "niveauEtangRempli") {
+        Alpine.store('Etang').niveauRempli = d[element]
       }
       
     }
@@ -529,6 +544,7 @@ function onLoad(event) {
       
     }
   })
+  
   
 }
 

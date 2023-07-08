@@ -70,7 +70,7 @@ struct lastSend_t{
     unsigned long sendingTime =0;
     String msg;
     int attempt = 0;
-
+    LoRaMessageCode code;
 };
 
 class LoRaClass

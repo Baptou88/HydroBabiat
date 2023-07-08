@@ -105,7 +105,7 @@ void WifiAppClass::monitorClients(String message)
 void WifiAppClass::toastClients(String title,String message,String type)
 {
   String msg = "";
-  StaticJsonDocument<96> doc;
+  StaticJsonDocument<256> doc;
 
   JsonObject toast = doc.createNestedObject("toast");
   toast["title"] = title;

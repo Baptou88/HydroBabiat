@@ -267,10 +267,15 @@ void commandProcess(String cmd){
   {
     ESP.restart(); //TODO Gérer mieu que ça
   }
-  if (cmd.startsWith("CpuFreq="))
+  if (cmd.startsWith("CpuFreq"))
   {
-    cmd.replace("CpuFreq=","");
-    setCpuFrequencyMhz(cmd.toInt());
+    cmd.replace("CpuFreq","");
+    if (cmd.startsWith("="))
+    {
+      cmd.replace("=","");
+      setCpuFrequencyMhz(cmd.toInt());
+    }
+    
     Serial.println("CpuFreq: "+ (String)getCpuFrequencyMhz());
     msgReponse += "CpuFreq:" +(String)getCpuFrequencyMhz();
   }

@@ -193,6 +193,7 @@ int LoRaClass::sendData(byte address,LoRaMessageCode code, String Data)
     lastSend.sendingTime = millis();
     lastSend.msg = msg;
     lastSend.attempt = 0;
+    lastSend.code = code;
 
     LORACLASS_DEBUG_PRINTLN("[LORA] send msg " + (String)msg)
     int16_t retour = radio.startTransmit(msg);

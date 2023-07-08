@@ -77,6 +77,14 @@ bool blinkState = false;
 String msgReponse= "";
 unsigned long tMsgReponse = 0;
 
+enum scanWifiStatus_t {
+  ScanWifi_NONE,
+  ScanWifi_Begin,
+  ScanWifi_Proceed,
+  ScanWifi_End,
+};
+scanWifiStatus_t scanWifi = ScanWifi_NONE;
+
 struct MYDATA
 {
   int a = 12;
@@ -195,6 +203,13 @@ void LoRaMessage(LoRaPacket header, String msg)
       
       msgReponse += "OK";
     }
+    if (msg.startsWith("ScanWifi"))
+    {
+      msg.replace("ScanWifi","");
+      scanWifi = ScanWifi_Begin;
+      msgReponse += "Proceed";
+    }
+    
     
     break;
   
@@ -389,6 +404,19 @@ void updateFromFS(fs::FS &fs) {
       Serial.println("Could not load update.bin from sd root");
    }
 }
+String ListWifi(int n){
+  String msg;
+  Serial.print("n");
+  Serial.println(n);
+  for (size_t i = 0; i < n; i++)
+  {
+    Serial.println(WiFi.SSID(i));
+    msg += (String)WiFi.SSID(i)+ " " + (String)WiFi.RSSI(i) + " " + (String)WiFi.encryptionType(i) + "\n";
+    //msg += (String)WiFi.SSID(i);
+    
+  }
+  return msg;
+}
 
 void setup() {
   // put your setup code here, to run once:
@@ -482,6 +510,7 @@ void loop() {
   Ec.getDisplay()->println("speed :  " + (String)vitesseTranfert);
   Ec.getDisplay()->println("ota :  " + (String)fd.OtaUpdate);
   Ec.getDisplay()->println("Temp :  " + (String)bmp.readTemperature());
+  //Ec.getDisplay()->println("Hall :  " + (String)hallRead());
 
   Ec.getDisplay()->display();
 
@@ -503,5 +532,32 @@ void loop() {
     LoRa.sendData(0x01,LoRaMessageCode::DataReponse,msgReponse);
   }
   
+  static int n = 0;
+  
+  switch (scanWifi)
+  {
+  case ScanWifi_NONE:
+    
+    break;
+  case ScanWifi_Begin:
+    Serial.println("Wifi scan: " + (String)WiFi.scanNetworks(true,true));
+    scanWifi = ScanWifi_Proceed;
+    break;
+  case ScanWifi_Proceed:
+    n = WiFi.scanComplete();
+    if (n >= 0)
+    {
+      scanWifi = ScanWifi_End;
+    }
+    
+    
+    break;
+  case ScanWifi_End:
+    LoRa.sendData(0x01,LoRaMessageCode::DataReponse,"Wifi "+(String)n + " " +(String)ListWifi(n));
+    scanWifi = ScanWifi_NONE;
+    break;
+  default:
+    break;
+  }
   
 }
