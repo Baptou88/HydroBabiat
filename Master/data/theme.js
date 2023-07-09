@@ -41,6 +41,16 @@
 
       activeThemeIcon.removeChild(activeThemeIcon.querySelector('i'))
       activeThemeIcon.appendChild(newI)
+
+      document.querySelectorAll('.highcharts-dark').forEach(el =>{
+        el.classList.replace('highcharts-dark',`highcharts-${theme}`)
+      })
+      document.querySelectorAll('.highcharts-light').forEach(el =>{
+        el.classList.replace('highcharts-light',`highcharts-${theme}`)
+      })
+      document.querySelectorAll('.highcharts-auto').forEach(el =>{
+        el.classList.replace('highcharts-auto',`highcharts-${theme}`)
+      })
     }
   
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {

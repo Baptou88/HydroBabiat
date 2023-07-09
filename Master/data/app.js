@@ -122,9 +122,14 @@ document.addEventListener('alpine:init', () => {
   })
   Alpine.store('Etang', {
     niveauRempli: 0,
-    send(e){
+    niveauVide:0,
+    sendRempli(e){
       Alpine.store('Etang').niveauRempli = e.target.value;
       sendAction('ETANG','setNiveauFull=' + e.target.value)
+    },
+    sendVide(e){
+      Alpine.store('Etang').niveauVide = e.target.value;
+      sendAction('ETANG','setNiveauEmpty=' + e.target.value)
     }
   })
 })
@@ -159,6 +164,9 @@ document.addEventListener('DOMContentLoaded',async function (){
   })
 
   var graphNiveauOption = {
+    chart: {
+      styledMode: true
+    },
     title: { text: 'Etang' },
     // subtitle: {text: 'Using I2C Interface'},
     // chart: {
@@ -210,10 +218,8 @@ document.addEventListener('DOMContentLoaded',async function (){
         animation: false,
         dataLabels: { enabled: true }
       },
-      
     },
     xAxis: {
-        //categories: [],
       type: 'datetime',
       dateTimeLabelFormats: { second: '%H:%M:%S' }
     },
@@ -228,21 +234,15 @@ document.addEventListener('DOMContentLoaded',async function (){
       {
         data: [],
         name: 'Niveau (%)',
-        color: '#007acc',
+        //color: '#007acc',
       }
-      // { 
-      //   data:[],
-      //   name: 'Ouverture (%)',
-      //   color: '#FFAA8a' 
-      // },
-      // { 
-      //   data:[],
-      //   name: 'Cible (%)',
-      //   color: '#FFC78A' 
-      // }
+      
     ]
   };
   var graphTurbineOption = {
+    chart: {
+      styledMode: true
+    },
     title: { text: 'Turbine' },
     // subtitle: {text: 'Using I2C Interface'},
     // chart: {
@@ -279,7 +279,6 @@ document.addEventListener('DOMContentLoaded',async function (){
     },
     plotOptions: {
       series: {
-        
         showInNavigator: true
       },
       line: { 
@@ -464,6 +463,9 @@ function wsData(d) {
       }
       if (element == "niveauEtangRempli") {
         Alpine.store('Etang').niveauRempli = d[element]
+      }
+      if (element == "niveauEtangVide") {
+        Alpine.store('Etang').niveauVide = d[element]
       }
       
     }

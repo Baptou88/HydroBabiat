@@ -129,12 +129,26 @@
             }
         }
     </style>
+
+    <style>
+        @import url("https://code.highcharts.com/css/highcharts.css");
+        @media (prefers-color-scheme: dark) {
+        :root {
+            
+
+            /* UI colors */
+            --highcharts-background-color: #212529;
+        }
+        }   
+        .highcharts-dark {
+        /* UI colors */
+            --highcharts-background-color: #212529; 
+        }
+    </style>
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg ">
-
-
 
         <div class="container-fluid">
 
@@ -440,20 +454,13 @@
                         <button type="button" class="btn btn-outline-warning computed" data-node="ETANG"
                             data-action="Reboot">Reboot</button>
                     </div>
-                    <div x-data="{ edit: false}">
-                        <button @click="edit = !edit">Edit</button>
-                        <p>Niveau Etang Rempli: <span id="niveauEtangRempli">%niveauEtangRempli% </span></p>
-                        <p>Niveau Etang Vide: <span id="niveauEtangVide">%niveauEtangVide% </span></p>
-                        <label for="settingEtangRempli" class="form-label">Etang Rempli</label>
-                        <input x-bind:disabled="!edit" type="range" class="form-range computed-range" min="500" max="1000" id="settingEtangRempli"
-                            value="%niveauEtangRempli%" data-node="ETANG" data-action="setNiveauFull">
-                        <label for="settingEtangVide" class="form-label">Etang Vide</label>
-                        <input x-bind:disabled="!edit" type="range" class="form-range computed-range" min="2000" max="3000" id="settingEtangVide"
-                            value="%niveauEtangVide%">
-                    </div>
-                    <div x-data class="container">
-                        <label for="niveauRempli">niveauRempli <span x-text="$store.Etang.niveauRempli"></span></label>
-                        <input type="range" name="" id="niveauRempli" max="1000" @click="console.log($event)" x-on:change=" $store.Etang.send($event)" x-bind:value="$store.Etang.niveauRempli">
+                    <div x-data="{ edit: false, full : 0,vide : 0}">
+                        <button class="btn" @click="edit = !edit" @click.outside="edit = false">Edit</button>
+                        <label for="niveauRempli" class="form-label">niveauRempli <span x-text="$store.Etang.niveauRempli"></span> <span x-show="edit" x-text="full"></span></label>
+                        <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit" id="niveauRempli" max="1000" @click="console.log($event)" x-on:input="full = $event.target.value" x-on:change=" $store.Etang.sendRempli($event)" x-bind:value="$store.Etang.niveauRempli">
+                        <label for="niveauVide"class="form-label">niveauVide <span x-text="$store.Etang.niveauVide"></span> </span><span x-show="edit" x-text="vide"></span></label>
+                        <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit" id="niveauVide" min="1500"  max="3000" @click="console.log($event)" x-on:input="vide = $event.target.value" x-on:change=" $store.Etang.sendVide($event)" x-bind:value="$store.Etang.niveauVide">
+                        
                     </div>
                     <div class="container mt-5">
                         <input type="text" id="sliderTimingBudget" />
@@ -470,7 +477,7 @@
                             <i class="bi bi-circle-fill" style="color: grey;"></i>
                         </div>
                         <div class="ms-auto">
-                            <button onclick="console.log('bjr');">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="console.log('bjr');">
                                 <i class="bi bi-tools"></i>
 
                             </button>
@@ -501,10 +508,10 @@
         </div>
     </div>
     <div class="container border mb-2">
-        <div id="chartNiveau" class="container"></div>
+        <div id="chartNiveau" class="container highcharts-auto"></div>
     </div>
     <div class="container border mb-2">
-        <div id="chartTurbine" class="container"></div>
+        <div id="chartTurbine" class="container highcharts-auto"></div>
     </div>
     <div class="container mb-2">
         <h3>Temps d'envoi</h3>
@@ -585,9 +592,6 @@
         integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
         crossorigin="anonymous"></script>
     <script>
-        // document.querySelector("#darkmode").onclick = function(e){
-        //   darkmode.toggleDarkMode();
-        // }
         function updateNodeTimer() {
             var nodes = document.querySelectorAll('.nodeTimer');
 
