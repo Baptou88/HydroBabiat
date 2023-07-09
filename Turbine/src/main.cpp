@@ -26,6 +26,8 @@
 #include "main.h"
 #include "wifiCredentials.h"
 
+#include "moyenneGlissante.h"
+
 #define ms_to_s_factor 1000
 #define us_to_s_factor 1000000
 
@@ -36,6 +38,8 @@ AsyncWebServer server(80);
 unsigned long wifiActivation = 0;
 unsigned long ledReceptionMessage = 0;
 unsigned long dernierMessage = 0;
+
+unsigned long shouldReboot = 0;
 
 unsigned long messageReponse = 0;
 String msgReponse = "";
@@ -85,6 +89,7 @@ float moteurKd = 0.4;
 float voltage_coefA = 1/63.9f;
 float voltage_base = -40;
 float voltageOutput = 0;
+moyenneGlissante voltageOutputMoy(50);
 
 #define CURRENT_ADS_CHANNEL 1
 float current_coefA = 1/356.25f;
@@ -156,15 +161,14 @@ void displayData(){
     Ec.getDisplay()->println("RSSI: " + (String)(msgRSSI) + " dbm");
     Ec.getDisplay()->println("SNR : " + (String)(msgSNR) + " db");
 
-    Ec.getDisplay()->println("Tension ADS: " + (String)((rawTensionADS - 40)/63.9));
-    Ec.getDisplay()->println("Current ADS: " + (String)((rawCurrentADS - 13705)/356.25));
+
     break;
   case 2:
     Ec.getDisplay()->setCursor(0,0);
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getRPM() + " rpm");
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getHz() + " hz");
 
-    Ec.getDisplay()->println("U: " + (String)voltageOutput + " V");
+    Ec.getDisplay()->println("U: " + (String)voltageOutputMoy.get() + " V");
     Ec.getDisplay()->println("I: " + (String)currentOutput + " A");
     Ec.getDisplay()->println("UB: " + (String)VoltageBattery + " mV");
     Ec.getDisplay()->println("Isysteme: " + (String)currentSysteme + " mA");
@@ -210,6 +214,7 @@ void LoRaMessage(LoRaPacket header, String msg){
   //digitalWrite(LED_BUILTIN,HIGH);
   Serial.println(msg);
   
+  msgReponse = "";
   
   if (ledNotif)
   {
@@ -229,7 +234,7 @@ void LoRaMessage(LoRaPacket header, String msg){
  
 }
 
-float calibrateADS(int channel,int sample = 20)
+float calibrateADS(int channel,int sample = 20, int delaybetweensample = 5)
 {
   ads.readADC_SingleEnded(channel);
   
@@ -238,7 +243,7 @@ float calibrateADS(int channel,int sample = 20)
   for (size_t i = 0; i < sample; i++)
   {
       sum += ads.readADC_SingleEnded(channel);
-      delay(5);
+      delay(delaybetweensample);
 
   }
   float average = sum / sample;
@@ -265,7 +270,8 @@ void commandProcess(String cmd){
   
   if (cmd.startsWith("Reboot"))
   {
-    ESP.restart(); //TODO Gérer mieu que ça
+    shouldReboot = millis()+3000;
+    msgReponse += "Reboot en cours";
   }
   if (cmd.startsWith("CpuFreq"))
   {
@@ -311,6 +317,7 @@ void commandProcess(String cmd){
     int consigne = transmission::ratioToTarget((cmd.toInt()),mot);
     Serial.printf("consigne %i\n",consigne);
     mot.setTarget(transmission::ratioToTarget((cmd.toInt() ),mot));
+    msgReponse += "Consigne Vanne : " + (String)cmd.toInt();
   }
   
   if (cmd.startsWith("ZV")) //set Zero to Voltage mesure
@@ -356,7 +363,7 @@ void commandProcess(String cmd){
   {
     Serial.println("calibrate: ");
     calibrationADS = true;
-    
+    msgReponse += "Calibration ...";
     //VoltageOutput.calibrate();
     //CurrentOutput.calibrate();
   }
@@ -372,27 +379,24 @@ void commandProcess(String cmd){
       om = cmd.toInt();
     }
     mot.ouvertureMax = om;
-    
+    msgReponse += "Ouverture Max: " + (String)om;
   }
   if (cmd.startsWith("FT"))
   {
     cmd.replace("FT","");
     mot.setState(MotorState::FERMETURE_TOTALE);
-  }
-  if (cmd.startsWith("reboot"))
-  {
-    cmd.replace("reboot","");
-    ESP.restart();
+    msgReponse += "Fermeture Totale ...";
   }
   if (cmd.startsWith("SavePref"))
   {
     cmd.replace("SavePref","");
-    savePreferences();
+    msgReponse += "Sauvegarde Pref: " + (String) savePreferences();
   }
   
   if (cmd.startsWith("initVanne"))
   {
     mot.setState(MotorState::INIT_POS_MIN);
+    msgReponse += "initVanne";
   }
   if (cmd.startsWith("idle"))
   {
@@ -440,7 +444,7 @@ void commandProcess(String cmd){
       cmd.replace("=","");
       mot.maxItensiteMoteur = cmd.toFloat();
     }
-  
+    msgReponse += "Intensite max Moteur " + (String) mot.maxItensiteMoteur ;
   }
 
   if (cmd.startsWith("MaxSpeed"))
@@ -453,7 +457,7 @@ void commandProcess(String cmd){
       maxSpeed = cmd.toInt(); 
       Serial.println("Turbine MaxSpeed: " + (String)maxSpeed);
     }
-    
+    msgReponse += "Max Speed: " + (String) maxSpeed;
   }
   
   
@@ -548,9 +552,11 @@ void acquisitionEntree(){
   VoltageBattery = ina260.readBusVoltage();
   currentSysteme = ina219.getCurrent_mA();
 
-
+  ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL);
   rawTensionADS= ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL);
-  voltageOutput = voltage_coefA * (rawTensionADS +voltage_base) ;
+  //Serial.println("rawtensionAds " + (String))
+  voltageOutput = voltage_coefA * (rawTensionADS + voltage_base) ;
+  voltageOutputMoy.add(voltageOutput);
   rawCurrentADS = ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL);
   currentOutput = current_coefA * (rawCurrentADS +current_base) ;
 
@@ -600,7 +606,7 @@ void menuVZCalleback(Adafruit_SSD1306* display,bool firstTime){
 void menuCZCalleback(Adafruit_SSD1306* display,bool firstTime){
   if (firstTime)
   {
-     current_base = - calibrateADS(CURRENT_ADS_CHANNEL);
+    current_base = - calibrateADS(CURRENT_ADS_CHANNEL);
   }
   
   display->clearDisplay();
@@ -894,6 +900,12 @@ void loop() {
 
   }
   
+  if (shouldReboot != 0 && millis()> shouldReboot)
+  {
+    shouldReboot = 0;
+    ESP.restart();
+  }
+  
 
   if (tachy.getRPM()>maxSpeed)
   {
@@ -909,10 +921,12 @@ void loop() {
 
   if (calibrationADS)
   {
+    Serial.printf("[calibration ADS] current_base %f voltage_base %f\n",current_base,voltage_base);
     calibrationADS = false; 
-    voltage_base = - calibrateADS(VOLTAGE_ADS_CHANNEL);
+    voltage_base = -calibrateADS(VOLTAGE_ADS_CHANNEL,30,10);
 
     current_base = -calibrateADS(CURRENT_ADS_CHANNEL);
+    Serial.printf("[calibration ADS] current_base %f voltage_base %f\n",current_base,voltage_base);
   }
   
   switch ( displayMode)
