@@ -22,19 +22,25 @@
     setTheme(getPreferredTheme())
   
     const showActiveTheme = theme => {
-    console.log(theme);
-      const activeThemeIcon = document.querySelector('.theme-icon-active use')
+
+      const activeThemeIcon = document.querySelector('.theme-icon-active')
       const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
-      const svgOfActiveBtn = btnToActive.querySelector('svg use').getAttribute('href')
-  
+
+      const iOfActiveBtn = btnToActive.querySelector('i').classList
+      
       document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
         element.classList.remove('active')
       })
         
       btnToActive.classList.add('active')
       
-      console.log(svgOfActiveBtn);
-      activeThemeIcon.setAttribute('href', svgOfActiveBtn)
+      let newI = document.createElement('i')
+      iOfActiveBtn.forEach(el => {
+        newI.classList.add(el)
+      })
+
+      activeThemeIcon.removeChild(activeThemeIcon.querySelector('i'))
+      activeThemeIcon.appendChild(newI)
     }
   
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {

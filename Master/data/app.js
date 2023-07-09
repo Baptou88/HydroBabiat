@@ -4,11 +4,7 @@ class modes_C {
       this.id = id;
   }
   active(){
-      console.log(`active function ${this.name} `);
-      // document.querySelectorAll(`[data-moded="${this.id}"]`).forEach(el => {
-      //     console.log(el);
-      //     el.removeAttribute("disabled")
-      // })
+
       document.querySelectorAll(`[data-modee="${this.id}"]`).forEach(el => {
           el.classList.remove('visually-hidden')
       })
@@ -64,7 +60,6 @@ let modalDisconnected;
 let chartNiveau 
 let chartTurbine 
 function initTerminal(){
-  console.log("init terminal");
   const form = document.querySelector("#command-form")
   const input = document.querySelector("#command-input")
 
@@ -361,7 +356,6 @@ document.addEventListener('DOMContentLoaded',async function (){
             data: []
           }
           var dt = new Date(((items[0]-3600)) * 1000).getTime();
-          //console.log("ajax: " , dt);
           graphNiveauOption.series[0].data.push([dt,parseFloat(items[2])]);
           graphTurbineOption.series[0].data.push([dt,parseFloat(items[4])]);
           graphTurbineOption.series[1].data.push([dt,parseFloat(items[3])]);
@@ -373,7 +367,7 @@ document.addEventListener('DOMContentLoaded',async function (){
       chartTurbine = Highcharts.stockChart('chartTurbine',graphTurbineOption)
     }
   })
-  //console.log("fini" , graphNiveauOption.series[0].data);
+
   
   initWebSocket(); 
 
@@ -435,7 +429,7 @@ function wsData(d) {
         if (el.type == "checkbox") {
           el.checked = d[element]
         } else if (el.type == "range") {
-          console.log("input srgd ",el, d[element]);
+          
           el.value = d[element]
         } 
         
@@ -485,7 +479,7 @@ function onMessage(event) {
     wsData(data.data)
   }
   if (data.monitor) {
-    console.log(data.monitor);
+    //console.log(data.monitor);
     terminalAdd("info",data.monitor)
   }
   if (data.toast) {
@@ -493,7 +487,7 @@ function onMessage(event) {
   }
 }
 function sendAction(node,action) {
-  console.log("sendAction: " , node , action);
+
   terminalAdd("command","sendAction: " + node + action);
   websocket.send("Action:" + node + ":" + action + ";")
 }
@@ -505,7 +499,6 @@ function onLoad(event) {
 
 
   rangePosVanne.addEventListener('change',(e) => {
-    console.log(e);
     websocket.send(e.target.id + " " + e.target.value)
   })
 
@@ -520,11 +513,9 @@ function onLoad(event) {
   var computedRange = document.querySelectorAll(".computed-range")
   computedRange.forEach(element => {
     element.addEventListener('change', (e) => {
-      console.log(e);
       var node = e.target.dataset.node
       var cmd = e.target.dataset.action
       var val = e.target.value
-      console.log(node,cmd,val);
       sendAction(node,cmd + "=" + val)
 
     })
