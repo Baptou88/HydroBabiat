@@ -39,6 +39,10 @@
 
 #include <EnergieMeter.h>
 
+// this file contains binary patch for the SX1262
+#include <modules/SX126x/patches/SX126x_patch_scan.h>
+
+
 #define LED 7
 #define POT  6
 
@@ -120,6 +124,9 @@ const int pinAnalogTest = 6;
 
 
 bool OtaUpdate = false;
+
+bool SpectrumScan = false;
+
 
 //battery mesure
 
@@ -982,6 +989,55 @@ void loop() {
   {
     startReboot = 0;
     ESP.restart();
+  }
+  
+  if (SpectrumScan)
+  {
+    SpectrumScan = false;
+    
+    Serial.print(F("[SX1262] Uploading patch ... "));
+    int state;
+    state = LoRa.getRadio().uploadPatch(sx126x_patch_scan, sizeof(sx126x_patch_scan));
+    if(state == RADIOLIB_ERR_NONE) {
+      Serial.println(F("success!"));
+    } else {
+      Serial.print(F("failed, code "));
+      Serial.println(state);
+      while(true);
+    }
+    for (size_t i = 0; i < 200; i++)
+    {
+      
+    
+    
+      state = LoRa.getRadio().spectralScanStart(2048);
+      if(state == RADIOLIB_ERR_NONE) {
+        Serial.println(F("success!"));
+      } else {
+        Serial.print(F("failed, code "));
+        Serial.println(state);
+        while(true);
+      }
+
+      // wait for spectral scan to finish
+      while(LoRa.getRadio().spectralScanGetStatus() != RADIOLIB_ERR_NONE) {
+        delay(10);
+      }
+
+      // read the results
+      uint16_t results[RADIOLIB_SX126X_SPECTRAL_SCAN_RES_SIZE];
+      state = LoRa.getRadio().spectralScanGetResult(results);
+      if(state == RADIOLIB_ERR_NONE) {
+        // we have some results, print it
+        Serial.print("SCAN ");
+        for(uint8_t i = 0; i < RADIOLIB_SX126X_SPECTRAL_SCAN_RES_SIZE; i++) {
+          Serial.print(results[i]);
+          Serial.print(',');
+        }
+        Serial.println(" END");
+      }
+      delay(20);
+    }
   }
   
   if (millis() > startDeepSleep && startDeepSleep !=0)

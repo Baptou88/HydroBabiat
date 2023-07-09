@@ -11,6 +11,7 @@ extern PIDController *pidC;
 extern manuelController *manuelC;
 extern basicController *bC;
 
+extern bool SpectrumScan;
 
 extern NTPClient timeClient;
 
@@ -1046,23 +1047,27 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     }
     
     else if (dataStr.startsWith("NodeTest."))
+    {
+      Serial.println(dataStr);
+      dataStr.replace("NodeTest.","");
+      if (dataStr.startsWith("Active="))
       {
-        Serial.println(dataStr);
-        dataStr.replace("NodeTest.","");
-        if (dataStr.startsWith("Active="))
-        {
-          dataStr.replace("Active=","");
-          nodeTest.active = dataStr.toInt();
-          Serial.println(nodeTest.active);
-          Prefs.putBool(nodeTest.Name.c_str(),nodeTest.active) ; //TODO logic à deplacer
-        }
-        
+        dataStr.replace("Active=","");
+        nodeTest.active = dataStr.toInt();
+        Serial.println(nodeTest.active);
+        Prefs.putBool(nodeTest.Name.c_str(),nodeTest.active) ; //TODO logic à deplacer
       }
-     else if (dataStr.startsWith("DeepSleepServer"))
+      
+    }
+    else if (dataStr.startsWith("DeepSleepServer"))
     {
       startDeepSleep = millis() + 5000;
     }
-  
+    else if (dataStr.startsWith("SpectrumScan"))
+    {
+      SpectrumScan = true;
+    }
+    
 
     WifiApp.notifyClients();
   }
