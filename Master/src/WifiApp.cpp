@@ -380,22 +380,27 @@ bool WifiAppClass::begin()
     WiFi.disconnect();
     String SSID = Prefs.getString("WIFI_SSID","");
     String PSSWD = Prefs.getString("WIFI_PSSWD","");
+    Serial.println(PSSWD);
     WiFi.begin(SSID.c_str(),PSSWD.c_str());
   
     //WiFi.setHostname("Esp32S3_HydroBabiat");
     //WiFi.begin(WIFISSID, WIFIPASSWORD);
-    if (WiFi.waitForConnectResult() != WL_CONNECTED)
+    
+    
+    
+    
+    if (WiFi.waitForConnectResult(10000) != WL_CONNECTED)
     {
       Serial.println("[WiFiApp] Wifi begin failed");
       return false;
     }
     timeClient.begin();
-  if (!timeClient.update())
-  {
-    timeClient.forceUpdate();
-  }
-  Serial.println("Time: " + (String)timeClient.getFormattedDate() + " " + (String)timeClient.getFormattedTime());
-  Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
+    if (!timeClient.update())
+    {
+      timeClient.forceUpdate();
+    }
+    Serial.println("Time: " + (String)timeClient.getFormattedDate() + " " + (String)timeClient.getFormattedTime());
+    Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
   } else
   {
     WiFi.mode(WiFiMode_t::WIFI_MODE_APSTA);
@@ -428,7 +433,6 @@ bool WifiAppClass::begin()
     
   }).setFilter(ON_STA_FILTER);
   server.on("/",HTTP_GET,[](AsyncWebServerRequest * req){
-    Serial.println("////");
     String retour;
     retour += "<html><head>";
     retour += R"(<style>
@@ -450,7 +454,7 @@ bool WifiAppClass::begin()
     {
       retour += "<div class=\"container\" data-ssid=\""+ WiFi.SSID(i) +"\" onclick=\"selectElement(this)\">";
       retour += "<h3>" + WiFi.SSID(i) + "</h3>";
-      retour += "<p>" + WiFi.SSID(i) + " " + (String)WiFi.RSSI(i) + " " + (String)WiFi.encryptionType(i) + "</p>\n";
+      retour += "<p>" + WiFi.SSID(i) + " " + (String)WiFi.RSSI(i) + "(dbm) " + (String)WiFi.encryptionType(i) + "</p>\n";
       retour += "</div>";
     }
     retour += R"(<input type="hidden" name="ssid" id="ssid">)";

@@ -4,9 +4,18 @@
 <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  width="512.000000pt" height="512.000000pt" viewBox="0 0 512.000000 512.000000"
  preserveAspectRatio="xMidYMid meet">
-
+<style>
+    path {
+        fill: #559977;
+    }
+    @media (prefers-color-scheme: dark){
+        path {
+            fill: white;
+        }
+    }
+</style>
 <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)"
-fill="#000000" stroke="none">
+ stroke="none">
 <path d="M2623 4915 c-83 -18 -156 -58 -218 -120 -100 -101 -135 -206 -135
 -411 l0 -121 -98 -31 c-54 -18 -146 -56 -204 -85 l-106 -54 -238 238 -239 239
 -62 -67 c-33 -38 -75 -90 -92 -118 -78 -129 -80 -314 -4 -445 14 -25 73 -93

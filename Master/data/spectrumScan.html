@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpectrumScan</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <!-- <script src="https://code.highcharts.com/stock/highstock.js"></script> -->
+    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+</head>
+<body>
+    <div id="graph">
+
+    </div>
+    <div class="container">
+        <input type="text">
+        <button onclick="ajouter()">ajouter</button>
+        <button onclick="ajouter2()">ajouter2</button>
+    </div>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script>
+        let SCAN_MARK_START = 'SCAN '
+        let SCAN_MARK_END = ', END'
+        let scanTest =  'SCAN 650,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2048,0, END\n' +
+                        'SCAN 0,0,0,0,0,0,0,0,0,0,0,0,0,1792,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0, END\n' +
+                        'SCAN 0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0, END'
+        
+        let arr =[];
+        let numScan = 0;
+
+        // var lines = scanTest.split('\n')
+        // for (let line = 0; line < lines.length; line++) {
+        //     let lineTest = lines[line];
+            
+        
+
+        //     if (lineTest.startsWith(SCAN_MARK_START) && lineTest.endsWith(SCAN_MARK_END)) {
+        //         lineTest = lineTest.replace(SCAN_MARK_START,"")
+        //         lineTest = lineTest.replace(SCAN_MARK_END,"")
+
+        //         var linesplit = lineTest.split(',')
+                
+               
+
+        //         for (let index = 0; index < linesplit.length; index++) {
+        //             const element = linesplit[index];
+        //             var c = [line, index*-1,parseInt(element)]
+        //             arr.push(c)
+        //         }
+                
+
+        //     }
+             //numScan++
+        // }
+        
+        function getRandomInt(max) {
+            return Math.floor(Math.random()*max);
+        }
+
+        // Substring template helper for the responsive labels
+        Highcharts.Templating.helpers.substr = (s, from, length) =>
+            s.substr(from, length);
+
+        // Create the chart
+        var graph = Highcharts.chart('graph', {
+
+        chart: {
+            type: 'heatmap',
+            marginTop: 40,
+            marginBottom: 80,
+            plotBorderWidth: 1
+        },
+
+
+        title: {
+            text: 'RadioLib SX126X SpectralScan',
+            style: {
+                fontSize: '1em'
+            }
+        },
+
+        xAxis: {
+            categories: [],
+            title: "Time (Sample)"
+        },
+
+        yAxis: {
+            categories: [-11,-15,-19,-23,-27,-31,-35,-39,-43,-47,-51,-55,-59,-63,-67,-71,-75,-79,-83,-87,-91,-95,-99,-103,-107,-111,-115,-119,-123,-127,-131,-135,-139],
+            title: "RSSI (Dbm)",
+            reversed: true
+        },
+
+        accessibility: {
+            point: {
+                descriptionFormat: '{(add index 1)}. ' +
+                    '{series.xAxis.categories.(x)} sales ' +
+                    '{series.yAxis.categories.(y)}, {value}.'
+            }
+        },
+
+        colorAxis: {
+            // min: 0,
+            // minColor: 'purple',
+            // maxColor: 'yellow'
+            min: 0,
+            // minColor: '#FFFFFF',
+            // maxColor: Highcharts.getOptions().colors[0]
+            minColor: '#CAE3DF',
+            maxColor: '#4F2F7D'
+        },
+
+        legend: {
+            align: 'right',
+            layout: 'vertical',
+            margin: 0,
+            verticalAlign: 'top',
+            y: 25,
+            symbolHeight: 280
+        },
+
+        tooltip: {
+            format: '<b>{series.xAxis.categories.(point.x)}</b> sold<br>' +
+                '<b>{point.value}</b> items on <br>' +
+                '<b>{series.yAxis.categories.(point.y)}</b>'
+        },
+
+        series: [{
+            name: 'Sales per employee',
+            borderWidth: 0.1,
+            data: arr,
+            dataLabels: {
+                enabled: false,
+                color: '#000000'
+            }
+        }],
+
+        responsive: {
+        
+            rules: [{
+                condition: {
+                    maxWidth: 500
+                },
+                chartOptions: {
+                    yAxis: {
+                        labels: {
+                            format: '{substr value 0 1}'
+                        }
+                    }
+                }
+            }]
+        }
+
+        });
+    
+    var tData = []
+        /**
+     * @param data[]
+     * */
+    function ajouter(data) {
+        let newData = [];
+        for (let index = 0; index < 33; index++) {
+
+            newData = newData.concat([[numScan,(index),getRandomInt(2048)]])
+        }
+        
+        let oldData = graph.series[0].data
+        let totalData = oldData.concat(newData)
+            
+        var xAxis = graph.xAxis[0];
+        xAxis.setCategories(xAxis.categories.concat(numScan+1))
+  
+        graph.series[0].setData(totalData)
+        numScan++
+    }
+
+        function ajouter2() {
+            var ligne = "SCAN 0,0,0,0,0,0,0,0,1792,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,12,0, END"
+            var arr =  []
+            if (ligne.startsWith(SCAN_MARK_START) && ligne.endsWith(SCAN_MARK_END)) {
+                ligne = ligne.replace(SCAN_MARK_START,"")
+                ligne = ligne.replace(SCAN_MARK_END,"")
+
+                var ligne= ligne.split(',')
+                
+               
+
+                for (let index = 0; index < ligne.length; index++) {
+                    const element = ligne[index];
+                    var c = [3, index*-1,parseInt(element)]
+                    //arr.push(c)
+                    graph.series[0].addPoint(c)
+                }
+                console.log(arr);
+            }
+        //graph.series[0].addPoint(4,arr)
+    }
+    function ajouterN(n) {
+        let compteur = 0;
+        const intervalleId = setInterval(()=> {
+            compteur++
+            ajouter()
+            if (compteur == n) {
+                clearInterval(intervalleId)
+            }
+        },1000)
+    }
+    </script>
+</body>
+</html>

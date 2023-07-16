@@ -811,13 +811,36 @@ void setup() {
 	}
   
 
-  Ec.getDisplay()->clearDisplay();
+  //Ec.getDisplay()->clearDisplay();
   Ec.getDisplay()->display();
 
 
   
+  Ec.getDisplay()->println("Starting Wifi APP");
+  Ec.getDisplay()->display();
 
-  WifiApp.begin();
+  while (!WifiApp.begin())
+  {
+    if (Serial.available()>0)
+    {
+      String cmd = Serial.readStringUntil('\n');
+      if (cmd.startsWith("REMOVE"))
+      {
+        Prefs.remove("WIFI_SSID");
+        Prefs.remove("WIFI_PSSWD");
+        Serial.println("ESP RESTART");
+        ESP.restart();
+      }
+    }
+    
+    Ec.getDisplay()->println("failed");
+    Ec.getDisplay()->display();
+    delay(1000);
+  }
+  
+  Ec.getDisplay()->println("Starting Wifi APP Success");
+  Ec.getDisplay()->display();
+  
 
   arduinoOtaSetup();
 

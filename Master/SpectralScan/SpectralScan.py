@@ -104,41 +104,49 @@ def main():
     # list of frequencies in frequency mode
     freq_list = []
 
-    # open the COM port
-    with serial.Serial(args.port, args.speed, timeout=None) as com:
-        while(True):
-            # update the progress bar
-            if not freq_mode:
-                printProgressBar(row, scan_len)
+     # set some properites and show 
+    timestamp = datetime.now().strftime('%y-%m-%d %H-%M-%S')
+    title = f'RadioLib SX126x Spectral Scan {timestamp}'
 
-            # read a single line
-            try:
-                line = com.readline().decode('utf-8')
-            except:
-                continue
+    with open(f'{OUT_PATH}/{title.replace(" ", "_")}.txt','w') as ftext:
 
-            if SCAN_MARK_FREQ in line:
-                new_freq = float(line.split(' ')[1])
-                if (len(freq_list) > 1) and (new_freq < freq_list[-1]):
-                    break
+    
+        # open the COM port
+        with serial.Serial(args.port, args.speed, timeout=None) as com:
+            while(True):
+                # update the progress bar
+                if not freq_mode:
+                    printProgressBar(row, scan_len)
 
-                freq_list.append(new_freq)
-                print('{:.3f}'.format(new_freq), end = '\r')
-                continue
+                # read a single line
+                try:
+                    line = com.readline().decode('utf-8')
+                except:
+                    continue
 
-            # check the markers
-            if (SCAN_MARK_START in line) and (SCAN_MARK_END in line):
-                # get the values
-                scanline = line[len(SCAN_MARK_START):-len(SCAN_MARK_END)].split(',')
-                for col in range(SCAN_WIDTH):
-                    arr[col][row] = int(scanline[col])
-                
-                # increment the row counter
-                row = row + 1
+                if SCAN_MARK_FREQ in line:
+                    new_freq = float(line.split(' ')[1])
+                    if (len(freq_list) > 1) and (new_freq < freq_list[-1]):
+                        break
 
-                # check if we're done
-                if (not freq_mode) and (row >= scan_len):
-                    break
+                    freq_list.append(new_freq)
+                    print('{:.3f}'.format(new_freq), end = '\r')
+                    continue
+
+                # check the markers
+                if (SCAN_MARK_START in line) and (SCAN_MARK_END in line):
+                    ftext.write(line.replace('\n','',1))
+                    # get the values
+                    scanline = line[len(SCAN_MARK_START):-len(SCAN_MARK_END)].split(',')
+                    for col in range(SCAN_WIDTH):
+                        arr[col][row] = int(scanline[col])
+                    
+                    # increment the row counter
+                    row = row + 1
+
+                    # check if we're done
+                    if (not freq_mode) and (row >= scan_len):
+                        break
     
     # scale to the number of scans (sum of any given scanline)
     num_samples = arr.sum(axis=0)[0]
@@ -158,9 +166,7 @@ def main():
     im = ax.imshow(arr[:,:scan_len], cmap=args.map, extent=extent)
     fig.colorbar(im)
 
-    # set some properites and show 
-    timestamp = datetime.now().strftime('%y-%m-%d %H-%M-%S')
-    title = f'RadioLib SX126x Spectral Scan {timestamp}'
+   
     if freq_mode:
         plt.xlabel("Frequency [Hz]")
     else:
