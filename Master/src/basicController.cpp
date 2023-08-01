@@ -62,7 +62,7 @@ void basicController::loop(void)
     // default:
     //     break;
     // }
-    if (etat == UNDIFINED && EtangStatus.dernierMessage == 0 && TurbineStatus.dernierMessage == 0)
+    if ((etat == UNDIFINED && EtangStatus.dernierMessage == 0) && TurbineStatus.dernierMessage == 0)
     {
         return;
     }

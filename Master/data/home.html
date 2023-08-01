@@ -136,7 +136,7 @@
             
 
             /* UI colors */
-            --highcharts-background-color: #212529;
+            --highcharts-background-color: var(--bs-body-bg);
         }
         }   
         .highcharts-dark {
@@ -165,14 +165,24 @@
                             <a class="nav-link active" aria-current="page" href="/">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="programmateur">Programmateur</a>
+                            <a class="nav-link icon-link" href="programmateur"><i class="bi bi-calendar-event"></i> Programmateur</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="fileSystem">FS</a>
+                            <a class="nav-link" href="fileSystem"><i class="bi bi-database"></i> FS</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link disabled">Disabled</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle icon-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-cpu"></i>Nodes
+                            </a>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#Etang">Etang</a></li>
+                              <li><a class="dropdown-item" href="#Turbine">Turbine</a></li>
+                              <li><a class="dropdown-item" href="#NodeTest">nodeTest</a></li>
+                            </ul>
+                          </li>
                         <li class="nav-item dropdown">
                             <button
                                 class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center"
@@ -212,8 +222,8 @@
                     <form class="d-flex" role="search">
                         <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
                         <button class="btn btn-outline-success" type="submit">Search</button>
-                        <button class="btn btn-outline-warning" type="submit" onclick="logout()">Logout</button>
                     </form>
+                    <button class="btn btn-outline-warning" type="submit" onclick="logout()">Logout %user%</button>
                 </div>
             </div>
         </nav>
@@ -239,21 +249,22 @@
                 <label for="RangePosVanneTarget" class="form-label">Cible Vanne</label>
                 <input type="range" class="form-range" id="RangePosVanneTarget" value="%RangePosVanneTarget%">
             </div>
-            <div class="container  border rounded" data-modee="1">m1
+            <div class="container  border rounded" data-modee="1" x-data="{edited: false}">m1
+                <div x-show="edited"><button @click="edited = false" onclick="websocket.send('SavePref')">Save Pref</button></div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">target vanne</span>
                     <input type="number" class="form-control param" name="bctarget" id="bc.target" value="%bc.target%"
-                        data-param="bc.target">
+                        data-param="bc.target" x-on:change="edited = true">
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">min</span>
                     <input type="number" class="form-control param" name="bcmin" id="bc.min" value="%bc.min%"
-                        data-param="bc.min">
+                        data-param="bc.min" x-on:change="edited = true">
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">max</span>
                     <input type="number" class="form-control param" name="bcmax" id="bc.max" value="%bc.max%"
-                        data-param="bc.max">
+                        data-param="bc.max" x-on:change="edited = true">
                 </div>
             </div>
             <div class="container border rounded" data-modee="2">m2
@@ -323,7 +334,7 @@
             <div class="card mb-2">
                 <div class="card-header">
                     <div class="d-flex">
-                        Turbine
+                        <i class="bi bi-fan"></i> Turbine
                         <div class="ms-auto">
                             <i class="bi bi-circle-fill" style="color: grey;"></i>
                         </div>
@@ -336,7 +347,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="Turbine">
                     <p>Turbine RSSI: <span id="TurbineRSSI"></span> dBm</p>
                     <p>Turbine SNR: <span id="TurbineSNR"></span> dB</p>
                     <p>Dernière MAJ: <span class="nodeTimer" id="TurbineDernierMessage">-1</span> s</p>
@@ -348,7 +359,7 @@
                     <p>Tension Batterie <span id="tensionBatterie">%tensionBatterie% </span> V</p>
                     <p>motorState <span id="motorStateStr">%motorStateStr% </span> </p>
                     <div class="btn-group" role="group" aria-label="Basic example">
-                        <button type="button" class="btn btn-secondary">Fermeture Totale</button>
+                        <button type="button" class="btn btn-secondary" data-node="TURBINE" data-action="FT">Fermeture Totale</button>
                         <!-- <button type="button" class="btn btn-secondary">Middle</button> -->
                         <button type="button" class="btn btn-secondary">Ouverture Totale</button>
                     </div>
@@ -371,6 +382,9 @@
                     <div class="btn-group" role="group" aria-label="Calibration ADS">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="calibrate">Calibration ADS</button>
                     </div>
+                    <div class="btn-group" role="group" aria-label="Int max moteur">
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="IMM">Int max moteur</button>
+                    </div>
 
                     <div x-data="{selected:%CpuFreq%,CpuFreqs:[240,160,80,40,20,10]}">
                         <select class="form-select form-select-sm computed-range" name="Turbine_CpuFreq" data-node="TURBINE" data-action="CpuFreq">
@@ -387,9 +401,11 @@
             </div>
         </div>
         <div class="col-sm">
-            <div class="card mb-2">
+            <div class="card mb-2" id="Etang">
                 <div class="card-header">
                     <div class="d-flex">
+                        <i class="bi bi-moisture"></i>
+                        <i class="bi bi-droplet-half"></i>
                         Etang
                         <div class="ms-auto">
                             Test
@@ -448,7 +464,7 @@
                         <button type="button" class="btn btn-secondary computed" data-node="ETANG"
                             data-action="savePref">Save Pref</button>
                         <button type="button" class="btn btn-outline-warning computed" data-node="ETANG"
-                            data-action="Reboot">Reboot</button>
+                            data-action="Reboot"><i class="bi bi-bootstrap-reboot"></i> Reboot</button>
                     </div>
                     <div x-data="{ edit: false, full : 0,vide : 0}">
                         <button class="btn" @click="edit = !edit" @click.outside="edit = false">Edit</button>
@@ -465,7 +481,7 @@
             </div>
         </div>
         <div class="col-sm">
-            <div class="card mb-2">
+            <div class="card mb-2" id="NodeTest">
                 <div class="card-header">
                     <div class="d-flex">
                         Test
@@ -591,6 +607,7 @@
           </div>
       
           <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+            <li class="ms-3"><a class="text-body-secondary" href="https://github.com/Baptou88/HydroBabiat/issues"><i class="bi bi-bug"></i></a></li>
             <li class="ms-3"><a class="text-body-secondary" href="https://github.com/Baptou88/HydroBabiat"><i class="bi bi-github"></i></a></li>
             <li class="ms-3"><a class="text-body-secondary" href="https://www.instagram.com/baptou88/"><i class="bi bi-instagram"></i></a></li>
             

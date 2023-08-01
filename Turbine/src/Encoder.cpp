@@ -7,9 +7,9 @@ namespace EncoderVanne
     volatile int position = 0;
 
     unsigned long _millis_debounce = 0;
-    int debounceTime = 5;
+    int debounceTime = 2;
 
-    void setPins(byte pinCW,byte pinCCW)
+    void setPins(byte pinCW, byte pinCCW)
     {
         _pinCCW = pinCCW;
         _pinCW = pinCW;
@@ -21,29 +21,30 @@ namespace EncoderVanne
         if (_pinCCW != -1)
         {
             pinMode(_pinCCW, INPUT_PULLDOWN);
-            attachInterrupt(digitalPinToInterrupt(_pinCCW),EncoderVanne::isr,CHANGE);
+            attachInterrupt(digitalPinToInterrupt(_pinCCW), EncoderVanne::isr, CHANGE);
         }
         if (_pinCW != -1)
         {
             pinMode(_pinCW, INPUT_PULLDOWN);
-            
         }
-        
     }
 
     IRAM_ATTR void isr()
     {
-       
-        if(millis()>_millis_debounce + debounceTime){
+
+        if (millis() > _millis_debounce + debounceTime)
+        {
             _millis_debounce = millis();
-            if (digitalRead(_pinCW)==digitalRead(_pinCCW)){
+            if (digitalRead(_pinCW) == digitalRead(_pinCCW))
+            {
                 position++;
-            }else{
+            }
+            else
+            {
                 position--;
             }
         }
     }
-
 
     int getPos()
     {
@@ -54,10 +55,10 @@ namespace EncoderVanne
     {
         position = pos;
     }
-    
-    void setZeroPos(){
+
+    void setZeroPos()
+    {
         position = 0;
     }
 
 } // namespace EncoderVanne
-

@@ -33,7 +33,7 @@
 #include "basicController.h"
 #include "PIDController.h"
 #include "manuelController.h"
-  
+
 #include <NTPClient.h>
 #include <ProgrammatedTasks.h>
 
@@ -42,28 +42,27 @@
 // this file contains binary patch for the SX1262
 #include <modules/SX126x/patches/SX126x_patch_scan.h>
 
-
 #define LED 7
-#define POT  6
+#define POT 6
 
 #define LEDNOTIF 35
 #define PINTONE 5
 
 #ifdef USE_TFT
 SPIClass spitft;
-#define TFT_CS        26
-#define TFT_RST       16 // Or set to -1 and connect to Arduino RESET pin
-#define TFT_DC        47
+#define TFT_CS 26
+#define TFT_RST 16 // Or set to -1 and connect to Arduino RESET pin
+#define TFT_DC 47
 #define TFT_BACKLIGHT PIN_A3 // Display backlight pin
-#define TFT_MOSI      33  // Data out
-#define TFT_SCLK      34  // Clock out
-Adafruit_ST7735 tft = Adafruit_ST7735 (TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
+#define TFT_MOSI 33          // Data out
+#define TFT_SCLK 34          // Clock out
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
 #endif
 
 #define pinBattery 1
-float batteryReadings ;
+float batteryReadings;
 
-//Adafruit_SSD1306* display;
+// Adafruit_SSD1306* display;
 int potRaw = 0;
 int potValue = 0;
 unsigned long ledReceptionMessage = 0;
@@ -78,7 +77,6 @@ unsigned long startReboot = 0;
 
 String bufferActionToSend;
 
-
 dataTurbine_t dataTurbine;
 nodeStatus_t TurbineStatus;
 
@@ -88,49 +86,45 @@ nodeStatus_t EtangStatus;
 dataNodeTest_t dataNodeTest;
 nodeStatus_t nodeTest;
 
-LList<nodeStatus_t*> listNodes = LList<nodeStatus_t*>();
+LList<nodeStatus_t *> listNodes = LList<nodeStatus_t *>();
 int lastNode = -1;
-
 
 Preferences Prefs;
 
-digitalInput btnPRG(0,INPUT_PULLUP);
+digitalInput btnPRG(0, INPUT_PULLUP);
 
 Timer timerEnvoi(10000);
 Timer timerEnvoiWS(1000);
 Ecran Ec(&Wire);
 
-Timer TftTimer (2500);
+Timer TftTimer(2500);
 
-const char* EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power,Energie";
+const char *EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power,Energie";
 
 EnergieMeter Em;
 
-//sauvegarde des données
+// sauvegarde des données
 unsigned long lastSaveData = 0;
-
 
 manuelController *manuelC = new manuelController();
 basicController *bC = new basicController();
 PIDController *pidC = new PIDController();
 int modeActuel = 0;
-LList<IController*> modes = LList<IController*>();
+LList<IController *> modes = LList<IController *>();
 
 WiFiUDP ntpUDP;
-const char* ntpServer = "europe.pool.ntp.org";
-NTPClient timeClient(ntpUDP,ntpServer,3600,3600);
+const char *ntpServer = "europe.pool.ntp.org";
+NTPClient timeClient(ntpUDP, ntpServer, 3600, 3600);
 
 const int pinAnalogTest = 6;
-
 
 bool OtaUpdate = false;
 
 bool SpectrumScan = false;
 
+// battery mesure
 
-//battery mesure
-
-#define FBattery 3700 //The default battery is 3700mv when the battery is fully charged.
+#define FBattery 3700 // The default battery is 3700mv when the battery is fully charged.
 float XS = 0.0025f;
 uint16_t MMUL = 1000;
 uint16_t MUL = 100;
@@ -141,11 +135,12 @@ float voltageBattery = 0;
 
 void VextON(void)
 {
-  pinMode(Vext,OUTPUT);
+  pinMode(Vext, OUTPUT);
   digitalWrite(Vext, LOW);
 }
-float readBatLevel() {
-  pinMode(37,OUTPUT);
+float readBatLevel()
+{
+  pinMode(37, OUTPUT);
   digitalWrite(37, LOW);
   delay(10); // let GPIO stabilize
   int analogValue = analogRead(1);
@@ -153,36 +148,32 @@ float readBatLevel() {
   return voltage;
 }
 
-String timeElapsedToString(unsigned long timeS){
-  
+String timeElapsedToString(unsigned long timeS)
+{
 
-  //temps inferieur à 1 min
-  if (timeS < 60  )
+  // temps inferieur à 1 min
+  if (timeS < 60)
   {
     return (String)timeS + "s";
   }
-  //temps inferieur à 1 h
-  if (timeS < 60 * 60  )
+  // temps inferieur à 1 h
+  if (timeS < 60 * 60)
   {
-    return (String)(timeS / 60) + "min" + (String)(timeS%60);
+    return (String)(timeS / 60) + "min" + (String)(timeS % 60);
   }
 
-  //temps inferieur à 1 jour
-  // if (timeS < 24 * 3600)
-  // {
-    return (String)(timeS/3600) + "h" +(String)((timeS%3600) / 60) + "min" + (String)((timeS%3600)%60);
+  // temps inferieur à 1 jour
+  //  if (timeS < 24 * 3600)
+  //  {
+  return (String)(timeS / 3600) + "h" + (String)((timeS % 3600) / 60) + "min" + (String)((timeS % 3600) % 60);
   //}
-  
-  
-
 }
 
-
-
-
-void arduinoOtaSetup(void){
+void arduinoOtaSetup(void)
+{
   ArduinoOTA
-    .onStart([]() {
+      .onStart([]()
+               {
       Ec.wakeUp();
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
@@ -193,14 +184,14 @@ void arduinoOtaSetup(void){
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
       Serial.println("Start updating " + type);
       OtaUpdate = true;
-      WifiApp.monitorClients("OTA UPDATE: " + type);
-    })
-    .onEnd([]() {
+      WifiApp.monitorClients("OTA UPDATE: " + type); })
+      .onEnd([]()
+             {
       Serial.println("\nEnd");
       OtaUpdate = false;
-      ESP.restart();
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
+      ESP.restart(); })
+      .onProgress([](unsigned int progress, unsigned int total)
+                  {
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
       Ec.getDisplay()->clearDisplay();
       Ec.getDisplay()->setCursor(40,10);
@@ -211,53 +202,49 @@ void arduinoOtaSetup(void){
       Ec.getDisplay()->printf("Progress: %u%%\r\n", (progress / (total / 100)));
       Ec.getDisplay()->println(ArduinoOTA.getCommand() == U_FLASH ? "sketch":"fs");
 
-      Ec.getDisplay()->display();
-    })
-    .onError([](ota_error_t error) {
+      Ec.getDisplay()->display(); })
+      .onError([](ota_error_t error)
+               {
       OtaUpdate = false;
       Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
       else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
       else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
+      else if (error == OTA_END_ERROR) Serial.println("End Failed"); });
 
   ArduinoOTA.begin();
 }
 
-void handleTelegramMessage(int numNewMessages){
-  
+void handleTelegramMessage(int numNewMessages)
+{
 }
 
+bool saveDataCsV(void)
+{
+  File myFile;
+  if (!SPIFFS.exists("/data.csv"))
+  {
+    Serial.println("Creation data.csv");
+    File myFile = SPIFFS.open("/data.csv", FILE_WRITE);
+    myFile.print(EnteteCSV);
+    myFile.close();
+  }
+  myFile = SPIFFS.open("/data.csv", FILE_APPEND);
 
+  // myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
 
-bool saveDataCsV(void){
-	File myFile;
-	if (!SPIFFS.exists("/data.csv"))
-	{
-		Serial.println("Creation data.csv");
-		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print(EnteteCSV);
-		myFile.close();
-		
-	}
-	myFile = SPIFFS.open("/data.csv",FILE_APPEND);
-	
-  
-	//myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
-	
   size_t test;
-  
-  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",timeClient.getEpochTime(),dataTurbine.tacky,dataEtang.ratioNiveauEtang,dataTurbine.targetPositionVanne,dataTurbine.positionVanne,dataTurbine.U,dataTurbine.I, Em.getEnergie());
+
+  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", timeClient.getEpochTime(), dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
   myFile.close();
-  
+
   Serial.println("Sauvegarde : " + (String)test);
-	return true;
+  return true;
 }
 
-
-String LoRaOnMsgStatut(){
+String LoRaOnMsgStatut()
+{
   return "";
 }
 
@@ -266,7 +253,7 @@ void LoRaMessage(LoRaPacket header, String msg)
   ledReceptionMessage = millis();
   switch (header.Code)
   {
-  case LoRaMessageCode::FileAck :
+  case LoRaMessageCode::FileAck:
     LoRaFileUpl.nextPacket();
     return;
     break;
@@ -274,17 +261,16 @@ void LoRaMessage(LoRaPacket header, String msg)
     // WifiApp.monitorClients(msg);
     // delay(100);
     Serial.println("par la");
-    WifiApp.toastClients("DataReponse",msg,"success");
+    WifiApp.toastClients("DataReponse", msg, "success");
     break;
   default:
     break;
   }
   if (ledNotif)
   {
-    digitalWrite(LEDNOTIF,HIGH);
-    
+    digitalWrite(LEDNOTIF, HIGH);
   }
-  
+
   Serial.print("cb: ");
   Serial.println(msg);
   if (header.Emetteur == TURBINE)
@@ -295,45 +281,53 @@ void LoRaMessage(LoRaPacket header, String msg)
 
     String key;
     String val;
-    
+
     int posSeparat = msg.indexOf(",");
     while (msg.indexOf(",") != -1)
     {
       int posDeli = msg.indexOf(":");
       posSeparat = msg.indexOf(",");
-      key = msg.substring(0,posDeli);
-      val = msg.substring(posDeli +1,posSeparat);
-      //Serial.printf("key: %s val: %s\n",key ,val);
-      msg.remove(0,posSeparat+1);
+      key = msg.substring(0, posDeli);
+      val = msg.substring(posDeli + 1, posSeparat);
+      // Serial.printf("key: %s val: %s\n",key ,val);
+      msg.remove(0, posSeparat + 1);
 
-      if (key == "PV"){
+      if (key == "PV")
+      {
         dataTurbine.positionVanne = val.toFloat();
       }
-      if (key == "PM"){
+      if (key == "PM")
+      {
         dataTurbine.positionMoteur = val.toFloat();
       }
-      if (key == "target"){
+      if (key == "target")
+      {
         dataTurbine.targetPositionVanne = val.toFloat();
       }
-      if (key == "tachy"){
+      if (key == "tachy")
+      {
         dataTurbine.tacky = val.toFloat();
       }
-      if (key == "U"){
+      if (key == "U")
+      {
         dataTurbine.U = val.toFloat();
       }
-      if (key == "I"){
+      if (key == "I")
+      {
         dataTurbine.I = val.toFloat();
       }
-      if (key == "UB"){
-        dataTurbine.UB = val.toFloat()  / 1000;
+      if (key == "UB")
+      {
+        dataTurbine.UB = val.toFloat() / 1000;
       }
-      if (key == "motorState"){
+      if (key == "motorState")
+      {
         dataTurbine.motorState = (MotorState)val.toInt();
       }
     }
     Em.update(dataTurbine.I * dataTurbine.U);
-
-  } else if (header.Emetteur == ETANG)
+  }
+  else if (header.Emetteur == ETANG)
   {
     EtangStatus.RSSI = header.RSSI;
     EtangStatus.dernierMessage = millis();
@@ -341,16 +335,16 @@ void LoRaMessage(LoRaPacket header, String msg)
 
     String key;
     String val;
-    //char message[20];
+    // char message[20];
     int posSeparat = msg.indexOf(",");
     while (msg.indexOf(",") != -1)
     {
       int posDeli = msg.indexOf(":");
       posSeparat = msg.indexOf(",");
-      key = msg.substring(0,posDeli);
-      val = msg.substring(posDeli +1,posSeparat);
-      //Serial.printf("key: %s val: %s\n",key ,val);
-      msg.remove(0,posSeparat+1);
+      key = msg.substring(0, posDeli);
+      val = msg.substring(posDeli + 1, posSeparat);
+      // Serial.printf("key: %s val: %s\n",key ,val);
+      msg.remove(0, posSeparat + 1);
 
       if (key == "NE")
       {
@@ -358,19 +352,22 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "NEVide")
       {
-        dataEtang.niveauEtangVide = val.toInt();;
+        dataEtang.niveauEtangVide = val.toInt();
+        ;
       }
       if (key == "NERempli")
       {
-        dataEtang.niveauEtangRempli = val.toInt();;
+        dataEtang.niveauEtangRempli = val.toInt();
+        ;
       }
       if (key == "NETropPlein")
       {
-        dataEtang.niveauEtangTroPlein = val.toInt();;
+        dataEtang.niveauEtangTroPlein = val.toInt();
+        ;
       }
       if (key == "ratio")
       {
-        dataEtang.ratioNiveauEtang = (val.toFloat())*100; //TODO 
+        dataEtang.ratioNiveauEtang = (val.toFloat()) * 100; // TODO
       }
       if (key == "timingBudget")
       {
@@ -382,53 +379,48 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "RoiXY")
       {
-        dataEtang.RoiX = val.substring(0,val.indexOf("|")).toInt();
-        dataEtang.RoiY = val.substring(val.indexOf("|")+1).toInt();
+        dataEtang.RoiX = val.substring(0, val.indexOf("|")).toInt();
+        dataEtang.RoiY = val.substring(val.indexOf("|") + 1).toInt();
       }
       if (key == "distanceMode")
       {
         dataEtang.distanceMode = val.toInt();
-        
       }
-      
+
       AlertNiv.updateNiveau(dataEtang.ratioNiveauEtang);
     }
-    
-
-
-
-    
-  } else if (header.Emetteur == 0x04)
+  }
+  else if (header.Emetteur == 0x04)
   {
     nodeTest.RSSI = header.RSSI;
     nodeTest.dernierMessage = millis();
     nodeTest.SNR = header.SNR;
     String key;
     String val;
-    
+
     int posSeparat = msg.indexOf(",");
     while (msg.indexOf(",") != -1)
     {
       int posDeli = msg.indexOf(":");
       posSeparat = msg.indexOf(",");
-      key = msg.substring(0,posDeli);
-      val = msg.substring(posDeli +1,posSeparat);
-      //Serial.printf("key: %s val: %s\n",key ,val);
-      msg.remove(0,posSeparat+1);
+      key = msg.substring(0, posDeli);
+      val = msg.substring(posDeli + 1, posSeparat);
+      // Serial.printf("key: %s val: %s\n",key ,val);
+      msg.remove(0, posSeparat + 1);
 
-      if (key == "temp"){
+      if (key == "temp")
+      {
         dataNodeTest.temp = val.toFloat();
-        
       }
     }
   }
-  
+
   WifiApp.notifyClients();
-  
 }
 
-void LoRaNoReply(lastSend_t* packet){
-  //byte emetteur = packet->id;
+void LoRaNoReply(lastSend_t *packet)
+{
+  // byte emetteur = packet->id;
   if (packet->id == LoRaFileUpl.id && LoRaFileUpl.initialized)
   {
     Serial.println("NoReply");
@@ -436,202 +428,194 @@ void LoRaNoReply(lastSend_t* packet){
   }
   if (packet->code == LoRaMessageCode::Data)
   {
-    WifiApp.toastClients("Not Send",packet->msg,"error");
+    WifiApp.toastClients("Not Send", packet->msg, "error");
   }
-  
-  
 }
 
 /*
-* scan i2c bus
-*/
-void scanI2C(TwoWire* bus){
+ * scan i2c bus
+ */
+void scanI2C(TwoWire *bus)
+{
   byte error, address;
-	int nDevices;
+  int nDevices;
 
-	Serial.println("Scanning...");
+  Serial.println("Scanning...");
 
-	nDevices = 0;
-	for(address = 1; address < 127; address++ )
-	{
+  nDevices = 0;
+  for (address = 1; address < 127; address++)
+  {
     Serial.print("I2C device begin at address 0x");
-    Serial.println(address,HEX);
-		bus->beginTransmission(address);
-		error = bus->endTransmission();
+    Serial.println(address, HEX);
+    bus->beginTransmission(address);
+    error = bus->endTransmission();
 
-//		Wire1.beginTransmission(address);
-//		error = Wire1.endTransmission();
+    //		Wire1.beginTransmission(address);
+    //		error = Wire1.endTransmission();
 
-		if (error == 0)
-		{
-			Serial.print("I2C device found at address 0x");
-			if (address<16)
-			Serial.print("0");
-			Serial.print(address,HEX);
-			Serial.println("  !");
+    if (error == 0)
+    {
+      Serial.print("I2C device found at address 0x");
+      if (address < 16)
+        Serial.print("0");
+      Serial.print(address, HEX);
+      Serial.println("  !");
 
-			nDevices++;
-		}
-		else if (error==4)
-		{
-			Serial.print("Unknown error at address 0x");
-			if (address<16)
-				Serial.print("0");
-			Serial.println(address,HEX);
-		}
-	}
-	if (nDevices == 0)
-	Serial.println("No I2C devices found\n");
-	else
-	Serial.println("done\n");
+      nDevices++;
+    }
+    else if (error == 4)
+    {
+      Serial.print("Unknown error at address 0x");
+      if (address < 16)
+        Serial.print("0");
+      Serial.println(address, HEX);
+    }
+  }
+  if (nDevices == 0)
+    Serial.println("No I2C devices found\n");
+  else
+    Serial.println("done\n");
 }
 
-void displayData(){
+void displayData()
+{
   if (OtaUpdate)
   {
     return;
   }
-  
+
   Ec.getDisplay()->clearDisplay();
-    Ec.getDisplay()->setCursor(0,0);
-  
+  Ec.getDisplay()->setCursor(0, 0);
+
   if (LoRaFileUpl.initialized)
   {
     Ec.wakeUp();
-    
+
     Ec.getDisplay()->println((String)LoRaFileUpl.getPacketNum() + "/" + (String)LoRaFileUpl.getPacketTotal());
     Ec.getDisplay()->display();
     return;
   }
-  
+
   switch (displayNum)
   {
   case 0:
-    
 
-    for (size_t i = 0; i < listNodes.size()  ; i++)
+    for (size_t i = 0; i < listNodes.size(); i++)
     {
-      Ec.getDisplay()->println("[" + String(listNodes.get(i)->active?"x":" ") +"] " + (String)listNodes.get(i)->Name.substring(0,6) + "  : " + (String)listNodes.get(i)->RSSI);
+      Ec.getDisplay()->println("[" + String(listNodes.get(i)->active ? "x" : " ") + "] " + (String)listNodes.get(i)->Name.substring(0, 6) + "  : " + (String)listNodes.get(i)->RSSI);
       if (LoRa.AttenteReponse() && lastNode == i)
       {
         Ec.getDisplay()->print((String)LoRa.lastSend.attempt);
-      } else
+      }
+      else
       {
         Ec.getDisplay()->print("  ");
-        
       }
-      
-      
-      Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - listNodes.get(i)->dernierMessage)/1000));
+
+      Ec.getDisplay()->println(" : " + timeElapsedToString((millis() - listNodes.get(i)->dernierMessage) / 1000));
     }
-    
-    
+
     break;
   case 1:
-    Ec.getDisplay()->setCursor(0,0);
-    Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang ) + " %");
+    Ec.getDisplay()->setCursor(0, 0);
+    Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang) + " %");
     Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne) + " %");
     Ec.getDisplay()->println("Cible Vanne: " + (String)(dataTurbine.targetPositionVanne) + " %");
 
-    Ec.drawBVProgressBar(114,4,5,50,(dataEtang.ratioNiveauEtang ));
+    Ec.drawBVProgressBar(114, 4, 5, 50, (dataEtang.ratioNiveauEtang));
 
     int posxTargetVanne;
     posxTargetVanne = 4 + 106 * pidC->vanne / 100;
-    Ec.getDisplay()->setCursor(posxTargetVanne,45);
+    Ec.getDisplay()->setCursor(posxTargetVanne, 45);
     Ec.getDisplay()->println("v");
-    Ec.drawProgressBar(4,55,106,5,(dataTurbine.positionVanne ));
+    Ec.drawProgressBar(4, 55, 106, 5, (dataTurbine.positionVanne));
     break;
   case 2:
-    Ec.getDisplay()->setCursor(0,0);
+    Ec.getDisplay()->setCursor(0, 0);
     Ec.getDisplay()->println("WifiStatus: " + (String)WiFi.status());
     if (WiFi.getMode() == wifi_mode_t::WIFI_MODE_STA)
     {
-      Ec.getDisplay()->println("STA " + (String) WiFi.localIP().toString());
-    } else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
-    {
-      Ec.getDisplay()->println("APSTA " + (String) WiFi.softAPIP().toString());
-      
+      Ec.getDisplay()->println("STA " + (String)WiFi.localIP().toString());
     }
-    
-    
-    Ec.getDisplay()->println("Battery: " + (String) voltageBattery + " / " + (String)voltageBatteryMin);
-    
-    
-    Ec.getDisplay()->printf("Spiffs: %i / %i\n" , SPIFFS.usedBytes(), SPIFFS.totalBytes() );
-    Ec.getDisplay()->printf("Spiffs: %f %\n" ,  (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) *100 );
+    else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
+    {
+      Ec.getDisplay()->println("APSTA " + (String)WiFi.softAPIP().toString());
+    }
 
-    //Ec.getDisplay()->println(WifiApp.server.);
+    Ec.getDisplay()->println("Battery: " + (String)voltageBattery + " / " + (String)voltageBatteryMin);
+
+    Ec.getDisplay()->printf("Spiffs: %i / %i\n", SPIFFS.usedBytes(), SPIFFS.totalBytes());
+    Ec.getDisplay()->printf("Spiffs: %f %\n", (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) * 100);
+
+    // Ec.getDisplay()->println(WifiApp.server.);
 
     break;
   case 3:
 
-    Ec.getDisplay()->setCursor(0,0);
+    Ec.getDisplay()->setCursor(0, 0);
     Ec.getDisplay()->println(modes.get(modeActuel)->name);
     for (size_t i = 0; i < modes.size(); i++)
     {
-      Ec.getDisplay()->print("[" + String(i==modeActuel?"x":" ") + "] ");
+      Ec.getDisplay()->print("[" + String(i == modeActuel ? "x" : " ") + "] ");
       Ec.getDisplay()->println(modes.get(i)->name);
     }
-    
+
     switch (modes.get(modeActuel)->type)
     {
-    case typeController::manuel :
-      
+    case typeController::manuel:
+
       break;
-    case typeController::basic :
-      Ec.getDisplay()->setCursor(70,10);
+    case typeController::basic:
+      Ec.getDisplay()->setCursor(70, 10);
       Ec.getDisplay()->printf("min: %i", bC->niveauMin);
-      Ec.getDisplay()->setCursor(70,22);
+      Ec.getDisplay()->setCursor(70, 22);
       Ec.getDisplay()->printf("max: %i", bC->niveauMax);
-      Ec.getDisplay()->setCursor(70,32);
+      Ec.getDisplay()->setCursor(70, 32);
       Ec.getDisplay()->printf("etat: %s", (String)etangStateToString(bC->etat));
       break;
-    case typeController::PID :
-      Ec.getDisplay()->setCursor(70,10);
+    case typeController::PID:
+      Ec.getDisplay()->setCursor(70, 10);
       Ec.getDisplay()->printf("kp: %.3f", pidC->kp);
-      Ec.getDisplay()->setCursor(70,22);
+      Ec.getDisplay()->setCursor(70, 22);
       Ec.getDisplay()->printf("ki: %.3f", pidC->ki);
-      Ec.getDisplay()->setCursor(70,34);
+      Ec.getDisplay()->setCursor(70, 34);
       Ec.getDisplay()->printf("kd: %.3f", pidC->kd);
       break;
-    
+
     default:
       break;
     }
-    
 
-    Ec.getDisplay()->setCursor(0,40);
+    Ec.getDisplay()->setCursor(0, 40);
     Ec.getDisplay()->println("Niveau " + (String)modes.get(modeActuel)->niveau);
     Ec.getDisplay()->println("Vanne " + (String)modes.get(modeActuel)->vanne);
-    
+
     break;
   case 4:
     Ec.getDisplay()->println("Notification");
-    Ec.getDisplay()->println("[" + (Notifi.NotifyIndividuel? (String)"x": (String)" ") + "]Individuel ");
-    Ec.getDisplay()->println("[" + (Notifi.NotifyGroup? (String)"x": (String)" ") + "] Group");
+    Ec.getDisplay()->println("[" + (Notifi.NotifyIndividuel ? (String) "x" : (String) " ") + "]Individuel ");
+    Ec.getDisplay()->println("[" + (Notifi.NotifyGroup ? (String) "x" : (String) " ") + "] Group");
     break;
   default:
     Ec.getDisplay()->println("Programmateur   " + (String)ProgTasks.ListTasks->size());
     for (size_t i = 0; i < ProgTasks.ListTasks->size(); i++)
     {
       ProgrammatedTask *tache = ProgTasks.ListTasks->get(i);
-      Ec.getDisplay()->println("[" + (String) (String)(tache->isActive()?"x":" ") + "] " + (String)tache->name);
-      Ec.getDisplay()->println( (String)tache->getHours()+ " " + (String)tache->getMinutes() + "  Ouverture: " + (String)tache->targetVanne);
+      Ec.getDisplay()->println("[" + (String)(String)(tache->isActive() ? "x" : " ") + "] " + (String)tache->name);
+      Ec.getDisplay()->println((String)tache->getHours() + " " + (String)tache->getMinutes() + "  Ouverture: " + (String)tache->targetVanne);
     }
-    
+
     break;
   }
 
   Ec.getDisplay()->display();
-
-  
 }
 
-void initNodes(){
-  
+void initNodes()
+{
+
   EtangStatus.addr = ETANG;
   EtangStatus.Name = "Etang";
-
 
   TurbineStatus.addr = TURBINE;
   TurbineStatus.Name = "Turbine";
@@ -644,90 +628,110 @@ void initNodes(){
   listNodes.add(&nodeTest);
 }
 
-bool initPref() {
-  if (Prefs.begin("Master", false)) {
+bool initPref()
+{
+  if (Prefs.begin("Master", false))
+  {
     AlertNiv.active = Prefs.getBool("AlertNivActiv");
     AlertNiv.max = Prefs.getInt("AlertNivMax");
     AlertNiv.min = Prefs.getInt("AlertNivMin");
-    modeActuel = Prefs.getInt("modeVanne",0);
-    ledNotif = Prefs.getBool("LedNotif",ledNotif);
+    modeActuel = Prefs.getInt("modeVanne", 0);
+    ledNotif = Prefs.getBool("LedNotif", ledNotif);
     if (Prefs.isKey(nodeTest.Name.c_str()))
     {
-      nodeTest.active = Prefs.getBool(nodeTest.Name.c_str(),true);
+      nodeTest.active = Prefs.getBool(nodeTest.Name.c_str(), true);
     }
+    bC->niveauMax = Prefs.getInt("bc.max", bC->niveauMax);
+    bC->niveauMin = Prefs.getInt("bc.min", bC->niveauMin);
+    bC->vanneMax = Prefs.getInt("bc.target", bC->vanneMax);
     return true;
   }
   return false;
-
 }
 
-bool savePref() {
+bool savePref()
+{
   Prefs.putBool("AlertNivActiv", AlertNiv.active);
   Prefs.putInt("AlertNivMax", AlertNiv.max);
   Prefs.putInt("AlertNivMin", AlertNiv.min);
-  Prefs.putInt("modeVanne",modeActuel);
-  Prefs.putInt("LedNotif",ledNotif);
+  Prefs.putInt("modeVanne", modeActuel);
+  Prefs.putInt("LedNotif", ledNotif);
+
+  Prefs.putInt("bc.max", bC->niveauMax);
+  Prefs.putInt("bc.min", bC->niveauMin);
+  Prefs.putInt("bc.target", bC->vanneMax);
+
   WifiApp.monitorClients("Save Pref Ok");
   return true;
 }
 
 void setupAnalogMesure()
 {
-  //analogSetClockDiv(255); // 1338mS
-  //analogSetCycles(8);                   // Set number of cycles per sample, default is 8 and provides an optimal result, range is 1 - 255
-  //analogSetSamples(1);                  // Set number of samples in the range, default is 1, it has an effect on sensitivity has been multiplied
-   
+  // analogSetClockDiv(255); // 1338mS
+  // analogSetCycles(8);                   // Set number of cycles per sample, default is 8 and provides an optimal result, range is 1 - 255
+  // analogSetSamples(1);                  // Set number of samples in the range, default is 1, it has an effect on sensitivity has been multiplied
+
   // analogSetClockDiv(1);                 // Set the divider for the ADC clock, default is 1, range is 1 - 255
   // analogSetAttenuation(ADC_11db);       // Sets the input attenuation for ALL ADC inputs, default is ADC_11db, range is ADC_0db, ADC_2_5db, ADC_6db, ADC_11db
   // analogSetPinAttenuation(36,ADC_11db); // Sets the input attenuation, default is ADC_11db, range is ADC_0db, ADC_2_5db, ADC_6db, ADC_11db
   // analogSetPinAttenuation(37,ADC_11db);
 }
 
-
-void print_wakeup_reason(){
+void print_wakeup_reason()
+{
   esp_sleep_wakeup_cause_t wakeup_reason;
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch(wakeup_reason)
+  switch (wakeup_reason)
   {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  case ESP_SLEEP_WAKEUP_EXT0:
+    Serial.println("Wakeup caused by external signal using RTC_IO");
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    Serial.println("Wakeup caused by external signal using RTC_CNTL");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    Serial.println("Wakeup caused by timer");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    Serial.println("Wakeup caused by touchpad");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    Serial.println("Wakeup caused by ULP program");
+    break;
+  default:
+    Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+    break;
   }
 }
 
 // put your setup code here, to run once:
-void setup() {
+void setup()
+{
   VextON();
   Serial.begin(115200);
 
   print_wakeup_reason();
 
-  Wire.begin(SDA_OLED,SCL_OLED,400000);
-  //scanI2C(&Wire);
-  pinMode(LEDNOTIF,OUTPUT);
+  Wire.begin(SDA_OLED, SCL_OLED, 400000);
+  // scanI2C(&Wire);
+  pinMode(LEDNOTIF, OUTPUT);
 
-  pinMode(POT,INPUT);
+  pinMode(POT, INPUT);
 
-
-  pinMode(LED,OUTPUT);
-  digitalWrite(LED,LOW);
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
 
   modes.add(manuelC);
   modes.add(bC);
   modes.add(pidC);
 
-
   initPref();
   initNodes();
 
-
   Em.begin();
-  
+
   if (!Ec.begin())
   {
     Serial.println("Ecan failed init");
@@ -735,7 +739,6 @@ void setup() {
     {
       /* code */
     }
-    
   }
   Ec.getDisplay()->display();
 
@@ -743,13 +746,12 @@ void setup() {
 
   Ec.getDisplay()->clearDisplay();
 
-
-  Ec.getDisplay()->setCursor(0,0);
+  Ec.getDisplay()->setCursor(0, 0);
   Ec.getDisplay()->printf("Node Id %i \n", NODE_ID);
   LoRa.setNodeID(NODE_ID);
   LoRa.onMessage(LoRaMessage);
   LoRa.onNoReply(LoRaNoReply);
-  if (LoRa.begin()!= RADIOLIB_ERR_NONE)
+  if (LoRa.begin() != RADIOLIB_ERR_NONE)
   {
     Serial.println("Error init loRa");
     Ec.getDisplay()->println("LoRa init Failed !");
@@ -757,7 +759,6 @@ void setup() {
     while (true)
     {
     }
-    
   }
   Ec.getDisplay()->println("LoRa init Ok !");
   Ec.getDisplay()->display();
@@ -768,60 +769,51 @@ void setup() {
 #endif
 
 #ifdef pinBattery
-  //pinMode(pinBattery, INPUT);
-  //pinMode(36,ANALOG);
+  // pinMode(pinBattery, INPUT);
+  // pinMode(36,ANALOG);
 #endif
 
-  pinMode(pinAnalogTest,INPUT);
-  ledcSetup(1,1000,8);
-  ledcAttachPin(LED,1);
+  pinMode(pinAnalogTest, INPUT);
+  ledcSetup(1, 1000, 8);
+  ledcAttachPin(LED, 1);
 
 #ifdef USE_TFT
- tft.initR();
- 
- //tft.drawCircle(60,60,10,ST77XX_RED);
- tft.fillScreen(ST77XX_BLACK);
- tft.drawCircle(20,20,10,ST7735_WHITE);
- tft.setTextColor(ST7735_BLUE);
- //tft.drawCircle(20,-20,10,ST7735_ORANGE);
- //tft.drawCircle(-20,-20,10,ST7735_RED);
- //tft.drawCircle(-20,20,10,ST7735_BLUE);
+  tft.initR();
 
-  
+  // tft.drawCircle(60,60,10,ST77XX_RED);
+  tft.fillScreen(ST77XX_BLACK);
+  tft.drawCircle(20, 20, 10, ST7735_WHITE);
+  tft.setTextColor(ST7735_BLUE);
+  // tft.drawCircle(20,-20,10,ST7735_ORANGE);
+  // tft.drawCircle(-20,-20,10,ST7735_RED);
+  // tft.drawCircle(-20,20,10,ST7735_BLUE);
+
 #endif
-  
-  
 
-
-  
   Ec.getDisplay()->display();
-  
+
   if (!SPIFFS.begin(false))
   {
     Serial.println("Spiffs begin failed");
     Ec.getDisplay()->println("Spiffs failed");
   }
   if (!SPIFFS.exists("/data.csv"))
-	{
-		
-		File myFile = SPIFFS.open("/data.csv",FILE_WRITE);
-		myFile.print(EnteteCSV);
-		myFile.close();
-		
-	}
-  
+  {
 
-  //Ec.getDisplay()->clearDisplay();
+    File myFile = SPIFFS.open("/data.csv", FILE_WRITE);
+    myFile.print(EnteteCSV);
+    myFile.close();
+  }
+
+  // Ec.getDisplay()->clearDisplay();
   Ec.getDisplay()->display();
 
-
-  
   Ec.getDisplay()->println("Starting Wifi APP");
   Ec.getDisplay()->display();
 
   while (!WifiApp.begin())
   {
-    if (Serial.available()>0)
+    if (Serial.available() > 0)
     {
       String cmd = Serial.readStringUntil('\n');
       if (cmd.startsWith("REMOVE"))
@@ -832,33 +824,28 @@ void setup() {
         ESP.restart();
       }
     }
-    
+
     Ec.getDisplay()->println("failed");
     Ec.getDisplay()->display();
     delay(1000);
   }
-  
+
   Ec.getDisplay()->println("Starting Wifi APP Success");
   Ec.getDisplay()->display();
-  
 
   arduinoOtaSetup();
 
-  if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA)
+  if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_STA && WiFi.status() == wl_status_t::WL_CONNECTED)
   {
 
-   
     Notifi.begin() ? Serial.println("[Notifier] begin OK") : Serial.println("[Telegram] begin NOK");
-
-
   }
-  
 
-  //lireTacheProgrammer();
+  // lireTacheProgrammer();
   ProgTasks.begin(&timeClient);
   ProgTasks.initTask();
 
-  //timerEnvoi.reset();
+  // timerEnvoi.reset();
 
   timerEnvoiWS.reset();
 
@@ -866,38 +853,35 @@ void setup() {
 
   setupAnalogMesure();
 
-
   Serial.println("fin setup");
 }
 
 // put your main code here, to run repeatedly:
-void loop() {
+void loop()
+{
   voltageBattery = readBatLevel();
   ArduinoOTA.handle();
 
-  //batteryReadings = analogRead(pinBattery);
+  // batteryReadings = analogRead(pinBattery);
   btnPRG.loop();
   LoRa.loop();
   Ec.loop();
 
-
-  if (Serial.available()>0)
+  if (Serial.available() > 0)
   {
     String cmd = Serial.readStringUntil('\n');
     if (cmd.startsWith("F"))
     {
-      LoRaFileUpl.beginTransmit("/testTransmitt.txt",4);
-
+      LoRaFileUpl.beginTransmit("/testTransmitt.txt", 4);
     }
-    
   }
-  
+
   LoRaFileUpl.loop();
 
   // pidC->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
   // pidC->loop();
 
-  //modes.get(modeActuel)->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
+  // modes.get(modeActuel)->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
 
   modes.get(modeActuel)->niveau = dataEtang.ratioNiveauEtang;
   modes.get(modeActuel)->loop();
@@ -908,104 +892,97 @@ void loop() {
     {
       int posDeli = bufferActionToSend.indexOf(":");
       int posSeparat = bufferActionToSend.indexOf(";");
-      String node  = bufferActionToSend.substring(0,posDeli);
-      String action = bufferActionToSend.substring(posDeli +1,posSeparat);
-      
-      bufferActionToSend.remove(0,posSeparat+1);
+      String node = bufferActionToSend.substring(0, posDeli);
+      String action = bufferActionToSend.substring(posDeli + 1, posSeparat);
+
+      bufferActionToSend.remove(0, posSeparat + 1);
 
       if (node == "ETANG")
       {
-        LoRa.sendData(ETANG,LoRaMessageCode::Data,action);
-      } else if (node == "TURBINE")
+        LoRa.sendData(ETANG, LoRaMessageCode::Data, action);
+      }
+      else if (node == "TURBINE")
       {
-        LoRa.sendData(TURBINE,LoRaMessageCode::Data,action);
-        
-      } else if (node == "NODETEST")
+        LoRa.sendData(TURBINE, LoRaMessageCode::Data, action);
+      }
+      else if (node == "NODETEST")
       {
         LoRa.sendData(NODETEST, LoRaMessageCode::Data, action);
       }
-      
     }
-    
   }
-    
-  if (millis()> ledReceptionMessage +300 && ledReceptionMessage != 0)
+
+  if (millis() > ledReceptionMessage + 300 && ledReceptionMessage != 0)
   {
     ledReceptionMessage = 0;
-    digitalWrite(LEDNOTIF,LOW);
+    digitalWrite(LEDNOTIF, LOW);
   }
-  
+
   potRaw = analogRead(POT);
-  potValue = map(potRaw,0,4095,0,100);
+  potValue = map(potRaw, 0, 4095, 0, 100);
 
   if (btnPRG.frontDesceandant())
   {
-    #ifdef PINTONE
-      tone (PINTONE, 600); // allume le buzzer actif arduino
-      delay(100);
-      tone(PINTONE, 900); // allume le buzzer actif arduino
-      delay(100);
-      noTone(PINTONE);  // désactiver le buzzer actif arduino
-    #endif
+#ifdef PINTONE
+    tone(PINTONE, 600); // allume le buzzer actif arduino
+    delay(100);
+    tone(PINTONE, 900); // allume le buzzer actif arduino
+    delay(100);
+    noTone(PINTONE); // désactiver le buzzer actif arduino
+#endif
     if (Ec.getState() == EcranState::EcranState_IDLE)
     {
-      displayNum = (displayNum+1)%maxDisplay;
+      displayNum = (displayNum + 1) % maxDisplay;
     }
     Ec.wakeUp();
-    
   }
-  
+
   if (!LoRaFileUpl.initialized)
   {
     if (timerEnvoi.isOver())
     {
       lastNode++;
       lastNode = lastNode % listNodes.size();
-      //i = (i++%3)+2;
+      // i = (i++%3)+2;
       if (listNodes.get(lastNode)->active)
       {
         WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
-        //Serial.println("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
-        //lastNode++;
+        // Serial.println("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+        // lastNode++;
         lastNode = lastNode % listNodes.size();
 
-        LoRa.sendData(listNodes.get(lastNode)->addr,LoRaMessageCode::DemandeStatut,"demandeStatut");
+        LoRa.sendData(listNodes.get(lastNode)->addr, LoRaMessageCode::DemandeStatut, "demandeStatut");
       }
-      
     }
-    
   }
-  
 
   // if (timerEnvoiWS.isOver())
   // {
   //   WifiApp.notifyClients();
   // }
-  
 
-  
-  #ifdef USE_TFT
+#ifdef USE_TFT
   if (TftTimer.isOver())
   {
     tft.fillScreen(ST7735_BLACK);
-    tft.setCursor(0,10);
+    tft.setCursor(0, 10);
     tft.println("Etang  : " + (String)EtangStatus.RSSI);
     tft.println("Turbine: " + (String)TurbineStatus.RSSI);
   }
-  #endif
+#endif
 
   WifiApp.loop();
 
-  //Sauvegarde des données
-	if (millis() > lastSaveData + 30000)
-	{
-		lastSaveData = millis();
-    
-		saveDataCsV();
-	}
+  // Sauvegarde des données
+  if (millis() > lastSaveData + 30000)
+  {
+    lastSaveData = millis();
+
+    saveDataCsV();
+  }
 
   ProgTasks.loop();
-  
+
   displayData();
 
   if (millis() > startReboot && startReboot != 0)
@@ -1013,47 +990,56 @@ void loop() {
     startReboot = 0;
     ESP.restart();
   }
-  
+
   if (SpectrumScan)
   {
     SpectrumScan = false;
-    
+
     Serial.print(F("[SX1262] Uploading patch ... "));
     int state;
     state = LoRa.getRadio().uploadPatch(sx126x_patch_scan, sizeof(sx126x_patch_scan));
-    if(state == RADIOLIB_ERR_NONE) {
+    if (state == RADIOLIB_ERR_NONE)
+    {
       Serial.println(F("success!"));
-    } else {
+    }
+    else
+    {
       Serial.print(F("failed, code "));
       Serial.println(state);
-      while(true);
+      while (true)
+        ;
     }
     for (size_t i = 0; i < 200; i++)
     {
-      
-    
-    
+
       state = LoRa.getRadio().spectralScanStart(2048);
-      if(state == RADIOLIB_ERR_NONE) {
+      if (state == RADIOLIB_ERR_NONE)
+      {
         Serial.println(F("success!"));
-      } else {
+      }
+      else
+      {
         Serial.print(F("failed, code "));
         Serial.println(state);
-        while(true);
+        while (true)
+          ;
       }
 
       // wait for spectral scan to finish
-      while(LoRa.getRadio().spectralScanGetStatus() != RADIOLIB_ERR_NONE) {
+      while (LoRa.getRadio().spectralScanGetStatus() != RADIOLIB_ERR_NONE)
+      {
         delay(10);
       }
 
       // read the results
       uint16_t results[RADIOLIB_SX126X_SPECTRAL_SCAN_RES_SIZE];
       state = LoRa.getRadio().spectralScanGetResult(results);
-      if(state == RADIOLIB_ERR_NONE) {
+      if (state == RADIOLIB_ERR_NONE)
+      {
         // we have some results, print it
         Serial.print("SCAN ");
-        for(uint8_t i = 0; i < RADIOLIB_SX126X_SPECTRAL_SCAN_RES_SIZE; i++) {
+        for (uint8_t i = 0; i < RADIOLIB_SX126X_SPECTRAL_SCAN_RES_SIZE; i++)
+        {
           Serial.print(results[i]);
           Serial.print(',');
         }
@@ -1062,25 +1048,24 @@ void loop() {
       delay(20);
     }
   }
-  
-  if (millis() > startDeepSleep && startDeepSleep !=0)
+
+  if (millis() > startDeepSleep && startDeepSleep != 0)
   {
     startDeepSleep = 0;
 
     WifiApp.close();
-    
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_14,1);
-    //esp_sleep_enable_ext1_wakeup(0x400,ESP_EXT1_WAKEUP_ANY_HIGH);
+
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_14, 1);
+    // esp_sleep_enable_ext1_wakeup(0x400,ESP_EXT1_WAKEUP_ANY_HIGH);
     esp_sleep_enable_timer_wakeup(10e6);
     esp_deep_sleep_start();
   }
 
-  if (voltageBattery < voltageBatteryMin && millis()> lastBatteryNotification + 30 * 60 * 1000 ) // toute les 30 min
+  if (voltageBattery < voltageBatteryMin && millis() > lastBatteryNotification + 30 * 60 * 1000) // toute les 30 min
   {
     lastBatteryNotification = millis();
     Notifi.send("J'ai plus de battery :(");
   }
-  
-  
+
   delay(10);
 }

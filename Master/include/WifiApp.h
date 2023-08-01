@@ -37,6 +37,10 @@ extern LList<IController*> modes;
 //     request->send(SPIFFS,"#filename"); \
 // });
     
+#define USERNAME_ADMIN "admin"
+#define PASSWORD_ADMIN "test"
+#define USERNAME_User "user"
+#define PASSWORD_User "user"
 class WifiAppClass
 {
 private:
@@ -67,6 +71,8 @@ public:
     static void onNotFound(AsyncWebServerRequest *request);
 
     static String templateProcessor(const String& var);
+    static String templateProcessorAdmin(const String& var);
+    static String templateProcessorUser(const String& var);
 
     static bool sendInternalServerError(AsyncWebServerRequest *request);
 

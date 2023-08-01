@@ -26,18 +26,20 @@ DNSServer dnsserver;
   Serial.println(#filename);\
         request->send(SPIFFS,#filename); });
 
-
-class CaptiveRequestHandler : public AsyncWebHandler {
+class CaptiveRequestHandler : public AsyncWebHandler
+{
 public:
   CaptiveRequestHandler() {}
   virtual ~CaptiveRequestHandler() {}
 
-  bool canHandle(AsyncWebServerRequest *request){
-    //request->addInterestingHeader("ANY");
+  bool canHandle(AsyncWebServerRequest *request)
+  {
+    // request->addInterestingHeader("ANY");
     return true;
   }
 
-  void handleRequest(AsyncWebServerRequest *request) {
+  void handleRequest(AsyncWebServerRequest *request)
+  {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
     response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
     response->print("<p>This is out captive portal front page.</p>");
@@ -100,10 +102,10 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 
 void WifiAppClass::monitorClients(String message)
 {
-  String msg = "{\"monitor\":\" "+ message + "\"}";
+  String msg = "{\"monitor\":\" " + message + "\"}";
   WifiApp.ws.textAll(msg);
 }
-void WifiAppClass::toastClients(String title,String message,String type)
+void WifiAppClass::toastClients(String title, String message, String type)
 {
   String msg = "";
   StaticJsonDocument<256> doc;
@@ -228,16 +230,15 @@ String WifiAppClass::templateProcessor(const String &var)
   }
   if (var == "AlertNivActif")
   {
-    
+
     if (AlertNiv.active)
     {
       return "checked";
-    } else
+    }
+    else
     {
       return "";
     }
-    
-    
   }
   if (var == "AlertNivMax")
   {
@@ -253,15 +254,32 @@ String WifiAppClass::templateProcessor(const String &var)
   }
   if (var == "Notification")
   {
-    return (String) Notifi.NotifyIndividuel;
+    return (String)Notifi.NotifyIndividuel;
   }
   if (var == "NotificationGroup")
   {
-    return (String) Notifi.NotifyGroup;
+    return (String)Notifi.NotifyGroup;
   }
-  
-  
+
   return "templateProcesor default: " + var;
+}
+
+String WifiAppClass::templateProcessorAdmin(const String &var)
+{
+  if (var == "user")
+  {
+    return "admin";
+  }
+  return templateProcessor(var);
+}
+
+String WifiAppClass::templateProcessorUser(const String &var)
+{
+  if (var == "user")
+  {
+    return "user";
+  }
+  return templateProcessor(var);
 }
 
 bool WifiAppClass::sendInternalServerError(AsyncWebServerRequest *request)
@@ -301,10 +319,9 @@ bool WifiAppClass::sendInternalServerError(AsyncWebServerRequest *request)
   tempStr += "})\n";
   tempStr += "}\n";
 
-
   tempStr += "</script>";
   tempStr += "</html>";
-  request->send(500,"text/html",tempStr);
+  request->send(500, "text/html", tempStr);
   return false;
 }
 
@@ -313,57 +330,64 @@ void WifiAppClass::onNotFound(AsyncWebServerRequest *request)
   String retour;
   // Handle Unknown Request
   retour += ("NOT_FOUND: ");
-    if(request->method() == HTTP_GET)
-      retour += ("GET");
-    else if(request->method() == HTTP_POST)
-      retour += ("POST");
-    else if(request->method() == HTTP_DELETE)
-      retour += ("DELETE");
-    else if(request->method() == HTTP_PUT)
-      retour += ("PUT");
-    else if(request->method() == HTTP_PATCH)
-      retour += ("PATCH");
-    else if(request->method() == HTTP_HEAD)
-      retour += ("HEAD");
-    else if(request->method() == HTTP_OPTIONS)
-      retour += ("OPTIONS");
+  if (request->method() == HTTP_GET)
+    retour += ("GET");
+  else if (request->method() == HTTP_POST)
+    retour += ("POST");
+  else if (request->method() == HTTP_DELETE)
+    retour += ("DELETE");
+  else if (request->method() == HTTP_PUT)
+    retour += ("PUT");
+  else if (request->method() == HTTP_PATCH)
+    retour += ("PATCH");
+  else if (request->method() == HTTP_HEAD)
+    retour += ("HEAD");
+  else if (request->method() == HTTP_OPTIONS)
+    retour += ("OPTIONS");
+  else
+    retour += ("UNKNOWN");
+
+  retour += "\n";
+
+  retour += " http://" + (String)request->host().c_str() + request->url().c_str() + "\n";
+
+  if (request->contentLength())
+  {
+    retour += "_CONTENT_TYPE: " + (String)request->contentType().c_str() + "\n";
+    retour += "_CONTENT_LENGTH: " + (String)request->contentLength() + "\n";
+  }
+
+  retour += "\n";
+  retour += "Headers: \n";
+  int headers = request->headers();
+  int i;
+  for (i = 0; i < headers; i++)
+  {
+    AsyncWebHeader *h = request->getHeader(i);
+    retour += "_HEADER[" + (String)h->name().c_str() + "]: " + h->value().c_str() + "\n";
+  }
+
+  retour += "\n";
+  retour += "Params: \n";
+  int params = request->params();
+  for (i = 0; i < params; i++)
+  {
+    AsyncWebParameter *p = request->getParam(i);
+    if (p->isFile())
+    {
+      retour += "_FILE[" + (String)p->name().c_str() + "]: " + p->value().c_str() + ", size: " + p->size() + " \n";
+    }
+    else if (p->isPost())
+    {
+      retour += "_POST[" + (String)p->name().c_str() + "]: " + p->value().c_str() + "\n";
+    }
     else
-      retour += ("UNKNOWN");
-
-    retour += "\n";
-
-    retour += " http://" + (String)request->host().c_str()+ request->url().c_str() +"\n";
-
-    if(request->contentLength()){
-      retour += "_CONTENT_TYPE: " + (String)request->contentType().c_str() + "\n";
-      retour += "_CONTENT_LENGTH: " + (String)request->contentLength() +"\n" ;
+    {
+      retour += "_GET[" + (String)p->name().c_str() + "]:  " + p->value().c_str() + "\n";
     }
+  }
 
-    retour += "\n";
-    retour += "Headers: \n";
-    int headers = request->headers();
-    int i;
-    for(i=0;i<headers;i++){
-      AsyncWebHeader* h = request->getHeader(i);
-      retour += "_HEADER[" + (String)h->name().c_str() + "]: " + h->value().c_str() + "\n";
-    }
-
-    retour += "\n";
-    retour += "Params: \n";
-    int params = request->params();
-    for(i=0;i<params;i++){
-      AsyncWebParameter* p = request->getParam(i);
-      if(p->isFile()){
-        retour += "_FILE[" + (String)p->name().c_str() + "]: " + p->value().c_str() + ", size: " + p->size() + " \n" ;
-      } else if(p->isPost()){
-        retour += "_POST[" +  (String)p->name().c_str() +"]: " + p->value().c_str() + "\n";
-      } else {
-        retour += "_GET[" + (String)p->name().c_str() + "]:  " + p->value().c_str() + "\n";
-      }
-    }
-    
-  request->send(404,"text/plaintext",retour);
-  
+  request->send(404, "text/plaintext", retour);
 }
 
 bool WifiAppClass::begin()
@@ -378,21 +402,18 @@ bool WifiAppClass::begin()
   {
     WiFi.mode(WiFiMode_t::WIFI_MODE_STA);
     WiFi.disconnect();
-    String SSID = Prefs.getString("WIFI_SSID","");
-    String PSSWD = Prefs.getString("WIFI_PSSWD","");
-    Serial.println(PSSWD);
-    WiFi.begin(SSID.c_str(),PSSWD.c_str());
-  
-    //WiFi.setHostname("Esp32S3_HydroBabiat");
-    //WiFi.begin(WIFISSID, WIFIPASSWORD);
-    
-    
-    
-    
-    if (WiFi.waitForConnectResult(10000) != WL_CONNECTED)
+    String SSID = Prefs.getString("WIFI_SSID", "");
+    String PSSWD = Prefs.getString("WIFI_PSSWD", "");
+
+    WiFi.setHostname("Esp32S3_HydroBabiat");
+    WiFi.begin(SSID.c_str(), PSSWD.c_str());
+
+    // WiFi.begin(WIFISSID, WIFIPASSWORD);
+
+    if (WiFi.waitForConnectResult() != WL_CONNECTED)
     {
       Serial.println("[WiFiApp] Wifi begin failed");
-      return false;
+      // return false;
     }
     timeClient.begin();
     if (!timeClient.update())
@@ -401,41 +422,51 @@ bool WifiAppClass::begin()
     }
     Serial.println("Time: " + (String)timeClient.getFormattedDate() + " " + (String)timeClient.getFormattedTime());
     Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
-  } else
+  }
+  else
   {
     WiFi.mode(WiFiMode_t::WIFI_MODE_APSTA);
     WiFi.softAP("HydroBabiat");
     WiFi.scanNetworks();
     dnsserver.start(53, "*", WiFi.softAPIP());
-    
+
     Serial.println("[WiFiApp AP Ip:] " + (String)WiFi.softAPIP().toString());
-    // server.on("/",HTTP_ANY,[](AsyncWebServerRequest *req){
-    //   req->send(200,"text/html","Test");
-    // });
-    
-    //server.begin();
-    //return true;
   }
-  
-  
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
-    //Serial.println("[SERVER] get root");
-    if (SPIFFS.exists("/home.html"))
-    {
-      request->send(SPIFFS,"/home.html","text/html",false,WifiApp.templateProcessor); 
-      
-    } else
-    {
-      sendInternalServerError(request);
-    }
-    
-    
-  }).setFilter(ON_STA_FILTER);
-  server.on("/",HTTP_GET,[](AsyncWebServerRequest * req){
-    String retour;
-    retour += "<html><head>";
-    retour += R"(<style>
+            {
+              if (request->authenticate(USERNAME_ADMIN, PASSWORD_ADMIN))
+              {
+                if (SPIFFS.exists("/home.html"))
+                {
+                  return request->send(SPIFFS, "/home.html", "text/html", false, WifiApp.templateProcessorAdmin);
+                }
+                else
+                {
+                  sendInternalServerError(request);
+                }
+              }
+              else if (request->authenticate(USERNAME_User, PASSWORD_User))
+              {
+                if (SPIFFS.exists("/home.html"))
+                {
+                  return request->send(SPIFFS, "/home.html", "text/html", false, WifiApp.templateProcessorUser);
+                }
+                else
+                {
+                  sendInternalServerError(request);
+                }
+              }
+              else
+              {
+                return request->send(SPIFFS, "/notAuth.html", "text/html", false);
+              } })
+      .setFilter(ON_STA_FILTER);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *req)
+            {
+              String retour;
+              retour += "<html><head>";
+              retour += R"(<style>
 		.container {
 			border: 1px solid black;
 			padding: 10px;
@@ -447,21 +478,21 @@ bool WifiAppClass::begin()
 			border: 2px solid blue;
 		}
 	</style>)";
-    retour += "</head><body>";
-    retour += "<form method=\"POST\" action =\"/wifi\">";
-    int n = WiFi.scanComplete();
-    for (size_t i = 0; i < n; i++)
-    {
-      retour += "<div class=\"container\" data-ssid=\""+ WiFi.SSID(i) +"\" onclick=\"selectElement(this)\">";
-      retour += "<h3>" + WiFi.SSID(i) + "</h3>";
-      retour += "<p>" + WiFi.SSID(i) + " " + (String)WiFi.RSSI(i) + "(dbm) " + (String)WiFi.encryptionType(i) + "</p>\n";
-      retour += "</div>";
-    }
-    retour += R"(<input type="hidden" name="ssid" id="ssid">)";
-    retour += R"(<label for="psswd">Password:</label><br>
+              retour += "</head><body>";
+              retour += "<form method=\"POST\" action =\"/wifi\">";
+              int n = WiFi.scanComplete();
+              for (size_t i = 0; i < n; i++)
+              {
+                retour += "<div class=\"container\" data-ssid=\"" + WiFi.SSID(i) + "\" onclick=\"selectElement(this)\">";
+                retour += "<h3>" + WiFi.SSID(i) + "</h3>";
+                retour += "<p>" + WiFi.SSID(i) + " " + (String)WiFi.RSSI(i) + "(dbm) " + (String)WiFi.encryptionType(i) + "</p>\n";
+                retour += "</div>";
+              }
+              retour += R"(<input type="hidden" name="ssid" id="ssid">)";
+              retour += R"(<label for="psswd">Password:</label><br>
   <input type="text" id="psswd" name="psswd" value=""><br>)";
-    retour += "</form>";
-    retour += R"(<script>
+              retour += "</form>";
+              retour += R"(<script>
 		function selectElement(element) {
 			// Retirer la classe "selected" de tous les containers
 			let containers = document.getElementsByClassName("container");
@@ -477,70 +508,66 @@ bool WifiAppClass::begin()
 			selectedElement.value = element.dataset.ssid;
 		}
 	</script>)";
-    req->send(200,"text/html", retour);
-    
+              req->send(200, "text/html", retour); })
+      .setFilter(ON_AP_FILTER);
 
-  }).setFilter(ON_AP_FILTER);
+  server.on("/wifi", HTTP_ANY, [](AsyncWebServerRequest *request)
+            {
+              int params = request->params();
+              switch (request->method())
+              {
+              case HTTP_GET:
 
-  server.on("/wifi",HTTP_ANY,[](AsyncWebServerRequest *request){
-    int params = request->params();
-    switch (request->method() )
-    {
-    case HTTP_GET:
-      
-      break;
-    case HTTP_POST:
-      for(int i=0;i<params;i++){
-        AsyncWebParameter* p = request->getParam(i);
-        if(p->isFile()){ //p->isPost() is also true
-          Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-        } else if(p->isPost()){
-          Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-        } else {
-          Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-        }
+                break;
+              case HTTP_POST:
+                for (int i = 0; i < params; i++)
+                {
+                  AsyncWebParameter *p = request->getParam(i);
+                  if (p->isFile())
+                  { // p->isPost() is also true
+                    Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+                  }
+                  else if (p->isPost())
+                  {
+                    Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                  }
+                  else
+                  {
+                    Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                  }
+                }
+                if (request->hasParam("ssid", true) && request->hasParam("psswd", true))
+                {
+                  Prefs.putString("WIFI_SSID", request->getParam("ssid", true)->value());
+                  Prefs.putString("WIFI_PSSWD", request->getParam("psswd", true)->value());
+                }
 
-      }
-      if (request->hasParam("ssid",true) && request->hasParam("psswd",true))  
-      {
-        Prefs.putString("WIFI_SSID",request->getParam("ssid",true)->value());
-        Prefs.putString("WIFI_PSSWD",request->getParam("psswd",true)->value());
-      }
-      
-      request->redirect("/");
-      break;
-    case HTTP_DELETE:
-      
-        Prefs.remove("WIFI_SSID");
-        Prefs.remove("WIFI_PSSWD");
-        request->send(200,"text/plaintext","ok");
-      
-      break;
-    default:
-      break;
-    }
-    
-  });
-  server.on("/reboot",HTTP_GET,[](AsyncWebServerRequest *request){
+                request->redirect("/");
+                break;
+              case HTTP_DELETE:
+
+                Prefs.remove("WIFI_SSID");
+                Prefs.remove("WIFI_PSSWD");
+                request->send(200, "text/plaintext", "ok");
+
+                break;
+              default:
+                break;
+              } });
+  server.on("/reboot", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
     startReboot = millis() + 2000;
-    request->send(200,"text/plaintext","ok");
-  });
+    request->send(200,"text/plaintext","ok"); });
   server.on("/icons/hydro-elec-512.svg", HTTP_GET, [](AsyncWebServerRequest *request)
-  { 
-    request->send(SPIFFS, "/icons/hydro-elec-512.svg"); 
-  });
+            { request->send(SPIFFS, "/icons/hydro-elec-512.svg"); });
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
-  { 
-    request->send(SPIFFS, "/icons/favicon.ico"); 
-  });
+            { request->send(SPIFFS, "/icons/favicon.ico"); });
   server.on("/logo.png", HTTP_GET, [](AsyncWebServerRequest *request)
-  { 
-    request->send(SPIFFS, "/icons/favicon-192.png"); 
-  });
+            { request->send(SPIFFS, "/icons/favicon-192.png"); });
 
   server.on("/mode", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
-    if (!request->authenticate("admin","admin"))
+            {
+    if (!request->authenticate(USERNAME_ADMIN,PASSWORD_ADMIN))
     {
       return request->requestAuthentication();
     }
@@ -556,39 +583,34 @@ bool WifiAppClass::begin()
       modes.get(modeActuel)->startMode();
 
     }
-    request->send(200, "text/plain", "mode ok"); 
-  });
+    request->send(200, "text/plain", "mode ok"); });
 
   server.on("/dataEtang", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+            {
     String Response = "{";
     Response += "\"niveauEtang\":" + (String)dataEtang.niveauEtang + ",";
     Response += "\"niveauEtangP\":" + (String)dataEtang.ratioNiveauEtang;
     Response += "}";
-    request->send(200, "application/json", Response);
-  });
+    request->send(200, "application/json", Response); });
 
   server.on("/programmateur/new", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+            {
 		//ProgrammatedTasks->add(new ProgrammatedTask(12,12,"test ajout"));
 		ProgTasks.addTask(new ProgrammatedTask(12,12,"test ajout"));
 		//request->send(SPIFFS,"/programmateur.html", "text/html", false, processor);
-		request->redirect("/programmateur"); 
-  });
+		request->redirect("/programmateur"); });
 
   server.on("/programmateur/sauvegarder", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+            {
 		ProgTasks.saveTask();
 		
-		request->send(SPIFFS,"/Programmated","text/plaintext"); 
-  });
+		request->send(SPIFFS,"/Programmated","text/plaintext"); });
 
   server.on("/programmateur", HTTP_GET, [](AsyncWebServerRequest *request)
-  { 
-    request->send(SPIFFS, "/programmateur.html", "text/html", false, ProgTasks.templateProcessor); 
-  });
+            { request->send(SPIFFS, "/programmateur.html", "text/html", false, ProgTasks.templateProcessor); });
 
-  server.on("/updateprogrammateur", HTTP_POST , [](AsyncWebServerRequest* request) {
+  server.on("/updateprogrammateur", HTTP_POST, [](AsyncWebServerRequest *request)
+            {
 		
 		
 		int params = request->params();
@@ -650,40 +672,47 @@ bool WifiAppClass::begin()
 		
 		
 		
-		request->send(200,"text/json","{\"ok\":1}");
-  });
+		request->send(200,"text/json","{\"ok\":1}"); });
 
-  server.on("/data.csv",HTTP_GET,[](AsyncWebServerRequest * request){
-    request->send(SPIFFS,"/data.csv","text/csv");
-  });
-  
+  server.on("/data.csv", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/data.csv", "text/csv"); });
+
   SPIFFS_provide_file("/app.js");
   SPIFFS_provide_file("/theme.js");
   SPIFFS_provide_file("/fileSystem.js");
   SPIFFS_provide_file("/Programmateur.js");
   SPIFFS_provide_file("/rSlider.js");
   SPIFFS_provide_file("/rSlider.css");
-  
+
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
-  //SPIFFS_provide_file("/fileSystem.html");
-  server.on("/fileSystem",HTTP_ANY,[](AsyncWebServerRequest * request){
-    Serial.println("request method: "+ (String)request->method());
-    int params = request->params();
-    for(int i=0;i<params;i++){
-      AsyncWebParameter* p = request->getParam(i);
-      if(p->isFile()){ //p->isPost() is also true
-        Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-      } else if(p->isPost()){
-        Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-      } else {
-        Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-      }
-    }
-    if (request->method() == HTTP_GET)
-    {
-     
-      request->send(SPIFFS,"/fileSystem.html","text/html",false,[](String var){
+  // SPIFFS_provide_file("/fileSystem.html");
+  server.on(
+      "/fileSystem", HTTP_ANY, [](AsyncWebServerRequest *request)
+      {
+        Serial.println("request method: " + (String)request->method());
+        int params = request->params();
+        for (int i = 0; i < params; i++)
+        {
+          AsyncWebParameter *p = request->getParam(i);
+          if (p->isFile())
+          { // p->isPost() is also true
+            Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+          }
+          else if (p->isPost())
+          {
+            Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+          }
+          else
+          {
+            Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+          }
+        }
+        if (request->method() == HTTP_GET)
+        {
+
+          request->send(SPIFFS, "/fileSystem.html", "text/html", false, [](String var)
+                        {
       String retour;
         if (var == "freeSpiffs")
         {
@@ -698,147 +727,165 @@ bool WifiAppClass::begin()
           retour += String(SPIFFS.totalBytes());
         }
         
-      return retour;
-    });
-    } else {
-      request->send(200,"text/plaintext","par l)");
-    }
-    
-    
-  },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-    //if (checkUserWebAuth(request)) {
-      Serial.println("par ici : "+ (String)filename);
-      if (request->method() != HTTP_POST)
+      return retour; });
+        }
+        else
+        {
+          request->send(200, "text/plaintext", "par l)");
+        } },
+      [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
       {
-        return;
-      }
-      
+        // if (checkUserWebAuth(request)) {
+        Serial.println("par ici : " + (String)filename);
+        if (request->method() != HTTP_POST)
+        {
+          return;
+        }
 
-      if (!index) {
-        
-        // open the file on first call and store the file handle in the request object
-        Serial.println("Upload file "+ String(filename));
-        request->_tempFile = SPIFFS.open("/" + filename, "w");
-        
-      }
+        if (!index)
+        {
 
-      if (len) {
-        // stream the incoming chunk to the opened file
-        request->_tempFile.write(data, len);       
-      }
+          // open the file on first call and store the file handle in the request object
+          Serial.println("Upload file " + String(filename));
+          request->_tempFile = SPIFFS.open("/" + filename, "w");
+        }
 
-      if (final) {
-        // close the file handle as the upload is now done
-        int filesize = request->_tempFile.size();
-        request->_tempFile.close();
-        return request->send(200,"application/json","{\"status\":\"ok\",\"file\":[{\"name\":\"" + String(filename) + "\",\"size\":"+ String(filesize)+"}]}");
-        //request->redirect("/");
-      }
-    // } else {
-    //   Serial.println("Auth: Failed");
-      
+        if (len)
+        {
+          // stream the incoming chunk to the opened file
+          request->_tempFile.write(data, len);
+        }
 
-    // }
-  });
+        if (final)
+        {
+          // close the file handle as the upload is now done
+          int filesize = request->_tempFile.size();
+          request->_tempFile.close();
+          return request->send(200, "application/json", "{\"status\":\"ok\",\"file\":[{\"name\":\"" + String(filename) + "\",\"size\":" + String(filesize) + "}]}");
+          // request->redirect("/");
+        }
+        // } else {
+        //   Serial.println("Auth: Failed");
 
-  server.on("/api/fs",HTTP_DELETE,[](AsyncWebServerRequest * request){
-    
-    if (request->hasParam("fileName",true))
+        // }
+      });
+
+  server.on("/api/fs", HTTP_DELETE, [](AsyncWebServerRequest *request)
+            {
+              if (request->hasParam("fileName", true))
+              {
+                String fileName = (String)request->getParam("fileName", true)->value();
+                if (SPIFFS.exists(fileName))
+                {
+                  SPIFFS.remove((String)fileName);
+                  request->send(200, "application/json", "{\"status\":\"ok\"}");
+                }
+                request->send(400, "text/plaintext", "file \"" + fileName + "\" doesn't exist");
+              } });
+  server.on("/api/fs", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              String response = "";
+              response += "{\"SPIFFS\":[";
+
+              File fileRoot = SPIFFS.open("/");
+
+              // Parcourt tous les fichiers et dossiers de la carte SD
+              while (File file = fileRoot.openNextFile())
+              {
+                // Ajoute le nom du fichier ou du dossier au tableau
+                if (!response.endsWith("["))
+                {
+                  response += ",";
+                }
+
+                response += "{\"name\": \"" + (String)file.name() + "\", \"size\": " + (String)file.size() + ", \"path\": \"" + (String)file.path() + "\"}";
+              }
+
+              response += "]}";
+
+              request->send(200, "application/json", response); });
+
+  server.on("/sendFile", HTTP_POST, [](AsyncWebServerRequest *request)
+            {
+              int params = request->params();
+              for (int i = 0; i < params; i++)
+              {
+                AsyncWebParameter *p = request->getParam(i);
+                if (p->isFile())
+                { // p->isPost() is also true
+                  Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+                }
+                else if (p->isPost())
+                {
+                  Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                }
+                else
+                {
+                  Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                }
+              }
+              bool otaUpdate = false;
+
+              if (request->hasParam("Ota", true))
+              {
+                otaUpdate = true;
+              }
+
+              if (request->hasParam("fileName", true))
+              {
+                String fileName = (String)request->getParam("fileName", true)->value();
+                if (SPIFFS.exists(fileName))
+                {
+                  Serial.println("Sending: " + String(fileName));
+                  // TODO lorafile transfer
+                  LoRaFileUpl.beginTransmit(fileName, 0x04, otaUpdate);
+                  return request->send(200, "application/json", "{\"status\":\"ok\"}");
+                }
+                return request->send(400, "text/plaintext", "file doesn't exist");
+              }
+              return request->send(400, "text/plaintext", "wrong filename"); });
+
+  server.on("/cmd", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              if (!request->authenticate("bapt", "000"))
+                return request->requestAuthentication();
+              request->send(200, "text/plain", "Login Success!"); });
+  server.on("/cmd2", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              if (request->authenticate("bapt", "000"))
+              {
+                request->send(200, "text/plain", "Login Success! bapt");
+              }
+              else if (request->authenticate("bapt2", "000"))
+              {
+                request->send(200, "text/plain", "Login Success! bapt2");
+              }
+              else
+              {
+                return request->requestAuthentication();
+              } });
+  server.on("/logout", HTTP_GET, [](AsyncWebServerRequest *req)
+            { req->send(401, "text/plain", "deco"); });
+  server.on("/login", HTTP_GET, [](AsyncWebServerRequest *req)
+            {
+    if (req->authenticate(USERNAME_ADMIN,PASSWORD_ADMIN))
     {
-      String fileName =  (String)request->getParam("fileName",true)->value();
-      if (SPIFFS.exists(fileName))
-      {
-        SPIFFS.remove( (String)fileName);
-        request->send(200,"application/json","{\"status\":\"ok\"}");
-      }
-      request->send(400,"text/plaintext","file \""+ fileName +"\" doesn't exist");
-    }
-    
-  });
-  server.on("/api/fs",HTTP_GET,[](AsyncWebServerRequest * request) {
-    String response = "";
-    response += "{\"SPIFFS\":[";
-    
-    File fileRoot = SPIFFS.open("/");
-    
-    // Parcourt tous les fichiers et dossiers de la carte SD
-    while (File file = fileRoot.openNextFile()) {
-      // Ajoute le nom du fichier ou du dossier au tableau
-      if (!response.endsWith("["))
-      {
-        response += ",";
-      }
-      
-      response += "{\"name\": \"" + (String)file.name() + "\", \"size\": "+ (String)file.size() + ", \"path\": \""+ (String)file.path() + "\"}";
-    }
-    
-    response += "]}";
-   
-    request->send(200, "application/json",response );
-     
-  });
-
-  server.on("/sendFile",HTTP_POST,[](AsyncWebServerRequest * request){
-    int params = request->params();
-    for(int i=0;i<params;i++){
-      AsyncWebParameter* p = request->getParam(i);
-      if(p->isFile()){ //p->isPost() is also true
-        Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-      } else if(p->isPost()){
-        Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-      } else {
-        Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-      }
-    }
-    bool otaUpdate = false;
-
-    if (request->hasParam("Ota",true))
+      return req->redirect("/");
+    } else if (req->authenticate(USERNAME_User,PASSWORD_User))
     {
-        otaUpdate = true;
+      return req->redirect("/");
     }
     
-    if (request->hasParam("fileName",true))
-    {
-      String fileName =  (String)request->getParam("fileName",true)->value();
-      if (SPIFFS.exists(fileName))
-      {
-        Serial.println("Sending: " + String(fileName));
-        //TODO lorafile transfer
-        LoRaFileUpl.beginTransmit(fileName,0x04,otaUpdate);
-        return request->send(200,"application/json","{\"status\":\"ok\"}");
-      }
-      return request->send(400,"text/plaintext","file doesn't exist");
-    }
-      return request->send(400,"text/plaintext","wrong filename");
-    
-  });
-
-  server.on("/cmd",HTTP_GET,[](AsyncWebServerRequest *request) {
-    if(!request->authenticate("bapt", "000"))
-        return request->requestAuthentication();
-    request->send(200, "text/plain", "Login Success!");
-    
-  });
-  server.on("/cmd2",HTTP_GET,[](AsyncWebServerRequest *request) {
-    if(request->authenticate("bapt", "000"))
-      {request->send(200, "text/plain", "Login Success! bapt");}
-    else if(request->authenticate("bapt2", "000"))
-      {request->send(200, "text/plain", "Login Success! bapt2");}
-    else
-      {return request->requestAuthentication();}
-    
-  });
-  server.on("/logout",HTTP_GET,[](AsyncWebServerRequest *req) {
-    req->send(401,"text/plain","deco");
-  });
-  //server.onNotFound([](AsyncWebServerRequest *request)
-   //                 { return request->send(404); });
+    return req->requestAuthentication(); });
+  // server.onNotFound([](AsyncWebServerRequest *request)
+  //                  { return request->send(404); });
 
   server.onNotFound(WifiApp.onNotFound);
 
-  #ifdef  ASYNC_TCP_SSL_ENABLED 
-    #pragma message "tcp ssl"
-    server.onSslFileRequest([](void * arg, const char *filename, uint8_t **buf) -> int {
+#ifdef ASYNC_TCP_SSL_ENABLED
+#pragma message "tcp ssl"
+  server.onSslFileRequest([](void *arg, const char *filename, uint8_t **buf) -> int
+                          {
       Serial.printf("SSL File: %s\n", filename);
       File file = SPIFFS.open(filename, "r");
       if(file){
@@ -853,28 +900,28 @@ bool WifiAppClass::begin()
         file.close();
       }
       *buf = 0;
-      return 0;
-    }, NULL);
-  #endif
+      return 0; },
+                          NULL);
+#endif
 
   ws.onEvent(WifiApp.onEvent);
   server.addHandler(&ws);
 
   server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
 
-  #ifdef ASYNC_TCP_SSL_ENABLED
-    server.beginSecure("Cert.pem","Key.pem",NULL);
-  #else
-    server.begin();
-  #endif
+#ifdef ASYNC_TCP_SSL_ENABLED
+  server.beginSecure("Cert.pem", "Key.pem", NULL);
+#else
+  server.begin();
+#endif
   return true;
 }
 
 bool WifiAppClass::close()
 {
-  ws.closeAll() ;
+  ws.closeAll();
   Serial.println("ws closed !");
-  //server.removeHandler(&ws);
+  // server.removeHandler(&ws);
   Serial.println("handler removed !");
   server.end();
   Serial.println("server closed !");
@@ -919,10 +966,10 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     else if (dataStr.startsWith("LedNotif"))
     {
       ledNotif = !ledNotif;
-      
+
       Prefs.putBool("LedNotif", ledNotif);
     }
-    
+
     else if (dataStr.startsWith("RangePosVanneTarget"))
     {
       dataStr.replace("RangePosVanneTarget ", "");
@@ -937,9 +984,8 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       bufferActionToSend += dataStr;
       if (dataStr.startsWith("NODETEST:DEEPSLEEP"))
       {
-        startDeepSleep = millis()+1500;
+        startDeepSleep = millis() + 1500;
       }
-      
     }
     else if (dataStr.startsWith("pidc."))
     {
@@ -993,75 +1039,74 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     }
     else if (dataStr.startsWith("AlertNiv"))
     {
-      dataStr.replace("AlertNiv","");
+      dataStr.replace("AlertNiv", "");
 
       if (dataStr.startsWith("Actif="))
       {
-        dataStr.replace("Actif=","");
+        dataStr.replace("Actif=", "");
         if (dataStr.startsWith("true"))
         {
           AlertNiv.active = true;
-        } else
+        }
+        else
         {
           AlertNiv.active = false;
         }
       }
       if (dataStr.startsWith("Min="))
       {
-        dataStr.replace("Min=","");
+        dataStr.replace("Min=", "");
         AlertNiv.min = dataStr.toInt();
       }
       if (dataStr.startsWith("Max="))
       {
-        dataStr.replace("Max=","");
+        dataStr.replace("Max=", "");
         AlertNiv.max = dataStr.toInt();
       }
-
-    } 
+    }
     else if (dataStr.startsWith("NotificationGroup="))
     {
-      dataStr.replace("NotificationGroup=","");
-      Notifi.NotifyGroup = ! Notifi.NotifyGroup;
-      Prefs.putBool("NotifGroup",Notifi.NotifyGroup);
+      dataStr.replace("NotificationGroup=", "");
+      Notifi.NotifyGroup = !Notifi.NotifyGroup;
+      Prefs.putBool("NotifGroup", Notifi.NotifyGroup);
     }
     else if (dataStr.startsWith("Notification="))
     {
-      dataStr.replace("Notification=","");
-      Notifi.NotifyIndividuel= ! Notifi.NotifyIndividuel;
-      Prefs.putBool("Notif",Notifi.NotifyIndividuel);
+      dataStr.replace("Notification=", "");
+      Notifi.NotifyIndividuel = !Notifi.NotifyIndividuel;
+      Prefs.putBool("Notif", Notifi.NotifyIndividuel);
     }
-    
+
     else if (dataStr.startsWith("Etang."))
     {
-      dataStr.replace("Etang.","");
+      dataStr.replace("Etang.", "");
       if (dataStr.startsWith("Active="))
       {
-        dataStr.replace("Active=","");
+        dataStr.replace("Active=", "");
         EtangStatus.active = dataStr.toInt();
       }
     }
     else if (dataStr.startsWith("Turbine."))
     {
-      dataStr.replace("Turbine.","");
+      dataStr.replace("Turbine.", "");
       if (dataStr.startsWith("Active="))
       {
-        dataStr.replace("Active=","");
+        dataStr.replace("Active=", "");
         TurbineStatus.active = dataStr.toInt();
       }
     }
-    
+
     else if (dataStr.startsWith("NodeTest."))
     {
       Serial.println(dataStr);
-      dataStr.replace("NodeTest.","");
+      dataStr.replace("NodeTest.", "");
       if (dataStr.startsWith("Active="))
       {
-        dataStr.replace("Active=","");
+        dataStr.replace("Active=", "");
         nodeTest.active = dataStr.toInt();
         Serial.println(nodeTest.active);
-        Prefs.putBool(nodeTest.Name.c_str(),nodeTest.active) ; //TODO logic à deplacer
+        Prefs.putBool(nodeTest.Name.c_str(), nodeTest.active); // TODO logic à deplacer
       }
-      
     }
     else if (dataStr.startsWith("DeepSleepServer"))
     {
@@ -1071,7 +1116,6 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     {
       SpectrumScan = true;
     }
-    
 
     WifiApp.notifyClients();
   }
@@ -1091,14 +1135,17 @@ void WifiAppClass::loop()
     {
       timeClient.update();
     }
+    else if (WiFi.status() == WL_DISCONNECTED)
+    {
+      /* code */
+    }
+
     ws.cleanupClients();
-  } else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
+  }
+  else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
   {
     dnsserver.processNextRequest();
   }
-  
-  
-  
 }
 
 WifiAppClass WifiApp;
