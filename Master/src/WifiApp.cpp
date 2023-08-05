@@ -67,11 +67,11 @@ void WifiAppClass::notifyClients()
   message += "\"Notification\":" + (String)Notifi.NotifyIndividuel + ",";
   message += "\"NotificationGroup\":" + (String)Notifi.NotifyGroup + ",";
   message += dataTurbine.toJson() + ",";
-  message += TurbineStatus.toJson() + ",";
+  message += "\"turbineStatus\":{" + (String)TurbineStatus.toJson() + "},";
   message += dataEtang.toJson() + ",";
-  message += EtangStatus.toJson() + ",";
+  message += "\"etangStatus\":{" + (String)EtangStatus.toJson() + "},";
   message += dataNodeTest.toJson() + ",";
-  message += nodeTest.toJson();
+  message += "\"nodeTestStatus\":{" + (String)nodeTest.toJson() + "}";
 
   message += "}}";
   // Serial.print("[WiFiAPP] notif: ");
@@ -88,11 +88,11 @@ void WifiAppClass::notifyClient(uint32_t clientId)
   message += "\"Notification\":" + (String)Notifi.NotifyIndividuel + ",";
   message += "\"NotificationGroup\":" + (String)Notifi.NotifyGroup + ",";
   message += dataTurbine.toJson() + ",";
-  message += TurbineStatus.toJson() + ",";
+  message += "\"turbineStatus\":{" + (String)TurbineStatus.toJson() + "},";
   message += dataEtang.toJson() + ",";
-  message += EtangStatus.toJson() + ",";
+  message += "\"etangStatus\":{" + (String)EtangStatus.toJson() + "},";
   message += dataNodeTest.toJson() + ",";
-  message += nodeTest.toJson();
+  message += "\"nodeTestStatus\":{" + (String)nodeTest.toJson() + "}";
 
   message += "}}";
   // Serial.print("[WiFiAPP] notif: ");
@@ -122,7 +122,7 @@ void WifiAppClass::toastClients(String title, String message, String type)
 
 String WifiAppClass::templateProcessor(const String &var)
 {
-  if (var == "RangePosVanneTarget")
+  if (var == "PositionVanneTarget")
   {
     return (String)dataTurbine.targetPositionVanne;
   }
@@ -582,6 +582,7 @@ bool WifiAppClass::begin()
       modeActuel=p->value().toInt();
       modes.get(modeActuel)->startMode();
 
+      Prefs.putInt(MODEVANNE, modeActuel);
     }
     request->send(200, "text/plain", "mode ok"); });
 
@@ -653,6 +654,14 @@ bool WifiAppClass::begin()
 		{
 			test->deactivate();
 		}
+		if (request->hasParam("execOnce",true))
+		{
+			test->execOnce = true;
+		} else
+		{
+			test->execOnce = false;
+		}
+
 		if (request->hasParam("appt",true))
 		{
 			int dp = request->getParam("appt",true)->value().indexOf(":");
@@ -970,9 +979,9 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       Prefs.putBool("LedNotif", ledNotif);
     }
 
-    else if (dataStr.startsWith("RangePosVanneTarget"))
+    else if (dataStr.startsWith("PositionVanneTarget"))
     {
-      dataStr.replace("RangePosVanneTarget ", "");
+      dataStr.replace("PositionVanneTarget ", "");
       Serial.println("niveu vanne: " + (String)dataStr.toInt());
       dataTurbine.targetPositionVanne = dataStr.toInt();
       bufferActionToSend += "TURBINE:TargetVanne=" + (String)dataStr.toInt() + ";";

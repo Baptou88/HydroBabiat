@@ -114,16 +114,32 @@ function activateMode(el) {
   el.classList.add('active')
 }
 document.addEventListener('alpine:init', () => {
-  Alpine.store('Ws', {
-    etablished: false,
-
-    toggle() {
-      this.etablished = !this.etablished
-    }
-  })
+  
   Alpine.store('Etang', {
     niveauRempli: 0,
     niveauVide: 0,
+    ratioNiveauEtang: 0,
+    niveauEtang:0,
+    RoiCenter:0,
+    RoiX:0,
+    RoiY:0,
+    distanceMode:0,
+    timingBudget:0,
+    status:{},
+    fromJson(data){
+      this.niveauRempli = data["niveauEtangRempli"]
+      this.niveauVide = data["niveauEtangVide"]
+      this.ratioNiveauEtang = data["ratioNiveauEtang"]
+      this.niveauEtang =data["niveauEtang"]
+      this.RoiCenter =data["RoiCenter"]
+      this.RoiX =data["RoiX"]
+      this.RoiY =data["RoiY"]
+      this.distanceMode =data["distanceMode"]
+      this.timingBudget =data["timingBudget"]
+    },
+    ratioNiveauEtangToString() {
+      return this.ratioNiveauEtang +"%"
+    },
     sendRempli(e) {
       Alpine.store('Etang').niveauRempli = e.target.value;
       sendAction('ETANG', 'setNiveauFull=' + e.target.value)
@@ -133,7 +149,45 @@ document.addEventListener('alpine:init', () => {
       sendAction('ETANG', 'setNiveauEmpty=' + e.target.value)
     }
   })
+  Alpine.store('Turbine', {
+    positionVanne: 0,
+    positionVanneTarget: 0,
+    intensite:0,
+    motorState:5, //UNKOWN
+    motorStateStr:"",
+    power:0,
+    tacky:0,
+    tension:0,
+    tensionBatterie:0,
+    status:{},
+    fromJson(data){
+      this.positionVanne = data["positionVanne"]
+      this.positionVanneTarget = data["PositionVanneTarget"]
+      this.intensite = data["intensite"]
+      this.motorState = data["motorState"]
+      this.motorStateStr = data["motorStateStr"]
+      this.power = data["power"]
+      this.tacky = data["tacky"]
+      this.tension = data["tension"]
+      this.tensionBatterie = data["tensionBatterie"]
+    },
+    positionVannetoString(){
+      return this.positionVanne + "%"
+    },
+    sendPositionVanne(e) {
+      Alpine.store('Turbine').positionVanne = e.target.value
+      sendAction('TURBINE', `positionVanne=${e.target.value}`)
+    }
+  })
+  Alpine.store('NodeTest', {
+    temp: 0,
+    status:{},
+    fromJson(data){
+      this.temp = data["temp"]
+    }
+  })
 })
+
 
 document.addEventListener('DOMContentLoaded', async function () {
   modes = document.querySelector("#modes")
@@ -396,6 +450,11 @@ var websocket;
 
 window.addEventListener('load', onLoad);
 
+window.addEventListener('beforeunload', (e) => {
+  console.log(`before Unload  ${e}` , e);
+  websocket.close();
+})
+
 function initWebSocket() {
   console.log('Trying to open a WebSocket connection...');
   websocket = new WebSocket(gateway);
@@ -416,7 +475,7 @@ function onClose(event) {
   console.log('Connection closed');
   //alert('Connection closed');
   modalDisconnected.show();
-  setTimeout(initWebSocket, 2000);
+  //setTimeout(initWebSocket, 1000);
   Alpine.store("Ws.etablished", false);
 }
 function wsData(d) {
@@ -431,17 +490,17 @@ function wsData(d) {
       var el = document.getElementById(element);
       if (typeof (el) != 'undefined' && el != null) {
         if (el.type == "checkbox") {
-          el.checked = d[element]
+          //el.checked = d[element]
         } else if (el.type == "range") {
 
-          el.value = d[element]
+          //el.value = d[element]
         }
 
         else {
-          el.innerHTML = d[element];
+          //el.innerHTML = d[element];
         }
       } else {
-        console.log("element: " + element + " not exist");
+        //console.log("element: " + element + " not exist");
       }
       if (element == "Mode") {
         desactivateModes();
@@ -449,28 +508,29 @@ function wsData(d) {
 
         activateMode(el);
       }
-      if (element == "ratioNiveauEtang") {
-        chartNiveau.series[0].addPoint([dt, d[element]], true, false, true);
+
+      if (element == "Etang") {
+        Alpine.store('Etang').fromJson(d[element])
+        //chartNiveau.series[2].addPoint([dt, d[element]], true, false, true);
+        chartNiveau.series[0].addPoint([dt, d[element].ratioNiveauEtang], true, false, true);
       }
-      if (element == "targetNiveauEtang") {
-        chartNiveau.series[2].addPoint([dt, d[element]], true, false, true);
+      if (element == "Turbine") {
+        Alpine.store('Turbine').fromJson(d[element])
+        chartTurbine.series[2].addPoint([dt, d[element].tacky], true, false, true);
+        chartTurbine.series[1].addPoint([dt, d[element].PositionVanneTarget], true, false, true);
+        chartTurbine.series[0].addPoint([dt, Math.round(d[element].positionVanne)], true, false, true);
       }
-      if (element == "positionVanne") {
-        chartTurbine.series[0].addPoint([dt, d[element]], true, false, true);
+      if (element == "NodeTest") {
+        Alpine.store('NodeTest').fromJson(d[element])
       }
-      if (element == "RangePosVanneTarget") {
-        chartTurbine.series[1].addPoint([dt, d[element]], true, false, true);
-        el.value = d[element]
+      if (element == "turbineStatus") {
+        Alpine.store('Turbine').status = d[element]
       }
-      if (element == "tacky") {
-        chartTurbine.series[2].addPoint([dt, d[element]], true, false, true);
-        el.value = d[element]
+      if (element == "etangStatus") {
+        Alpine.store('Etang').status = d[element]
       }
-      if (element == "niveauEtangRempli") {
-        Alpine.store('Etang').niveauRempli = d[element]
-      }
-      if (element == "niveauEtangVide") {
-        Alpine.store('Etang').niveauVide = d[element]
+      if (element == "nodeTestStatus") {
+        Alpine.store('NodeTest').status = d[element]
       }
 
     }
@@ -502,7 +562,7 @@ function onLoad(event) {
   //initWebSocket();
 
 
-  var rangePosVanne = document.querySelector("#RangePosVanneTarget")
+  var rangePosVanne = document.querySelector("#PositionVanneTarget")
 
 
   rangePosVanne.addEventListener('change', (e) => {

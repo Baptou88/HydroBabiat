@@ -35,6 +35,7 @@ bool ProgrammatedTasksClass::initTask()
       byte h = 0;
       byte m = 0;
       bool activ = false;
+      bool execOnce = true;
       int targetVanne = 0;
       double deepsleep = 0;
 
@@ -61,6 +62,10 @@ bool ProgrammatedTasksClass::initTask()
         {
           activ = part2.toInt();
         }
+        if (part1 == "execOnce")
+        {
+          execOnce = part2.toInt();
+        }
         if (part1 == "targetVanne")
         {
           targetVanne = part2.toInt();
@@ -81,6 +86,7 @@ bool ProgrammatedTasksClass::initTask()
       {
         ajout->deactivate();
       }
+      ajout->execOnce = execOnce;
       ajout->deepsleep = deepsleep;
       ajout->targetVanne = targetVanne;
 
@@ -109,6 +115,7 @@ bool ProgrammatedTasksClass::saveTask()
     file.print("h=" + String(test->h) + ";");
     file.print("m=" + String(test->m) + ";");
     file.print("activate=" + String(test->isActive()) + ";");
+    file.print("execOnce=" + String(test->execOnce) + ";");
     file.print("targetVanne=" + String(test->targetVanne) + ";");
     file.println("deepsleep=" + String(test->deepsleep) + ";");
   }
@@ -131,8 +138,13 @@ void ProgrammatedTasksClass::loop()
         {
           Serial.println("exec Tache: " + (String)tache->name);
           Notifi.send("Exec Tache: " + (String)tache->name);
+          if (tache->execOnce)
+          {
+            tache->deactivate();
+          }
           
-          // TODO Gerer Execution Tache
+          bufferActionToSend += "TURBINE:TargetVanne=" + (String)tache->targetVanne + ";";
+          // TODO Gerer Execution Tache (mieux que ça)
 
           // if (tache->deepsleep != 0)
           // {
@@ -198,12 +210,19 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
       retour += "<label class=\"input-group-text\" for=\"deepsleep\">DeepSleep (ms)</label>\n";
       retour += "<input type=\"number\" class=\"form-control\" id=\"appte\" name=\"deepsleep\"  value= \"\%ProgrammatedTasks" + String(i) + ":deepsleep\%" + "\"  required>\n";
       retour += "</div>";
+      
+      retour += "<div class=\"form-check form-switch\" >\n";
+      retour += "<label class=\"input-group-label\" for=\"execOnce\">Exec Once</label>\n";
+      retour += "<input class=\"form-check-input\" type=\"checkbox\" name=\"execOnce\" role=\"switch\" id=\"flexSwitchCheckChecked\" " + String("\%ProgrammatedTasks" + String(i) + ":execOnce\%") + " onclick=\"\">";
+      retour += "</div>";
+      
       retour += "<button class=\"btn btn-primary\" type=\"submit\">Mettre a jour</button>";
       retour += "<a href=\"/programmateur/?delete=" + (String)i + "\" class=\"btn btn-danger\">";
-      retour += "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"white\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">";
-      retour += "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>";
-      retour += "<path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>";
-      retour += "</svg>";
+      // retour += "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"white\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">";
+      // retour += "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>";
+      // retour += "<path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>";
+      // retour += "</svg>";
+      retour += "<i class=\"bi bi-trash\"></i>";
       retour += "</a>";
       retour += "</form>";
       retour += "</div>\n";
@@ -230,6 +249,10 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
     if (methode == "isActive")
     {
       return String(ProgTasks.ListTasks->get(num_tache)->isActive() ? "checked" : "");
+    }
+    if (methode == "execOnce")
+    {
+      return String(ProgTasks.ListTasks->get(num_tache)->execOnce ? "checked" : "");
     }
     if (methode == "targetVanne")
     {

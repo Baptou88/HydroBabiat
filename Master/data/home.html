@@ -2,17 +2,17 @@
 <html lang="fr" data-bs-theme="light">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HydroBabiat</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel = "icon" href = "logo.png"   type = "image/x-icon">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" href="logo.png" type="image/x-icon" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous" />
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" />
 
     <script src="https://code.highcharts.com/stock/highstock.js"></script>
     <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
@@ -22,7 +22,7 @@
     <script src="/app.js" type="text/javascript"></script>
     <script src="/theme.js" type="text/javascript"></script>
 
-    <link rel="stylesheet" href="/rSlider.css">
+    <link rel="stylesheet" href="/rSlider.css" />
     <script src="/rSlider.js"></script>
 
     <style>
@@ -115,7 +115,6 @@
             cursor: pointer;
         }
 
-
         @keyframes blink {
 
             from,
@@ -131,32 +130,32 @@
 
     <style>
         @import url("https://code.highcharts.com/css/highcharts.css");
-        @media (prefers-color-scheme: dark) {
-        :root {
-            
 
-            /* UI colors */
-            --highcharts-background-color: var(--bs-body-bg);
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* UI colors */
+                --highcharts-background-color: var(--bs-body-bg);
+            }
         }
-        }   
+
         .highcharts-dark {
-        /* UI colors */
-            --highcharts-background-color: #212529; 
+            /* UI colors */
+            --highcharts-background-color: #212529;
         }
     </style>
 </head>
 
 <body>
     <header class="border-bottom">
-        <nav class="navbar navbar-expand-lg ">
+        <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
                 <a class="navbar-brand" href="/">
-                    <img src="/icons/hydro-elec-512.svg" alt="Bootstrap" width="40" height="40">
+                    <img src="/icons/hydro-elec-512.svg" alt="Bootstrap" width="40" height="40" />
                     HydroBabiat
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                    aria-label="Toggle navigation">
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -165,7 +164,8 @@
                             <a class="nav-link active" aria-current="page" href="/">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link icon-link" href="programmateur"><i class="bi bi-calendar-event"></i> Programmateur</a>
+                            <a class="nav-link icon-link" href="programmateur"><i class="bi bi-calendar-event"></i>
+                                Programmateur</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="fileSystem"><i class="bi bi-database"></i> FS</a>
@@ -174,15 +174,18 @@
                             <a class="nav-link disabled">Disabled</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle icon-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle icon-link" href="#" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-cpu"></i>Nodes
                             </a>
                             <ul class="dropdown-menu">
-                              <li><a class="dropdown-item" href="#Etang">Etang</a></li>
-                              <li><a class="dropdown-item" href="#Turbine">Turbine</a></li>
-                              <li><a class="dropdown-item" href="#NodeTest">nodeTest</a></li>
+                                <li><a class="dropdown-item" href="#Etang">Etang</a></li>
+                                <li><a class="dropdown-item" href="#Turbine">Turbine</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="#NodeTest">nodeTest</a>
+                                </li>
                             </ul>
-                          </li>
+                        </li>
                         <li class="nav-item dropdown">
                             <button
                                 class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center"
@@ -194,7 +197,7 @@
                                 <span class="d-lg-none ms-2">Toggle theme</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme"
-                                style="--bs-dropdown-min-width: 8rem;">
+                                style="--bs-dropdown-min-width: 8rem">
                                 <li>
                                     <button type="button" class="dropdown-item d-flex align-items-center"
                                         data-bs-theme-value="light">
@@ -220,259 +223,327 @@
                         </li>
                     </ul>
                     <form class="d-flex" role="search">
-                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                        <button class="btn btn-outline-success" type="submit">Search</button>
+                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
+                        <button class="btn btn-outline-success" type="submit">
+                            Search
+                        </button>
                     </form>
-                    <button class="btn btn-outline-warning" type="submit" onclick="logout()">Logout %user%</button>
+                    <button class="btn btn-outline-warning" type="submit" onclick="logout()">
+                        Logout %user%
+                    </button>
                 </div>
             </div>
         </nav>
     </header>
 
-
-
-
     <div class="row mx-1 mt-2">
         <div class="col-4">
             <div class="card">
-                <div class="card-header">Modes
+                <div class="card-header">
+                    Modes
                     <div class="card-subtitle">%mode%</div>
                 </div>
 
-                <ul class="list-group" id="modes">%modes%</ul>
+                <ul class="list-group" id="modes">
+                    %modes%
+                </ul>
             </div>
         </div>
 
         <div class="col-8">
-            <div class="container border rounded" data-modee="0">m0
-
-                <label for="RangePosVanneTarget" class="form-label">Cible Vanne</label>
-                <input type="range" class="form-range" id="RangePosVanneTarget" value="%RangePosVanneTarget%">
+            <div class="container border rounded" data-modee="0" x-data="{}">
+                m0
+                <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
+                    aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar" :style="{width: $store.Turbine.positionVannetoString()}"
+                        x-text="$store.Turbine.positionVannetoString()"></div>
+                </div>
+                <label for="PositionVanneTarget" class="form-label">Cible Vanne</label>
+                <input type="range" class="form-range" id="PositionVanneTarget" value="%PositionVanneTarget%" />
             </div>
-            <div class="container  border rounded" data-modee="1" x-data="{edited: false}">m1
-                <div x-show="edited"><button @click="edited = false" onclick="websocket.send('SavePref')">Save Pref</button></div>
+            <div class="container border rounded" data-modee="1" x-data="{edited: false}">
+                m1
+                <div x-show="edited">
+                    <button @click="edited = false" onclick="websocket.send('SavePref')">
+                        Save Pref
+                    </button>
+                </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">target vanne</span>
                     <input type="number" class="form-control param" name="bctarget" id="bc.target" value="%bc.target%"
-                        data-param="bc.target" x-on:change="edited = true">
+                        data-param="bc.target" x-on:change="edited = true" />
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">min</span>
                     <input type="number" class="form-control param" name="bcmin" id="bc.min" value="%bc.min%"
-                        data-param="bc.min" x-on:change="edited = true">
+                        data-param="bc.min" x-on:change="edited = true" />
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">max</span>
                     <input type="number" class="form-control param" name="bcmax" id="bc.max" value="%bc.max%"
-                        data-param="bc.max" x-on:change="edited = true">
+                        data-param="bc.max" x-on:change="edited = true" />
                 </div>
             </div>
-            <div class="container border rounded" data-modee="2">m2
+            <div class="container border rounded" data-modee="2">
+                m2
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">kp</span>
                     <input type="number" class="form-control param" name="pidcKp" id="pidcKp" value="%pidc.kp%"
-                        data-param="pidc.kp">
+                        data-param="pidc.kp" />
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">ki</span>
                     <input type="number" class="form-control" name="pidcKi" id="pidcKi" value="%pidc.ki%"
-                        data-param="pidc.ki">
+                        data-param="pidc.ki" />
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">kd</span>
                     <input type="number" class="form-control" name="pidcKd" id="pidcKd" value="%pidc.kd%"
-                        data-param="pidc.kd">
+                        data-param="pidc.kd" />
                 </div>
                 <div class="input-group mb-3">
-                    <input type="button" class="btn param" value="a">
+                    <input type="button" class="btn param" value="a" />
                 </div>
             </div>
-            <div class="container border rounded my-3" x-data="{Notification: %Notification% ,NotificationGroup: %NotificationGroup% }">
+            <div class="container border rounded my-3"
+                x-data="{Notification: %Notification% ,NotificationGroup: %NotificationGroup% }">
                 <div class="form-check form-switch">
                     <label class="form-check-label" for="Notification">Notification</label>
-                    <input class="form-check-input" type="checkbox" id="Notification" x-bind:checked="Notification" 
-                    onclick="websocket.send('Notification=' + this.checked)">
+                    <input class="form-check-input" type="checkbox" id="Notification" x-bind:checked="Notification"
+                        onclick="websocket.send('Notification=' + this.checked)" />
                 </div>
-                <div class="form-check form-switch" >
+                <div class="form-check form-switch">
                     <label class="form-check-label" for="NotificationGroup">NotificationGroup</label>
-                    <input class="form-check-input" type="checkbox" id="NotificationGroup" x-bind:checked="NotificationGroup"
-                            onclick="websocket.send('NotificationGroup=' + this.checked)">
-
+                    <input class="form-check-input" type="checkbox" id="NotificationGroup"
+                        x-bind:checked="NotificationGroup"
+                        onclick="websocket.send('NotificationGroup=' + this.checked)" />
                 </div>
             </div>
-            <div class="container border rounded my-3" onclick="websocket.send('SavePref')" x-data="{dataNotSaved:false}">
-
+            <div class="container border rounded my-3" onclick="websocket.send('SavePref')"
+                x-data="{dataNotSaved:false}">
                 <div x-show="dataNotSaved">
-                    <button class="btn btn-outline-warning" @click="dataNotSaved=false">SavePref</button>
+                    <button class="btn btn-outline-warning" @click="dataNotSaved=false">
+                        SavePref
+                    </button>
                 </div>
                 <div class="form-check form-switch">
                     <label class="form-check-label" for="AlertChecked">Alert</label>
                     <input class="form-check-input" type="checkbox" id="AlertChecked" %AlertNivActif%
-                        onclick="websocket.send('AlertNivActif=' + this.checked)">
-                    <button type="button" class="btn btn-secondary btn-sm"
-                        onclick="websocket.send('testNotif')">Test</button>
-                    <button type="button" class="btn btn-secondary btn-sm"
-                        onclick="websocket.send('testNotifGroup')">TestGroup</button>
+                        onclick="websocket.send('AlertNivActif=' + this.checked)" />
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="websocket.send('testNotif')">
+                        Test
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="websocket.send('testNotifGroup')">
+                        TestGroup
+                    </button>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Alert Min</span>
                     <input type="number" class="form-control param" name="AlertMin" id="AlertMin" value="%AlertNivMin%"
-                        data-param="AlertNivMin" x-on:change="dataNotSaved = true">
+                        data-param="AlertNivMin" x-on:change="dataNotSaved = true" />
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Alert Max</span>
                     <input type="number" class="form-control param" name="AlertMax" id="AlertMax" value="%AlertNivMax%"
-                        data-param="AlertNivMax">
+                        data-param="AlertNivMax" />
                 </div>
             </div>
-
         </div>
     </div>
 
-    <div class="row py-2 mx-2">
-        <div class="col-sm ">
+    <div class="row py-2 mx-2"  x-data="">
+        <div class="col-sm">
             <div class="card mb-2">
                 <div class="card-header">
                     <div class="d-flex">
-                        <i class="bi bi-fan"></i> Turbine
-                        <div class="ms-auto">
-                            <i class="bi bi-circle-fill" style="color: grey;"></i>
+                        <i class="bi bi-fan mx-2"></i> Turbine
+                        <div class="ms-auto mx-2">
+                            <i class="bi bi-circle-fill" style="color: grey"></i>
                         </div>
-                        <div class="ms-auto">
-                            test
-                        </div>
-                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="TurbineActive" onclick="websocket.send('Turbine.Active=' + (this.checked?1:0))">
-                            <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox input</label>
+                        <div class="ms-auto" x-show="$store.Turbine.motorState == 1"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="TurbineActive" x-bind:checked="$store.Turbine.status.Active"
+                                onclick="websocket.send('Turbine.Active=' + (this.checked?1:0))" />
                         </div>
                     </div>
                 </div>
                 <div class="card-body" id="Turbine">
-                    <p>Turbine RSSI: <span id="TurbineRSSI"></span> dBm</p>
-                    <p>Turbine SNR: <span id="TurbineSNR"></span> dB</p>
-                    <p>Dernière MAJ: <span class="nodeTimer" id="TurbineDernierMessage">-1</span> s</p>
-                    <p>position Vanne <span id="positionVanne">%positionVanne% </span> %%</p>
-                    <p>tacky <span id="tacky">%tacky% </span> rpm</p>
-                    <p>Tension <span id="tension">%tension% </span> V</p>
-                    <p>Intensite <span id="intensite">%intensite% </span> A</p>
-                    <p>Puissance <span id="power">%power% </span> W</p>
-                    <p>Tension Batterie <span id="tensionBatterie">%tensionBatterie% </span> V</p>
-                    <p>motorState <span id="motorStateStr">%motorStateStr% </span> </p>
+                    <p>RSSI: <span id="TurbineRSSI" x-text="$store.Turbine.status.RSSI"></span> dBm  -  SNR: <span id="TurbineSNR" x-text="$store.Turbine.status.SNR"></span> dB</p>
+                    <p>
+                        Dernière MAJ:
+                        <span class="nodeTimer" id="TurbineDernierMessage">-1</span> s
+                    </p>
+                    <p>
+                        position Vanne <span id="positionVanne" x-text="$store.Turbine.positionVanne">%positionVanne% </span> %%
+                    </p>
+                    <p>tacky: <strong><span id="tacky" x-text="$store.Turbine.tacky">%tacky% </span> rpm</strong></p>
+                    <p>Tension: <span id="tension" x-text="$store.Turbine.tension">%tension% </span> V</p>
+                    <p>Intensite: <span id="intensite" x-text="$store.Turbine.intensite">%intensite% </span> A</p>
+                    <p>Puissance: <span id="power" x-text="$store.Turbine.power">%power% </span> W</p>
+                    <p>
+                        Tension Batterie
+                        <span id="tensionBatterie" x-text="$store.Turbine.tensionBatterie">%tensionBatterie% </span> V
+                    </p>
+                    <p>motorState <span id="motorStateStr" x-text="$store.Turbine.motorStateStr">%motorStateStr% </span></p>
+                    <p>motorState <span x-text="$store.Turbine.motorState"></span></p>
                     <div class="btn-group" role="group" aria-label="Basic example">
-                        <button type="button" class="btn btn-secondary" data-node="TURBINE" data-action="FT">Fermeture Totale</button>
+                        <button type="button" class="btn btn-secondary computed" data-node="TURBINE" data-action="FT">
+                            Fermeture Totale
+                        </button>
                         <!-- <button type="button" class="btn btn-secondary">Middle</button> -->
-                        <button type="button" class="btn btn-secondary">Ouverture Totale</button>
+                        <button type="button" class="btn btn-secondary">
+                            Ouverture Totale
+                        </button>
                     </div>
                     <div class="btn-group" role="group" aria-label="Sommeil">
-                        <button class="computed btn btn-secondary" data-node="TURBINE"
-                            data-action="LightSleep">LightSleep</button>
-                        <button class="computed btn btn-secondary" data-node="TURBINE"
-                            data-action="DeepSleep">DeepSleep</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="LightSleep">
+                            LightSleep
+                        </button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="DeepSleep">
+                            DeepSleep
+                        </button>
                         <button type="button" class="btn btn-outline-warning computed" data-node="TURBINE"
-                            data-action="Reboot">Reboot</button>
+                            data-action="Reboot">
+                            Reboot
+                        </button>
                     </div>
                     <div class="btn-group" role="group" aria-label="Zero Tension">
-                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZV">Zero
-                            Tension</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZV">
+                            Zero Tension
+                        </button>
                     </div>
                     <div class="btn-group" role="group" aria-label="Zero Current">
-                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZC">Zero
-                            Courant</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZC">
+                            Zero Courant
+                        </button>
                     </div>
                     <div class="btn-group" role="group" aria-label="Calibration ADS">
-                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="calibrate">Calibration ADS</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="calibrate">
+                            Calibration ADS
+                        </button>
                     </div>
                     <div class="btn-group" role="group" aria-label="Int max moteur">
-                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="IMM">Int max moteur</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="IMM">
+                            Int max moteur
+                        </button>
                     </div>
 
                     <div x-data="{selected:%CpuFreq%,CpuFreqs:[240,160,80,40,20,10]}">
-                        <select class="form-select form-select-sm computed-range" name="Turbine_CpuFreq" data-node="TURBINE" data-action="CpuFreq">
+                        <select class="form-select form-select-sm computed-range" name="Turbine_CpuFreq"
+                            data-node="TURBINE" data-action="CpuFreq">
                             <template x-for="CpuFreq in CpuFreqs" :key="CpuFreq">
-                                <option :value="CpuFreq" :selected="selected == CpuFreq" x-text="CpuFreq + ' MHz'"></option>
+                                <option :value="CpuFreq" :selected="selected == CpuFreq" x-text="CpuFreq + ' MHz'">
+                                </option>
                             </template>
                         </select>
-
                     </div>
                     <div class="btn-group" role="group" aria-label="">
-                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="SavePref">SavePref</button>
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="SavePref">
+                            SavePref
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-sm">
-            <div class="card mb-2" id="Etang">
+            <div class="card mb-2" id="Etang" x-data="">
                 <div class="card-header">
                     <div class="d-flex">
-                        <i class="bi bi-moisture"></i>
-                        <i class="bi bi-droplet-half"></i>
+                        <i class="bi bi-moisture "></i>
+                        <i class="bi bi-droplet-half mx-2"></i>
                         Etang
-                        <div class="ms-auto">
-                            Test
+
+                        <div class="ms-auto mx-2">
+                            <i class="bi bi-circle-fill" style="color: grey"></i>
                         </div>
-                        <div class="ms-auto">
-                            Test
-                        </div>
-                        <div class="ms-auto">
-                            <i class="bi bi-circle-fill" style="color: grey;"></i>
-                        </div>
-                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="EtangActive" onclick="websocket.send('Etang.Active=' + (this.checked?1:0))">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="EtangActive" x-bind:checked="$store.Etang.status.Active"
+                                onclick="websocket.send('Etang.Active=' + (this.checked?1:0))" />
                             <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox input</label>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <p data-bs-toggle="tooltip" data-bs-placement="top"
-                        title="Recorded Signal Strength Indicator in dBm">Etang RSSI: <span id="EtangRSSI"></span> dBm
+                        title="Recorded Signal Strength Indicator in dBm">
+                        Etang RSSI: <span id="EtangRSSI" x-text="$store.Etang.status.RSSI"></span> dBm  -  Etang SNR: <span id="EtangSNR" x-text="$store.Etang.status.SNR"></span> dB</p>
+                    <p>
+                        Dernière MAJ:
+                        <span class="nodeTimer" id="EtangDernierMessage">-1</span> s
                     </p>
-                    <p>Etang SNR: <span id="EtangSNR"></span> dB</p>
-                    <p>Dernière MAJ: <span class="nodeTimer" id="EtangDernierMessage">-1</span> s</p>
-                    <p>Niveau Etang: <span id="niveauEtang">%niveauEtang% </span> </p>
-                    <p>Niveau Etang: <span id="ratioNiveauEtang">%ratioNiveauEtang% </span> %%</p>
+                    <div class="progress" role="progressbar" aria-label="Example with label">
+                        <div class="progress-bar" :style="{width: $store.Etang.ratioNiveauEtangToString()}"
+                            x-text="$store.Etang.ratioNiveauEtangToString()"></div>
+                    </div>
+                    <p>Niveau Etang: <span id="niveauEtang">%niveauEtang% </span></p>
+                    <p>
+                        Niveau Etang:
+                        <strong><span id="ratioNiveauEtang" x-text="$store.Etang.ratioNiveauEtang">%ratioNiveauEtang% </span>%%</strong>
+                    </p>
                     <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="setNiveauFull">Set Niveau full</button>
+                            data-action="setNiveauFull">
+                            Set Niveau full
+                        </button>
                         <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="setNiveauTP">Set Niveau TP</button>
+                            data-action="setNiveauTP">
+                            Set Niveau TP
+                        </button>
                         <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="setNiveauEmpty">Set Niveau empty</button>
+                            data-action="setNiveauEmpty">
+                            Set Niveau empty
+                        </button>
                     </div>
-                    <p>RoiXY: <span id="RoiX"></span> <span id="RoiY"></span></p>
-                    <p>RoiC : <span id="RoiCenter"></span> </p>
-                    <p>TimingBudget : <span id="timingBudget"></span> </p>
-                    <p>distanceMode : <span id="distanceMode"></span> </p>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="RoiX=16">RoiX = 16 (default)</button>
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="RoiX=8">RoiX = 8</button>
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="RoiX=4">RoiX = 4 (min)</button>
+
+                    <div class="input-group">
+                        <span class="input-group-text">RoiXY <span id="RoiX" x-text="$store.Etang.RoiX"></span> <span id="RoiY" x-text="$store.Etang.RoiY"></span></span>
+                        <button type="button" class="btn computed" :class="$store.Etang.RoiX != 16 ? 'btn-outline-secondary' :  'btn-secondary'"data-node="ETANG" data-action="RoiX=16">
+                            RoiX = 16 (default)
+                        </button>
+                        <button type="button" class="btn computed" :class="$store.Etang.timingBudget != 8 ? 'btn-outline-secondary' :  'btn-secondary'" data-node="ETANG" data-action="RoiX=8">
+                            RoiX = 8
+                        </button>
+                        <button type="button" class="btn computed" :class="$store.Etang.timingBudget != 4 ? 'btn-outline-secondary' :  'btn-secondary'" data-node="ETANG" data-action="RoiX=4">
+                            RoiX = 4 (min)
+                        </button>
                     </div>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="TimingBudget=50">Timing Budget 50</button>
-                        <button class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="TimingBudget=100">Timing Budget 100</button>
-                        <button class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="TimingBudget=200">Timing Budget 200</button>
+
+                    <p>RoiC : <span id="RoiCenter" x-text="$store.Etang.RoiCenter"></span></p>
+                    
+                    <div class="input-group">
+                        <span class="input-group-text">Timing Budget (ms) </span>
+                        <button class="btn  computed" :class="$store.Etang.timingBudget != 50 ? 'btn-outline-secondary' :  'btn-secondary'" type="button" data-node="ETANG" data-action="TimingBudget=50">50</button>
+                        <button class="btn  computed" :class="$store.Etang.timingBudget != 100 ? 'btn-outline-secondary' :  'btn-secondary'" type="button" data-node="ETANG" data-action="TimingBudget=100">100</button>
+                        <button class="btn  computed" :class="$store.Etang.timingBudget != 200 ? 'btn-outline-secondary' :  'btn-secondary'" type="button" data-node="ETANG" data-action="TimingBudget=200">200</button>
+                        
                     </div>
+                    <p>distanceMode : <span id="distanceMode" x-text="$store.Etang.distanceMode"></span></p>
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="LedVL53">Led VL53</button>
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
-                            data-action="savePref">Save Pref</button>
-                        <button type="button" class="btn btn-outline-warning computed" data-node="ETANG"
-                            data-action="Reboot"><i class="bi bi-bootstrap-reboot"></i> Reboot</button>
+                        
+                    </div>
+
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG" data-action="LedVL53">Led VL53</button>
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG" data-action="savePref"> Save Pref </button>
+                        <button type="button" class="btn btn-outline-warning computed" data-node="ETANG" data-action="Reboot"> <i class="bi bi-bootstrap-reboot"></i> Reboot </button>
                     </div>
                     <div x-data="{ edit: false, full : 0,vide : 0}">
-                        <button class="btn" @click="edit = !edit" @click.outside="edit = false">Edit</button>
-                        <label for="niveauRempli" class="form-label">niveauRempli <span x-text="$store.Etang.niveauRempli"></span> <span x-show="edit" x-text="full"></span></label>
-                        <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit" id="niveauRempli" max="1000" @click="console.log($event)" x-on:input="full = $event.target.value" x-on:change=" $store.Etang.sendRempli($event)" x-bind:value="$store.Etang.niveauRempli">
-                        <label for="niveauVide"class="form-label">niveauVide <span x-text="$store.Etang.niveauVide"></span> </span><span x-show="edit" x-text="vide"></span></label>
-                        <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit" id="niveauVide" min="1500"  max="3000" @click="console.log($event)" x-on:input="vide = $event.target.value" x-on:change=" $store.Etang.sendVide($event)" x-bind:value="$store.Etang.niveauVide">
-                        
+                        <button class="btn" @click="edit = !edit" @click.outside="edit = false">
+                            Edit
+                        </button>
+                        <label for="niveauRempli" class="form-label">niveauRempli <span x-text="$store.Etang.niveauRempli"></span>
+                            <span x-show="edit" x-text="full"></span></label>
+                        <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit"
+                            id="niveauRempli" max="1000" @click="console.log($event)"
+                            x-on:input="full = $event.target.value" x-on:change=" $store.Etang.sendRempli($event)"
+                            x-bind:value="$store.Etang.niveauRempli" />
+                        <label for="niveauVide" class="form-label">niveauVide <span
+                                x-text="$store.Etang.niveauVide"></span><span x-show="edit"
+                                x-text="vide"></span></label>
+                        <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit"
+                            id="niveauVide" min="1500" max="3000" @click="console.log($event)"
+                            x-on:input="vide = $event.target.value" x-on:change=" $store.Etang.sendVide($event)"
+                            x-bind:value="$store.Etang.niveauVide" />
                     </div>
                     <div class="container mt-5">
                         <input type="text" id="sliderTimingBudget" />
@@ -486,35 +557,44 @@
                     <div class="d-flex">
                         Test
                         <div class="ms-auto">
-                            <i class="bi bi-circle-fill" style="color: grey;"></i>
+                            <i class="bi bi-circle-fill" style="color: grey"></i>
                         </div>
-                        <div class="ms-auto">
+                        <div class="ms-auto mx-2">
                             <button class="btn btn-outline-secondary btn-sm" onclick="console.log('bjr');">
                                 <i class="bi bi-tools"></i>
-
                             </button>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="NodeTestActive" onclick="websocket.send('NodeTest.Active=' + (this.checked?1:0))">
-                            <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox input</label>
+                            <input class="form-check-input" type="checkbox" role="switch" id="NodeTestActive" x-bind:checked="$store.NodeTest.status.Active"
+                                onclick="websocket.send('NodeTest.Active=' + (this.checked?1:0))" />
+                            <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox
+                                input</label>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    <p>RSSI: <span id="NodeTestRSSI"></span> dBm</p>
-                    <p>SNR: <span id="NodeTestSNR"></span> dB</p>
-                    <p>Dernière MAJ: <span class="nodeTimer" id="NodeTestDernierMessage">-1</span> s</p>
+                    <p>RSSI: <span id="NodeTestRSSI" x-text="$store.NodeTest.status.RSSI"></span> dBm  -  SNR: <span id="NodeTestSNR" x-text="$store.NodeTest.status.SNR"></span> dB</p>
+                    <p>
+                        Dernière MAJ:
+                        <span class="nodeTimer" id="NodeTestDernierMessage">-1</span> s
+                    </p>
                     <p>temp <span id="temp">%temp% </span> °C</p>
 
+                    <button type="button" class="btn btn-secondary computed" data-node="NODETEST" data-action="blink">
+                        Blink
+                    </button>
                     <button type="button" class="btn btn-secondary computed" data-node="NODETEST"
-                            data-action="blink">Blink</button>
+                        data-action="DEEPSLEEP">
+                        DEEPSLEEP
+                    </button>
                     <button type="button" class="btn btn-secondary computed" data-node="NODETEST"
-                            data-action="DEEPSLEEP">DEEPSLEEP</button>
+                        data-action="ToggleScreen">
+                        ToggleScreen
+                    </button>
                     <button type="button" class="btn btn-secondary computed" data-node="NODETEST"
-                            data-action="ToggleScreen">ToggleScreen</button>
-                    <button type="button" class="btn btn-secondary computed" data-node="NODETEST"
-                            data-action="ScanWifi">ScanWifi</button>
-
+                        data-action="ScanWifi">
+                        ScanWifi
+                    </button>
                 </div>
             </div>
         </div>
@@ -525,7 +605,7 @@
     <div class="container border mb-2">
         <div id="chartTurbine" class="container highcharts-auto"></div>
     </div>
-    
+
     <div class="container mb-2">
         <div class="accordion" id="accordionExample">
             <div class="accordion-item">
@@ -536,14 +616,16 @@
                         Terminal
                     </button>
                 </h2>
-                <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne"
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne"
                     data-bs-parent="#accordionExample">
                     <div class="accordion-body">
                         <div id="terminal"></div>
                         <form id="command-form">
                             <label for="command-input">&gt;&nbsp;</label>
-                            <input class="form-control" type="text" id="command-input" autocomplete="off">
-                            <button class="btn btn-outline-light" type="submit">Envoyer</button>
+                            <input class="form-control" type="text" id="command-input" autocomplete="off" />
+                            <button class="btn btn-outline-light" type="submit">
+                                Envoyer
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -555,27 +637,34 @@
                         Setting
                     </button>
                 </h2>
-                <div id="collapseSecond" class="accordion-collapse collapse " aria-labelledby="headingSecond"
+                <div id="collapseSecond" class="accordion-collapse collapse" aria-labelledby="headingSecond"
                     data-bs-parent="#accordionExample">
                     <div class="accordion-body">
-                        <button type="button" class="btn btn-outline-success"
-                            onclick="websocket.send('SavePref')">SavePref</button>
-                        <button type="button" class="btn btn-outline-success"
-                            onclick="websocket.send('LedNotif')">LedNotif</button>
+                        <button type="button" class="btn btn-outline-success" onclick="websocket.send('SavePref')">
+                            SavePref
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="websocket.send('LedNotif')">
+                            LedNotif
+                        </button>
                         <button type="button" class="btn btn-outline-warning"
-                            onclick="websocket.send('DeepSleepServer')">DeepSleepServer</button>
-                        <button type="button" class="btn btn-outline-warning"
-                            onclick="websocket.send('SpectrumScan')">SpectrumScan</button>
+                            onclick="websocket.send('DeepSleepServer')">
+                            DeepSleepServer
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="websocket.send('SpectrumScan')">
+                            SpectrumScan
+                        </button>
+                        <button type="button" class="btn btn-outline-danger"
+                            onclick="window.dispatchEvent(new Event('beforeunload'))">
+                            beforeunload
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
 
     <div aria-live="polite" aria-atomic="true" class="">
-
-        <div class="toast-container position-fixed p-3 top-0 end-0" id="toastContainer">
+        <div class="toast-container position-fixed p-3 top-0 end-0" id="toastContainer"></div>
     </div>
 
     <!-- Modal -->
@@ -586,12 +675,14 @@
                     <h5 class="modal-title" id="exampleModalLabel">Serveur Eteind</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    ... :'(
-                </div>
+                <div class="modal-body">... :'(</div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                    <button type="button" onclick="initWebSocket()" class="btn btn-primary">
+                        Tenter reconnexion
+                    </button>
                 </div>
             </div>
         </div>
@@ -599,52 +690,61 @@
 
     <div class="container">
         <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-          <div class="col-md-4 d-flex align-items-center">
-            <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
-              <svg class="bi" width="30" height="24"><use xlink:href="#bootstrap"></use></svg>
-            </a>
-            <span class="mb-3 mb-md-0 text-body-secondary">© 1922 HydroBabiat, Inc</span>
-          </div>
-      
-          <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
-            <li class="ms-3"><a class="text-body-secondary" href="https://github.com/Baptou88/HydroBabiat/issues"><i class="bi bi-bug"></i></a></li>
-            <li class="ms-3"><a class="text-body-secondary" href="https://github.com/Baptou88/HydroBabiat"><i class="bi bi-github"></i></a></li>
-            <li class="ms-3"><a class="text-body-secondary" href="https://www.instagram.com/baptou88/"><i class="bi bi-instagram"></i></a></li>
-            
-          </ul>
+            <div class="col-md-4 d-flex align-items-center">
+                <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
+                    <svg class="bi" width="30" height="24">
+                        <use xlink:href="#bootstrap"></use>
+                    </svg>
+                </a>
+                <span class="mb-3 mb-md-0 text-body-secondary">© 1922 HydroBabiat, Inc</span>
+            </div>
+
+            <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                <li class="ms-3">
+                    <a class="text-body-secondary" href="https://github.com/Baptou88/HydroBabiat/issues"><i
+                            class="bi bi-bug"></i></a>
+                </li>
+                <li class="ms-3">
+                    <a class="text-body-secondary" href="https://github.com/Baptou88/HydroBabiat"><i
+                            class="bi bi-github"></i></a>
+                </li>
+                <li class="ms-3">
+                    <a class="text-body-secondary" href="https://www.instagram.com/baptou88/"><i
+                            class="bi bi-instagram"></i></a>
+                </li>
+            </ul>
         </footer>
-      </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
         crossorigin="anonymous"></script>
     <script>
         function updateNodeTimer() {
-            var nodes = document.querySelectorAll('.nodeTimer');
+            var nodes = document.querySelectorAll(".nodeTimer");
 
-            nodes.forEach(el => {
-                var it = parseInt(el.innerHTML)
+            nodes.forEach((el) => {
+                var it = parseInt(el.innerHTML);
                 if (it != -1) {
-
-                    it = it +2
-                    el.innerHTML = it 
+                    it = it + 2;
+                    el.innerHTML = it;
                     var color;
-                    if (it<=-1) {
-                        color = 'grey';
-                    } else if (it <=30) {
-                        color = 'green'
+                    if (it <= -1) {
+                        color = "grey";
+                    } else if (it <= 30) {
+                        color = "green";
                     } else if (it <= 120) {
-                        color = 'orange'
-                    }   else {
-                        color = 'red'
+                        color = "orange";
+                    } else {
+                        color = "red";
                     }
                     var test = el.parentElement.parentElement.parentElement;
-                    var test2 =  test.querySelector(".bi-circle-fill");
+                    var test2 = test.querySelector(".bi-circle-fill");
                     test2.style.color = color;
                 }
-            })
+            });
         }
         var nodeTimerIntervall = window.setInterval(function () {
-            updateNodeTimer(2000)
+            updateNodeTimer(2000);
         }, 2000);
     </script>
 </body>

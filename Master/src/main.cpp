@@ -114,7 +114,7 @@ LList<IController *> modes = LList<IController *>();
 
 WiFiUDP ntpUDP;
 const char *ntpServer = "europe.pool.ntp.org";
-NTPClient timeClient(ntpUDP, ntpServer, 3600, 3600);
+NTPClient timeClient(ntpUDP, ntpServer, 7200, 3600);
 
 const int pinAnalogTest = 6;
 
@@ -521,6 +521,7 @@ void displayData()
     Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang) + " %");
     Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne) + " %");
     Ec.getDisplay()->println("Cible Vanne: " + (String)(dataTurbine.targetPositionVanne) + " %");
+    Ec.getDisplay()->println("h: " + (String) timeClient.getHours() + ":" + (String) timeClient.getMinutes());
 
     Ec.drawBVProgressBar(114, 4, 5, 50, (dataEtang.ratioNiveauEtang));
 
@@ -635,7 +636,7 @@ bool initPref()
     AlertNiv.active = Prefs.getBool("AlertNivActiv");
     AlertNiv.max = Prefs.getInt("AlertNivMax");
     AlertNiv.min = Prefs.getInt("AlertNivMin");
-    modeActuel = Prefs.getInt("modeVanne", 0);
+    modeActuel = Prefs.getInt(MODEVANNE, 0);
     ledNotif = Prefs.getBool("LedNotif", ledNotif);
     if (Prefs.isKey(nodeTest.Name.c_str()))
     {
@@ -654,7 +655,7 @@ bool savePref()
   Prefs.putBool("AlertNivActiv", AlertNiv.active);
   Prefs.putInt("AlertNivMax", AlertNiv.max);
   Prefs.putInt("AlertNivMin", AlertNiv.min);
-  Prefs.putInt("modeVanne", modeActuel);
+  Prefs.putInt(MODEVANNE, modeActuel);
   Prefs.putInt("LedNotif", ledNotif);
 
   Prefs.putInt("bc.max", bC->niveauMax);

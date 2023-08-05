@@ -17,6 +17,7 @@ public:
     bool isActive();
     String getHours();
     String getMinutes();
+    bool execOnce = true;
     String name;
     byte h;
     byte m;

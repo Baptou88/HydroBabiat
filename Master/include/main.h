@@ -8,6 +8,11 @@
 #include "motorState.h"
 #include "Notifier.h"
 
+// Preference
+
+#define MODEVANNE "modeVanne"
+
+
 bool savePref();
 
 extern unsigned long startDeepSleep;
@@ -25,9 +30,9 @@ struct dataTurbine_t
   float UB = 0;
   MotorState motorState = MotorState::UNKOWN;
   String toJson(){
-    String message = "";
+    String message = "\"Turbine\":{";
     message += "\"positionVanne\":" +  (String)positionVanne +",";
-    message += "\"RangePosVanneTarget\":" +  (String)targetPositionVanne +",";
+    message += "\"PositionVanneTarget\":" +  (String)targetPositionVanne +",";
     message += "\"tacky\":" +  (String)tacky +",";
     message += "\"tension\":" +  (String)U + ",";
     message += "\"tensionBatterie\":" +  (String)UB + ",";
@@ -35,7 +40,7 @@ struct dataTurbine_t
     message += "\"motorState\":" +  (String)motorState + ",";
     message += "\"power\":" +  (String)getPower() + ",";
     message += "\"intensite\":" +  (String)I;
-    
+    message += "}";
     return message;
   }
   float getPower(){
@@ -54,10 +59,10 @@ struct nodeStatus_t
   bool active = true;
   String toJson(){
     String message = "" ;
-    message += "\"" + (String)Name + "RSSI\":" +  (String)RSSI +",";
-    message += "\"" + (String)Name + "SNR\":" +  (String)SNR +",";
-    message += "\"" + (String)Name + "Active\":" +  (String)active +",";
-    message += "\"" + (String)Name + "DernierMessage\":" +  (String)((millis()-dernierMessage)/1000) ;
+    message += "\"RSSI\":" +  (String)RSSI +",";
+    message += "\"SNR\":" +  (String)SNR +",";
+    message += "\"Active\":" +  (String)active +",";
+    message += "\"DernierMessage\":" +  (String)((millis()-dernierMessage)/1000) ;
 
     return message;
   }
@@ -76,7 +81,7 @@ struct dataEtang_t
   uint16_t timingBudget = 0;
   int distanceMode = 0;
   String toJson(){
-    String message = "";
+    String message = "\"Etang\":{";
     message += "\"niveauEtang\":" +  (String)niveauEtang +",";
     message += "\"ratioNiveauEtang\":" +  (String)ratioNiveauEtang + ",";
     message += "\"niveauEtangRempli\":" +  (String)niveauEtangRempli + ",";
@@ -86,6 +91,8 @@ struct dataEtang_t
     message += "\"RoiY\":" +  (String)RoiY + ",";
     message += "\"timingBudget\":" +  (String)timingBudget + ",";
     message += "\"distanceMode\":" +  (String)distanceMode;
+
+    message += "}";
     return message;
   }
 };
@@ -95,9 +102,9 @@ struct dataNodeTest_t
   float temp = 0;
   
   String toJson(){
-    String message = "";
+    String message = "\"NodeTest\":{";
     message += "\"temp\":" +  (String)temp ;
-    
+    message += "}";
     return message;
   }
 };
