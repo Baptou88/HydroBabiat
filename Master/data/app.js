@@ -114,31 +114,34 @@ function activateMode(el) {
   el.classList.add('active')
 }
 document.addEventListener('alpine:init', () => {
-  
+  console.log("Alpine Init");
+  Alpine.store('Data',{
+    Energie:0,
+  })
   Alpine.store('Etang', {
     niveauRempli: 0,
     niveauVide: 0,
     ratioNiveauEtang: 0,
-    niveauEtang:0,
-    RoiCenter:0,
-    RoiX:0,
-    RoiY:0,
-    distanceMode:0,
-    timingBudget:0,
-    status:{},
-    fromJson(data){
+    niveauEtang: 0,
+    RoiCenter: 0,
+    RoiX: 0,
+    RoiY: 0,
+    distanceMode: 0,
+    timingBudget: 0,
+    status: {},
+    fromJson(data) {
       this.niveauRempli = data["niveauEtangRempli"]
       this.niveauVide = data["niveauEtangVide"]
       this.ratioNiveauEtang = data["ratioNiveauEtang"]
-      this.niveauEtang =data["niveauEtang"]
-      this.RoiCenter =data["RoiCenter"]
-      this.RoiX =data["RoiX"]
-      this.RoiY =data["RoiY"]
-      this.distanceMode =data["distanceMode"]
-      this.timingBudget =data["timingBudget"]
+      this.niveauEtang = data["niveauEtang"]
+      this.RoiCenter = data["RoiCenter"]
+      this.RoiX = data["RoiX"]
+      this.RoiY = data["RoiY"]
+      this.distanceMode = data["distanceMode"]
+      this.timingBudget = data["timingBudget"]
     },
     ratioNiveauEtangToString() {
-      return this.ratioNiveauEtang +"%"
+      return this.ratioNiveauEtang + "%"
     },
     sendRempli(e) {
       Alpine.store('Etang').niveauRempli = e.target.value;
@@ -152,16 +155,21 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('Turbine', {
     positionVanne: 0,
     positionVanneTarget: 0,
-    intensite:0,
-    motorState:5, //UNKOWN
-    motorStateStr:"",
-    power:0,
-    tacky:0,
-    tension:0,
-    tensionBatterie:0,
-    status:{},
-    fromJson(data){
-      this.positionVanne = data["positionVanne"]
+    intensite: 0,
+    motorState: 5, //UNKOWN
+    motorStateStr: "",
+    power: 0,
+    tacky: 0,
+    tension: 0,
+    tensionBatterie: 0,
+    currentSyst:0,
+    ZV:0,
+    AV:0,
+    ZC:0,
+    AC:0,
+    status: {},
+    fromJson(data) {
+      this.positionVanne = Math.round( data["positionVanne"])
       this.positionVanneTarget = data["PositionVanneTarget"]
       this.intensite = data["intensite"]
       this.motorState = data["motorState"]
@@ -170,26 +178,35 @@ document.addEventListener('alpine:init', () => {
       this.tacky = data["tacky"]
       this.tension = data["tension"]
       this.tensionBatterie = data["tensionBatterie"]
+      this.AC = data["AC"]
+      this.ZC = data["ZC"]
+      this.AV = data["AV"]
+      this.ZV = data["ZV"]
+      this.currentSyst = data["currentSyst"]
     },
-    positionVannetoString(){
+    positionVannetoString() {
       return this.positionVanne + "%"
     },
     sendPositionVanne(e) {
       Alpine.store('Turbine').positionVanne = e.target.value
       sendAction('TURBINE', `positionVanne=${e.target.value}`)
+    },
+    changeParamADS(paramName,value){
+      console.log('TURBINE',`${paramName}=${value}`);
+      sendAction('TURBINE',`${paramName}=${value}`)
     }
   })
   Alpine.store('NodeTest', {
     temp: 0,
-    status:{},
-    fromJson(data){
+    status: {},
+    fromJson(data) {
       this.temp = data["temp"]
     }
   })
 })
 
 
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded',  function () {
   modes = document.querySelector("#modes")
   modes_li = modes.querySelectorAll("li")
 
@@ -391,7 +408,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     ]
   };
 
-  await Highcharts.ajax({
+   Highcharts.ajax({
     url: 'data.csv',
     dataType: 'text',
     success: function (data) {
@@ -407,12 +424,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         // the rest of the lines contain data with their name in the first position  
         else {
-          var seriesNiveau = {
-            data: []
-          }
-          var seriesTurbine = {
-            data: []
-          }
+          // var seriesNiveau = {
+          //   data: []
+          // }
+          // var seriesTurbine = {
+          //   data: []
+          // }
           var dt = new Date(((items[0] - 3600)) * 1000).getTime();
           graphNiveauOption.series[0].data.push([dt, parseFloat(items[2])]);
           graphTurbineOption.series[0].data.push([dt, parseFloat(items[4])]);
@@ -426,19 +443,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   })
 
-
+  console.log('chargement csv ok');
   initWebSocket();
 
 
   initTerminal()
 
-  sliderTimingBudget = new rSlider({
-    target: '#sliderTimingBudget',
-    values: [15, 20, 33, 50, 100, 200, 500],
-    range: false,
-    set: [100]
-
-  })
+ 
 
 })
 
@@ -451,7 +462,7 @@ var websocket;
 window.addEventListener('load', onLoad);
 
 window.addEventListener('beforeunload', (e) => {
-  console.log(`before Unload  ${e}` , e);
+  console.log(`before Unload  ${e}`, e);
   websocket.close();
 })
 
@@ -468,15 +479,14 @@ function initWebSocket() {
 
 function onOpen(event) {
   console.log('Connection opened');
-  Alpine.store("Ws.etablished", true);
   modalDisconnected.hide();
 }
 function onClose(event) {
   console.log('Connection closed');
   //alert('Connection closed');
   modalDisconnected.show();
-  //setTimeout(initWebSocket, 1000);
-  Alpine.store("Ws.etablished", false);
+  setTimeout(initWebSocket, 5000);
+
 }
 function wsData(d) {
   var keys = Object.keys(d)
@@ -508,7 +518,9 @@ function wsData(d) {
 
         activateMode(el);
       }
-
+      if (element == "Energie") {
+        Alpine.store("Data").Energie = d[element]
+      }
       if (element == "Etang") {
         Alpine.store('Etang').fromJson(d[element])
         //chartNiveau.series[2].addPoint([dt, d[element]], true, false, true);
@@ -539,7 +551,7 @@ function wsData(d) {
   }
 }
 function onMessage(event) {
-
+  
   var data = JSON.parse(event.data);
 
   if (data.data) {

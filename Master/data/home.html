@@ -22,9 +22,6 @@
     <script src="/app.js" type="text/javascript"></script>
     <script src="/theme.js" type="text/javascript"></script>
 
-    <link rel="stylesheet" href="/rSlider.css" />
-    <script src="/rSlider.js"></script>
-
     <style>
         /* Works on Firefox */
         * {
@@ -251,15 +248,18 @@
         </div>
 
         <div class="col-8">
-            <div class="container border rounded" data-modee="0" x-data="{}">
+            <div class="container border rounded" data-modee="0" x-data="{edit: false,value:0}">
                 m0
                 <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
                     aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-bar" :style="{width: $store.Turbine.positionVannetoString()}"
                         x-text="$store.Turbine.positionVannetoString()"></div>
                 </div>
-                <label for="PositionVanneTarget" class="form-label">Cible Vanne</label>
-                <input type="range" class="form-range" id="PositionVanneTarget" value="%PositionVanneTarget%" />
+                <label for="PositionVanneTarget" class="form-label">Cible Vanne <span x-show="edit"
+                        x-text="value"></span></label>
+                <input type="range" class="form-range" id="PositionVanneTarget" value="%PositionVanneTarget%"
+                    x-bind:value="$store.Turbine.positionVanneTarget" x-bind:input="edit = true; value= $el.value"
+                    x-bind:change="edit = false" />
             </div>
             <div class="container border rounded" data-modee="1" x-data="{edited: false}">
                 m1
@@ -351,40 +351,83 @@
         </div>
     </div>
 
-    <div class="row py-2 mx-2"  x-data="">
+    <div class="row py-2 mx-2" x-data="">
         <div class="col-sm">
             <div class="card mb-2">
                 <div class="card-header">
                     <div class="d-flex">
                         <i class="bi bi-fan mx-2"></i> Turbine
                         <div class="ms-auto mx-2">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#TurbineModal">
+                                <i class="bi bi-tools"></i>
+                            </button>
+                        </div>
+                        <div class="ms-auto mx-2">
                             <i class="bi bi-circle-fill" style="color: grey"></i>
                         </div>
-                        <div class="ms-auto" x-show="$store.Turbine.motorState == 1"><i class="bi bi-exclamation-triangle"></i></div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="TurbineActive" x-bind:checked="$store.Turbine.status.Active"
+                        <div class="ms-auto" x-show="$store.Turbine.motorState == 1">
+                            <i class="bi bi-exclamation-triangle mx-2" style="color: red"></i>
+                        </div>
+                        <div class="form-check form-switch mx-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="TurbineActive"
+                                x-bind:checked="$store.Turbine.status.Active"
                                 onclick="websocket.send('Turbine.Active=' + (this.checked?1:0))" />
                         </div>
                     </div>
                 </div>
                 <div class="card-body" id="Turbine">
-                    <p>RSSI: <span id="TurbineRSSI" x-text="$store.Turbine.status.RSSI"></span> dBm  -  SNR: <span id="TurbineSNR" x-text="$store.Turbine.status.SNR"></span> dB</p>
+                    <p>
+                        RSSI:
+                        <span id="TurbineRSSI" x-text="$store.Turbine.status.RSSI"></span>
+                        dBm - SNR:
+                        <span id="TurbineSNR" x-text="$store.Turbine.status.SNR"></span>
+                        dB
+                    </p>
                     <p>
                         Dernière MAJ:
-                        <span class="nodeTimer" id="TurbineDernierMessage">-1</span> s
+                        <span class="nodeTimer" id="TurbineDernierMessage"
+                            x-text="$store.Turbine.status.DernierMessage">-1</span>
+                        s
                     </p>
                     <p>
-                        position Vanne <span id="positionVanne" x-text="$store.Turbine.positionVanne">%positionVanne% </span> %%
+                        position Vanne
+                        <span id="positionVanne" x-text="$store.Turbine.positionVanne">%positionVanne%
+                        </span>
+                        %%
                     </p>
-                    <p>tacky: <strong><span id="tacky" x-text="$store.Turbine.tacky">%tacky% </span> rpm</strong></p>
-                    <p>Tension: <span id="tension" x-text="$store.Turbine.tension">%tension% </span> V</p>
-                    <p>Intensite: <span id="intensite" x-text="$store.Turbine.intensite">%intensite% </span> A</p>
-                    <p>Puissance: <span id="power" x-text="$store.Turbine.power">%power% </span> W</p>
+                    <p>
+                        tacky:
+                        <strong><span id="tacky" x-text="$store.Turbine.tacky">%tacky% </span>
+                            rpm</strong>
+                    </p>
+                    <p>
+                        Tension:
+                        <span id="tension" x-text="$store.Turbine.tension">%tension%
+                        </span>
+                        V
+                    </p>
+                    <p>
+                        Intensite:
+                        <span id="intensite" x-text="$store.Turbine.intensite">%intensite%
+                        </span>
+                        A
+                    </p>
+                    <p>
+                        Puissance:
+                        <span id="power" x-text="$store.Turbine.power">%power% </span> W
+                    </p>
                     <p>
                         Tension Batterie
-                        <span id="tensionBatterie" x-text="$store.Turbine.tensionBatterie">%tensionBatterie% </span> V
+                        <span id="tensionBatterie" x-text="$store.Turbine.tensionBatterie">%tensionBatterie%
+                        </span>
+                        V
                     </p>
-                    <p>motorState <span id="motorStateStr" x-text="$store.Turbine.motorStateStr">%motorStateStr% </span></p>
+                    <p>
+                        motorState
+                        <span id="motorStateStr" x-text="$store.Turbine.motorStateStr">%motorStateStr%
+                        </span>
+                    </p>
                     <p>motorState <span x-text="$store.Turbine.motorState"></span></p>
                     <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="button" class="btn btn-secondary computed" data-node="TURBINE" data-action="FT">
@@ -407,12 +450,12 @@
                             Reboot
                         </button>
                     </div>
-                    <div class="btn-group" role="group" aria-label="Zero Tension">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Zero Tension">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZV">
                             Zero Tension
                         </button>
                     </div>
-                    <div class="btn-group" role="group" aria-label="Zero Current">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Zero Current">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="ZC">
                             Zero Courant
                         </button>
@@ -422,21 +465,17 @@
                             Calibration ADS
                         </button>
                     </div>
-                    <div class="btn-group" role="group" aria-label="Int max moteur">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Int max moteur">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="IMM">
                             Int max moteur
                         </button>
                     </div>
-
-                    <div x-data="{selected:%CpuFreq%,CpuFreqs:[240,160,80,40,20,10]}">
-                        <select class="form-select form-select-sm computed-range" name="Turbine_CpuFreq"
-                            data-node="TURBINE" data-action="CpuFreq">
-                            <template x-for="CpuFreq in CpuFreqs" :key="CpuFreq">
-                                <option :value="CpuFreq" :selected="selected == CpuFreq" x-text="CpuFreq + ' MHz'">
-                                </option>
-                            </template>
-                        </select>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="turbine Max Speed">
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="MaxSpeed">
+                            Turbine Max Speed
+                        </button>
                     </div>
+
                     <div class="btn-group" role="group" aria-label="">
                         <button class="computed btn btn-secondary" data-node="TURBINE" data-action="SavePref">
                             SavePref
@@ -449,38 +488,52 @@
             <div class="card mb-2" id="Etang" x-data="">
                 <div class="card-header">
                     <div class="d-flex">
-                        <i class="bi bi-moisture "></i>
+                        <i class="bi bi-moisture"></i>
                         <i class="bi bi-droplet-half mx-2"></i>
                         Etang
-
+                        <div class="ms-auto mx-2">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#EtangModal">
+                                <i class="bi bi-tools"></i>
+                            </button>
+                        </div>
                         <div class="ms-auto mx-2">
                             <i class="bi bi-circle-fill" style="color: grey"></i>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="EtangActive" x-bind:checked="$store.Etang.status.Active"
+                            <input class="form-check-input" type="checkbox" role="switch" id="EtangActive"
+                                x-bind:checked="$store.Etang.status.Active"
                                 onclick="websocket.send('Etang.Active=' + (this.checked?1:0))" />
-                            <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox input</label>
+                            <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox
+                                input</label>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <p data-bs-toggle="tooltip" data-bs-placement="top"
                         title="Recorded Signal Strength Indicator in dBm">
-                        Etang RSSI: <span id="EtangRSSI" x-text="$store.Etang.status.RSSI"></span> dBm  -  Etang SNR: <span id="EtangSNR" x-text="$store.Etang.status.SNR"></span> dB</p>
+                        Etang RSSI:
+                        <span id="EtangRSSI" x-text="$store.Etang.status.RSSI"></span> dBm
+                        - Etang SNR:
+                        <span id="EtangSNR" x-text="$store.Etang.status.SNR"></span> dB
+                    </p>
                     <p>
                         Dernière MAJ:
-                        <span class="nodeTimer" id="EtangDernierMessage">-1</span> s
+                        <span class="nodeTimer" id="EtangDernierMessage"
+                            x-text="$store.Etang.status.DernierMessage">-1</span>
+                        s
                     </p>
                     <div class="progress" role="progressbar" aria-label="Example with label">
                         <div class="progress-bar" :style="{width: $store.Etang.ratioNiveauEtangToString()}"
                             x-text="$store.Etang.ratioNiveauEtangToString()"></div>
                     </div>
-                    <p>Niveau Etang: <span id="niveauEtang">%niveauEtang% </span></p>
+                    <p>Niveau Etang: <span id="niveauEtang" x-text="$store.Etang.niveauEtang">%niveauEtang%</span></p>
                     <p>
                         Niveau Etang:
-                        <strong><span id="ratioNiveauEtang" x-text="$store.Etang.ratioNiveauEtang">%ratioNiveauEtang% </span>%%</strong>
+                        <strong><span id="ratioNiveauEtang" x-text="$store.Etang.ratioNiveauEtang">%ratioNiveauEtang%
+                            </span>%%</strong>
                     </p>
-                    <div class="btn-group" role="group" aria-label="Basic example">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
                         <button type="button" class="btn btn-secondary computed" data-node="ETANG"
                             data-action="setNiveauFull">
                             Set Niveau full
@@ -495,43 +548,26 @@
                         </button>
                     </div>
 
-                    <div class="input-group">
-                        <span class="input-group-text">RoiXY <span id="RoiX" x-text="$store.Etang.RoiX"></span> <span id="RoiY" x-text="$store.Etang.RoiY"></span></span>
-                        <button type="button" class="btn computed" :class="$store.Etang.RoiX != 16 ? 'btn-outline-secondary' :  'btn-secondary'"data-node="ETANG" data-action="RoiX=16">
-                            RoiX = 16 (default)
-                        </button>
-                        <button type="button" class="btn computed" :class="$store.Etang.timingBudget != 8 ? 'btn-outline-secondary' :  'btn-secondary'" data-node="ETANG" data-action="RoiX=8">
-                            RoiX = 8
-                        </button>
-                        <button type="button" class="btn computed" :class="$store.Etang.timingBudget != 4 ? 'btn-outline-secondary' :  'btn-secondary'" data-node="ETANG" data-action="RoiX=4">
-                            RoiX = 4 (min)
-                        </button>
-                    </div>
-
-                    <p>RoiC : <span id="RoiCenter" x-text="$store.Etang.RoiCenter"></span></p>
-                    
-                    <div class="input-group">
-                        <span class="input-group-text">Timing Budget (ms) </span>
-                        <button class="btn  computed" :class="$store.Etang.timingBudget != 50 ? 'btn-outline-secondary' :  'btn-secondary'" type="button" data-node="ETANG" data-action="TimingBudget=50">50</button>
-                        <button class="btn  computed" :class="$store.Etang.timingBudget != 100 ? 'btn-outline-secondary' :  'btn-secondary'" type="button" data-node="ETANG" data-action="TimingBudget=100">100</button>
-                        <button class="btn  computed" :class="$store.Etang.timingBudget != 200 ? 'btn-outline-secondary' :  'btn-secondary'" type="button" data-node="ETANG" data-action="TimingBudget=200">200</button>
-                        
-                    </div>
-                    <p>distanceMode : <span id="distanceMode" x-text="$store.Etang.distanceMode"></span></p>
                     <div class="btn-group" role="group">
-                        
-                    </div>
-
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG" data-action="LedVL53">Led VL53</button>
-                        <button type="button" class="btn btn-secondary computed" data-node="ETANG" data-action="savePref"> Save Pref </button>
-                        <button type="button" class="btn btn-outline-warning computed" data-node="ETANG" data-action="Reboot"> <i class="bi bi-bootstrap-reboot"></i> Reboot </button>
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
+                            data-action="LedVL53">
+                            Led VL53
+                        </button>
+                        <button type="button" class="btn btn-secondary computed" data-node="ETANG"
+                            data-action="savePref">
+                            Save Pref
+                        </button>
+                        <button type="button" class="btn btn-outline-warning computed" data-node="ETANG"
+                            data-action="Reboot">
+                            <i class="bi bi-bootstrap-reboot"></i> Reboot
+                        </button>
                     </div>
                     <div x-data="{ edit: false, full : 0,vide : 0}">
-                        <button class="btn" @click="edit = !edit" @click.outside="edit = false">
+                        <button class="btn btn-outline-secondary" @click="edit = !edit" @click.outside="edit = false">
                             Edit
                         </button>
-                        <label for="niveauRempli" class="form-label">niveauRempli <span x-text="$store.Etang.niveauRempli"></span>
+                        <label for="niveauRempli" class="form-label">niveauRempli <span
+                                x-text="$store.Etang.niveauRempli"></span>
                             <span x-show="edit" x-text="full"></span></label>
                         <input type="range" class="form-range computed-range" name="" x-bind:disabled="!edit"
                             id="niveauRempli" max="1000" @click="console.log($event)"
@@ -544,9 +580,6 @@
                             id="niveauVide" min="1500" max="3000" @click="console.log($event)"
                             x-on:input="vide = $event.target.value" x-on:change=" $store.Etang.sendVide($event)"
                             x-bind:value="$store.Etang.niveauVide" />
-                    </div>
-                    <div class="container mt-5">
-                        <input type="text" id="sliderTimingBudget" />
                     </div>
                 </div>
             </div>
@@ -565,7 +598,8 @@
                             </button>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="NodeTestActive" x-bind:checked="$store.NodeTest.status.Active"
+                            <input class="form-check-input" type="checkbox" role="switch" id="NodeTestActive"
+                                x-bind:checked="$store.NodeTest.status.Active"
                                 onclick="websocket.send('NodeTest.Active=' + (this.checked?1:0))" />
                             <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox
                                 input</label>
@@ -573,12 +607,23 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <p>RSSI: <span id="NodeTestRSSI" x-text="$store.NodeTest.status.RSSI"></span> dBm  -  SNR: <span id="NodeTestSNR" x-text="$store.NodeTest.status.SNR"></span> dB</p>
+                    <p>
+                        RSSI:
+                        <span id="NodeTestRSSI" x-text="$store.NodeTest.status.RSSI"></span>
+                        dBm - SNR:
+                        <span id="NodeTestSNR" x-text="$store.NodeTest.status.SNR"></span>
+                        dB
+                    </p>
                     <p>
                         Dernière MAJ:
-                        <span class="nodeTimer" id="NodeTestDernierMessage">-1</span> s
+                        <span class="nodeTimer" id="NodeTestDernierMessage"
+                            x-text="$store.NodeTest.status.DernierMessage">-1</span>
+                        s
                     </p>
-                    <p>temp <span id="temp">%temp% </span> °C</p>
+                    <p>
+                        temp
+                        <span id="temp" x-text="$store.NodeTest.temp">%temp% </span> °C
+                    </p>
 
                     <button type="button" class="btn btn-secondary computed" data-node="NODETEST" data-action="blink">
                         Blink
@@ -605,7 +650,11 @@
     <div class="container border mb-2">
         <div id="chartTurbine" class="container highcharts-auto"></div>
     </div>
-
+    <div class="container" x-data="">
+        <h3>Energie</h3>
+        <span x-text="$store.Data.Energie"></span>
+        <button class="btn btn-outline-secondary" onclick="websocket.send('resetEnergieMeter')">Reset</button>
+    </div>
     <div class="container mb-2">
         <div class="accordion" id="accordionExample">
             <div class="accordion-item">
@@ -683,6 +732,145 @@
                     <button type="button" onclick="initWebSocket()" class="btn btn-primary">
                         Tenter reconnexion
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal Turbine -->
+    <div class="modal fade" id="TurbineModal" tabindex="-1" aria-labelledby="turbineModalLabel" aria-hidden="true"
+        x-data="">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="turbineModalLabel">Turbine</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="turbine Max Speed">
+                        <button class="computed btn btn-secondary" data-node="TURBINE" data-action="CpuFreq">
+                            Cpu Freq
+                        </button>
+                    </div>
+
+                    <div x-data="{selected:%CpuFreq%,CpuFreqs:[240,160,80,40,20,10]}">
+                        <select class="form-select form-select-sm computed-range" name="Turbine_CpuFreq"
+                            data-node="TURBINE" data-action="CpuFreq">
+                            <template x-for="CpuFreq in CpuFreqs" :key="CpuFreq">
+                                <option :value="CpuFreq" :selected="selected == CpuFreq" x-text="CpuFreq + ' MHz'">
+                                </option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="" x-data="">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">AC</span>
+                        <input type="text" class="form-control" placeholder="AC" x-bind:value="$store.Turbine.AC"
+                            on:change="$store.Turbine.changeParamADS('AC',$event.target.value)" />
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">ZC</span>
+                        <input type="text" class="form-control" placeholder="ZC" x-bind:value="$store.Turbine.ZC"
+                            on:change="$store.Turbine.changeParamADS('ZC',$event.target.value)" />
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">AV</span>
+                        <input type="text" class="form-control" placeholder="AV" x-bind:value="$store.Turbine.AV"
+                            on:change="$store.Turbine.changeParamADS('AV',$event.target.value)" />
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">ZV</span>
+                        <input type="text" class="form-control" placeholder="ZV" x-bind:value="$store.Turbine.ZV"
+                            on:change="$store.Turbine.changeParamADS('ZV',$event.target.value)" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal Etang -->
+    <div class="modal fade" id="EtangModal" tabindex="-1" aria-labelledby="etangModalLabel" aria-hidden="true"
+        x-data="">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="turbineModalLabel">Etang</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        x-data=""></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">RoiXY <span id="RoiX" x-text="$store.Etang.RoiX"></span>
+                            <span id="RoiY" x-text="$store.Etang.RoiY"></span></span>
+                        <button type="button" class="btn computed"
+                            :class="$store.Etang.RoiX != 16 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            data-node="ETANG" data-action="RoiX=16">
+                            RoiX = 16 (default)
+                        </button>
+                        <button type="button" class="btn computed"
+                            :class="$store.Etang.timingBudget != 8 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            data-node="ETANG" data-action="RoiX=8">
+                            RoiX = 8
+                        </button>
+                        <button type="button" class="btn computed"
+                            :class="$store.Etang.timingBudget != 4 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            data-node="ETANG" data-action="RoiX=4">
+                            RoiX = 4 (min)
+                        </button>
+                    </div>
+
+                    <p>
+                        RoiC :
+                        <span id="RoiCenter" x-text="$store.Etang.RoiCenter"></span>
+                    </p>
+
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Timing Budget (ms) </span>
+                        <button class="btn computed"
+                            :class="$store.Etang.timingBudget != 50 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            type="button" data-node="ETANG" data-action="TimingBudget=50">
+                            50
+                        </button>
+                        <button class="btn computed"
+                            :class="$store.Etang.timingBudget != 100 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            type="button" data-node="ETANG" data-action="TimingBudget=100">
+                            100
+                        </button>
+                        <button class="btn computed"
+                            :class="$store.Etang.timingBudget != 200 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            type="button" data-node="ETANG" data-action="TimingBudget=200">
+                            200
+                        </button>
+                    </div>
+
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">distanceMode :
+                            <span id="distanceMode" x-text="$store.Etang.distanceMode"></span></span>
+                        <button class="btn computed"
+                            :class="$store.Etang.distanceMode != 1 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            type="button" data-node="ETANG" data-action="DistanceMode=1">
+                            Short
+                        </button>
+                        <button class="btn computed"
+                            :class="$store.Etang.distanceMode != 2 ? 'btn-outline-secondary' :  'btn-secondary'"
+                            type="button" data-node="ETANG" data-action="DistanceMode=2">
+                            Long
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
                 </div>
             </div>
         </div>

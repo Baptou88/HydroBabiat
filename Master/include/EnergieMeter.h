@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <main.h>
 
-
+#ifndef ENERGIEMETER_H
+#define ENERGIEMETER_H
 class EnergieMeter
 {
 private:
@@ -13,36 +14,12 @@ public:
 
     void begin();
     void update(long watt);
+    void update(long intensite ,  long tension);
     void save();
+    void reset();
     long getEnergie();
 };
 
-EnergieMeter::EnergieMeter(/* args */)
-{
-}
 
-EnergieMeter::~EnergieMeter()
-{
-}
 
-void EnergieMeter::begin()
-{
-    energie = Prefs.getLong("Energie",0);
-    
-}
-
-void EnergieMeter::update(long watt)
-{
-    energie += watt;
-    save();
-}
-
-void EnergieMeter::save()
-{
-    Prefs.putLong("Energie",energie);
-}
-
-long EnergieMeter::getEnergie()
-{
-    return energie;
-}
+#endif //ENERGIEMETER_H

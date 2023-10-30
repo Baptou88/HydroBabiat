@@ -99,10 +99,24 @@ void Moteur::updateIntensiteMoteur(float Intensite){
     IntensiteMoteur = Intensite;
 }
 void Moteur::loop(){
-    if (IntensiteMoteur > maxItensiteMoteur)
+    // gestion de la sur-Intensité moteur
+    if (_target > _position)
     {
-        _state = MotorState::OVERLOAD;
+        // ouverture vanne
+        if (IntensiteMoteur > maxItensiteMoteurOuverture)
+        {
+            _state = MotorState::OVERLOAD;
+        }
+    } else
+    {
+        //fermeturevanne 
+        if (IntensiteMoteur > maxItensiteMoteur)
+        {
+            _state = MotorState::OVERLOAD;
+        }
     }
+    
+    
     
     switch (_state)
     {
@@ -172,11 +186,14 @@ void Moteur::loop(){
 
         break;
     case OVERSPEED:
-        if (_fcf->isPressed())
+        if (!_fcf->isPressed())
         {
             stopMoteur();
+        } else
+        {
+            fermeeVanne();
         }
-        fermeeVanne();
+        
         
         break;
     case AUTOTUNE:

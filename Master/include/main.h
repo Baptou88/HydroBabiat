@@ -28,6 +28,11 @@ struct dataTurbine_t
   float U = 0;
   float I = 0;
   float UB = 0;
+  float ZV =0;
+  float AV = 0;
+  float ZC = 0;
+  float AC = 0;
+  float currentSyst = 0;
   MotorState motorState = MotorState::UNKOWN;
   String toJson(){
     String message = "\"Turbine\":{";
@@ -39,6 +44,11 @@ struct dataTurbine_t
     message += "\"motorStateStr\":\"" +  (String)MotorStateToString(motorState) + "\",";
     message += "\"motorState\":" +  (String)motorState + ",";
     message += "\"power\":" +  (String)getPower() + ",";
+    message += "\"ZV\":" +  (String)ZV + ",";
+    message += "\"AV\":" +  (String)AV + ",";
+    message += "\"ZC\":" +  (String)ZC + ",";
+    message += "\"AC\":" +  (String)AC + ",";
+    message += "\"CurrentSyst\":" +  (String)currentSyst + ",";
     message += "\"intensite\":" +  (String)I;
     message += "}";
     return message;

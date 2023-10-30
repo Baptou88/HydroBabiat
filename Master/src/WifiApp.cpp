@@ -5,11 +5,13 @@
 #include <NTPClient.h>
 #include <ProgrammatedTask.h>
 #include "main.h"
+#include "EnergieMeter.h"
 
 extern int modeActuel;
 extern PIDController *pidC;
 extern manuelController *manuelC;
 extern basicController *bC;
+extern EnergieMeter Em;
 
 extern bool SpectrumScan;
 
@@ -64,6 +66,7 @@ void WifiAppClass::notifyClients()
 
   message += "\"Mode\":" + (String)modeActuel + ",";
   message += "\"freeheap\":" + (String)ESP.getFreeHeap() + ",";
+  message += "\"Energie\":" + (String)Em.getEnergie() + ",";
   message += "\"Notification\":" + (String)Notifi.NotifyIndividuel + ",";
   message += "\"NotificationGroup\":" + (String)Notifi.NotifyGroup + ",";
   message += dataTurbine.toJson() + ",";
@@ -74,8 +77,7 @@ void WifiAppClass::notifyClients()
   message += "\"nodeTestStatus\":{" + (String)nodeTest.toJson() + "}";
 
   message += "}}";
-  // Serial.print("[WiFiAPP] notif: ");
-  // Serial.println(message);
+
   WifiApp.ws.textAll(String(message));
 }
 void WifiAppClass::notifyClient(uint32_t clientId)
@@ -85,6 +87,7 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 
   message += "\"Mode\":" + (String)modeActuel + ",";
   message += "\"freeheap\":" + (String)ESP.getFreeHeap() + ",";
+  message += "\"Energie\":" + (String)Em.getEnergie() + ",";
   message += "\"Notification\":" + (String)Notifi.NotifyIndividuel + ",";
   message += "\"NotificationGroup\":" + (String)Notifi.NotifyGroup + ",";
   message += dataTurbine.toJson() + ",";
@@ -95,8 +98,7 @@ void WifiAppClass::notifyClient(uint32_t clientId)
   message += "\"nodeTestStatus\":{" + (String)nodeTest.toJson() + "}";
 
   message += "}}";
-  // Serial.print("[WiFiAPP] notif: ");
-  // Serial.println(message);
+
   WifiApp.ws.text(clientId, message);
 }
 
@@ -405,6 +407,16 @@ bool WifiAppClass::begin()
     String SSID = Prefs.getString("WIFI_SSID", "");
     String PSSWD = Prefs.getString("WIFI_PSSWD", "");
 
+    IPAddress local_IP(192, 168, 1, 10);
+    IPAddress gateway(192, 168, 1, 1);
+    IPAddress subnet(255, 255, 255, 0);
+    IPAddress primaryDNS(8, 8, 8, 8); // optional
+    IPAddress secondaryDNS(8, 8, 4, 4); // optional
+
+    // Configures static IP address
+    if (!WiFi.config(local_IP, gateway, subnet,primaryDNS)) {
+      Serial.println("STA Failed to configure");
+    }
     WiFi.setHostname("Esp32S3_HydroBabiat");
     WiFi.begin(SSID.c_str(), PSSWD.c_str());
 
@@ -594,6 +606,13 @@ bool WifiAppClass::begin()
     Response += "}";
     request->send(200, "application/json", Response); });
 
+  server.on("/dataTurbine", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+    String Response = "{";
+    Response +=  (String)dataTurbine.toJson();
+    Response += "}";
+    request->send(200, "application/json", Response); });
+
   server.on("/programmateur/new", HTTP_GET, [](AsyncWebServerRequest *request)
             {
 		//ProgrammatedTasks->add(new ProgrammatedTask(12,12,"test ajout"));
@@ -690,8 +709,7 @@ bool WifiAppClass::begin()
   SPIFFS_provide_file("/theme.js");
   SPIFFS_provide_file("/fileSystem.js");
   SPIFFS_provide_file("/Programmateur.js");
-  SPIFFS_provide_file("/rSlider.js");
-  SPIFFS_provide_file("/rSlider.css");
+
 
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
@@ -967,11 +985,11 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     Serial.print((char *)data);
     Serial.println(".");
     String dataStr = (char *)data;
-    if ((char *)data == "toggle")
-    {
-      Serial.println("ws changement led");
-      ledNotif != ledNotif;
-    }
+   if (dataStr.startsWith("resetEnergieMeter"))
+   {
+    Em.reset();
+   }
+   
     else if (dataStr.startsWith("LedNotif"))
     {
       ledNotif = !ledNotif;

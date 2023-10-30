@@ -74,7 +74,7 @@ String LoRaMesageStatut()
   retour += "RoiXY:" + (String)roix + "|" + (String)roiy + ",";
   uint16_t distanceMode;
   vl53.VL53L1X_GetDistanceMode(&distanceMode);
-  retour += "distanceMode:" + (String)distanceMode;
+  retour += "distanceMode:" + (String)distanceMode +",";
 
   return retour;
 }
@@ -148,9 +148,25 @@ void executeCmd(String msg)
     Serial.println(vl53.setTimingBudget(msg.toInt()));
     msgReponse += "TimingBudget " + (String)vl53.getTimingBudget();
   }
-  if (msg.startsWith("DistanceMode="))
+  if (msg.startsWith("DistanceMode"))
   {
-    vl53.VL53L1X_SetDistanceMode(msg.toInt());
+    int retour;
+    msg.replace("DistanceMode","");
+    if (msg.startsWith("="))
+    {
+      msg.replace("=","");
+      retour = vl53.VL53L1X_SetDistanceMode(msg.toInt());
+      msgReponse = "Distance Mode erreur :" + (String)retour;
+
+    } else
+    {
+      uint16_t dm;
+      VL53L1X_ERROR err;
+      err = vl53.VL53L1X_GetDistanceMode(&dm);
+      msgReponse = "Distance Mode :" + (String)dm + " Erreur: " + (String)err;
+     
+    }
+    
   }
 
   if (msg.startsWith("LedVL53"))

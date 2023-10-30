@@ -31,6 +31,7 @@ private:
 public:
     PID PIDMoteur = PID(&_position,&_speed,&_target,0,0,0,DIRECT);
     float maxItensiteMoteur = 9000;
+    float maxItensiteMoteurOuverture = 15000;
     double _position = 0;
     int ouvertureMax = 5000;
     float IntensiteMoteur = 0;

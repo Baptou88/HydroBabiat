@@ -222,6 +222,9 @@ void handleTelegramMessage(int numNewMessages)
 
 bool saveDataCsV(void)
 {
+  int maxLinesToKeep = 5;
+  int currentLine = 0;
+  int nbLine=0;
   File myFile;
   if (!SPIFFS.exists("/data.csv"))
   {
@@ -230,10 +233,18 @@ bool saveDataCsV(void)
     myFile.print(EnteteCSV);
     myFile.close();
   }
-  myFile = SPIFFS.open("/data.csv", FILE_APPEND);
+  myFile = SPIFFS.open("/data.csv", FILE_READ);
 
   // myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
-
+  while (myFile.available())
+  {
+    myFile.readStringUntil('\n');
+    nbLine++;
+  
+  }
+  Serial.print("nb line: " + (String)nbLine);
+  myFile.close();
+  myFile = SPIFFS.open("/data.csv", FILE_APPEND);
   size_t test;
 
   test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", timeClient.getEpochTime(), dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
@@ -324,9 +335,29 @@ void LoRaMessage(LoRaPacket header, String msg)
       {
         dataTurbine.motorState = (MotorState)val.toInt();
       }
+      if (key == "ZV")
+      {
+        dataTurbine.ZV = val.toFloat();
+      }
+      if (key == "AV")
+      {
+        dataTurbine.AV = val.toFloat();
+      }
+      if (key == "ZC")
+      {
+        dataTurbine.ZC = val.toFloat();
+      }
+      if (key == "AC")
+      {
+        dataTurbine.AC = val.toFloat();
+      }
+      if (key == "currentSyst")
+      {
+        dataTurbine.currentSyst = val.toFloat();
+      }
     }
-    Em.update(dataTurbine.I * dataTurbine.U);
-  }
+    Em.update(dataTurbine.I , dataTurbine.U);
+  } 
   else if (header.Emetteur == ETANG)
   {
     EtangStatus.RSSI = header.RSSI;

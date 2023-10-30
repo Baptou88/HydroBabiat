@@ -165,11 +165,19 @@ void displayData()
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getRPM() + " rpm");
     Ec.getDisplay()->println("Tachy: " + (String)tachy.getHz() + " hz");
 
-    Ec.getDisplay()->println("U: " + (String)voltageOutputMoy.get() + " V");
-    Ec.getDisplay()->println("I: " + (String)currentOutput + " A");
+
     Ec.getDisplay()->println("UB: " + (String)VoltageBattery + " mV");
     Ec.getDisplay()->println("Isysteme: " + (String)currentSysteme + " mA");
 
+    break;
+
+  case 3:
+    Ec.getDisplay()->setCursor(0, 0);
+    Ec.getDisplay()->println("U moyenne: " + (String)voltageOutputMoy.get() + " V");
+    Ec.getDisplay()->println("U        : " + (String)voltageOutput + " V");
+    Ec.getDisplay()->println("U ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL)) + " V");
+    Ec.getDisplay()->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " V");
+    Ec.getDisplay()->println("I: " + (String)currentOutput + " A");
     break;
   default:
     break;
@@ -185,7 +193,7 @@ String LoRaMesageStatut()
   toSend += "PM:" + (String)EncoderVanne::getPos() + ",";
   toSend += "PV:" + (String)transmission::ratiOuverture(mot) + ",";
   toSend += "target:" + (String)mot.getTargetP() + ",";
-  toSend += "U:" + (String)voltageOutput + ",";
+  toSend += "U:" + (String)voltageOutputMoy.get() + ",";
   toSend += "I:" + (String)currentOutput + ",";
   toSend += "tachy:" + (String)tachy.getRPM() + ",";
   toSend += "UB:" + (String)VoltageBattery + ",";
@@ -798,7 +806,7 @@ void loop()
     }
     else
     {
-      displayNum = (displayNum + 1) % 3;
+      displayNum = (displayNum + 1) % 4;
       if (mot.getState() == MotorState::WAIT_INIT)
       {
         mot.setState(MotorState::IDLE);
