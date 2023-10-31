@@ -2,7 +2,7 @@
 #include "wifiCredentials.h"
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
-#include <NTPClient.h>
+
 #include <ProgrammatedTask.h>
 #include "main.h"
 #include "EnergieMeter.h"
@@ -15,7 +15,7 @@ extern EnergieMeter Em;
 
 extern bool SpectrumScan;
 
-extern NTPClient timeClient;
+
 
 extern LList<ProgrammatedTask *> *ProgrammatedTasks;
 
@@ -427,12 +427,8 @@ bool WifiAppClass::begin()
       Serial.println("[WiFiApp] Wifi begin failed");
       // return false;
     }
-    timeClient.begin();
-    if (!timeClient.update())
-    {
-      timeClient.forceUpdate();
-    }
-    Serial.println("Time: " + (String)timeClient.getFormattedDate() + " " + (String)timeClient.getFormattedTime());
+    
+    
     Serial.println("[WiFiApp] IP: " + (String)WiFi.localIP().toString());
   }
   else
@@ -1160,7 +1156,7 @@ void WifiAppClass::loop()
   {
     if (WiFi.status() == WL_CONNECTED)
     {
-      timeClient.update();
+      
     }
     else if (WiFi.status() == WL_DISCONNECTED)
     {

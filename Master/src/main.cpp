@@ -34,7 +34,8 @@
 #include "PIDController.h"
 #include "manuelController.h"
 
-#include <NTPClient.h>
+
+
 #include <ProgrammatedTasks.h>
 
 #include <EnergieMeter.h>
@@ -112,9 +113,7 @@ PIDController *pidC = new PIDController();
 int modeActuel = 0;
 LList<IController *> modes = LList<IController *>();
 
-WiFiUDP ntpUDP;
-const char *ntpServer = "europe.pool.ntp.org";
-NTPClient timeClient(ntpUDP, ntpServer, 7200, 3600);
+
 
 const int pinAnalogTest = 6;
 
@@ -246,8 +245,12 @@ bool saveDataCsV(void)
   myFile.close();
   myFile = SPIFFS.open("/data.csv", FILE_APPEND);
   size_t test;
-
-  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", timeClient.getEpochTime(), dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
+  struct tm timeinfo;
+  time_t now;
+  getLocalTime(&timeinfo);
+  time(&now);
+  
+  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", now, dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
   myFile.close();
 
   Serial.println("Sauvegarde : " + (String)test);
@@ -552,7 +555,12 @@ void displayData()
     Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang) + " %");
     Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne) + " %");
     Ec.getDisplay()->println("Cible Vanne: " + (String)(dataTurbine.targetPositionVanne) + " %");
-    Ec.getDisplay()->println("h: " + (String) timeClient.getHours() + ":" + (String) timeClient.getMinutes());
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo))
+    {
+      Ec.getDisplay()->println("h: " + (String) timeinfo.tm_hour + ":" + (String) timeinfo.tm_min);
+    }
+    
 
     Ec.drawBVProgressBar(114, 4, 5, 50, (dataEtang.ratioNiveauEtang));
 
@@ -873,8 +881,9 @@ void setup()
     Notifi.begin() ? Serial.println("[Notifier] begin OK") : Serial.println("[Telegram] begin NOK");
   }
 
+  configTzTime(TZ_Europe_Paris,"pool.ntp.org");
   // lireTacheProgrammer();
-  ProgTasks.begin(&timeClient);
+  ProgTasks.begin();
   ProgTasks.initTask();
 
   // timerEnvoi.reset();

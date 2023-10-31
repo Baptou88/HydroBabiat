@@ -11,9 +11,9 @@ ProgrammatedTasksClass::~ProgrammatedTasksClass()
 {
 }
 
-bool ProgrammatedTasksClass::begin(NTPClient *ntpCli)
+bool ProgrammatedTasksClass::begin()
 {
-  NtpCli = ntpCli;
+
   return false;
 }
 
@@ -134,7 +134,13 @@ void ProgrammatedTasksClass::loop()
       ProgrammatedTask *tache = ListTasks->get(i);
       if (tache->isActive())
       {
-        if (NtpCli->getHours() == tache->h && NtpCli->getMinutes() == tache->m)
+        struct tm timeinfo;
+        if (!getLocalTime(&timeinfo))
+        {
+          return;
+        }
+        
+        if (timeinfo.tm_hour == tache->h && timeinfo.tm_min == tache->m)
         {
           Serial.println("exec Tache: " + (String)tache->name);
           Notifi.send("Exec Tache: " + (String)tache->name);

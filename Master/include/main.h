@@ -7,6 +7,8 @@
 #include <Preferences.h>
 #include "motorState.h"
 #include "Notifier.h"
+#include "time.h" 
+#define TZ_Europe_Paris	PSTR("CET-1CEST,M3.5.0,M10.5.0/3")
 
 // Preference
 
