@@ -8,6 +8,7 @@
 #include "pidautotuner.h"
 
 #include "motorState.h"
+#include "main.h"
 
 class Moteur
 {
@@ -19,21 +20,24 @@ private:
     double _speed = 0;
     int _maxSpeed = 100;
     int _minSpeed = 32;
+    
     void setSpeedLimits();
     void initPosMin();
     void initPosMax();
     void ouvrirVanne(int speed = 100);
     void fermeeVanne(int speed = 100);
     void stopMoteur();
+    void closeAndRestore(bool init = false);
     
     MotorState _state = MotorState::WAIT_INIT;
+    MotorState _prevState = MotorState::WAIT_INIT;
 
 public:
     PID PIDMoteur = PID(&_position,&_speed,&_target,0,0,0,DIRECT);
     float maxItensiteMoteur = 9000;
     float maxItensiteMoteurOuverture = 15000;
     double _position = 0;
-    int ouvertureMax = 5000;
+    int ouvertureMax = 6000;
     float IntensiteMoteur = 0;
     double _target = 0;
     

@@ -21,7 +21,7 @@
 #include "Encoder.h"
 #include "Moteur.h"
 #include "transmission.h"
-#include "Tachymetre.h"
+
 #include "main.h"
 #include "wifiCredentials.h"
 
@@ -75,21 +75,21 @@ int16_t rawCurrentADS = 0;
 int16_t rawTensionADS = 0;
 
 #if defined(LED_BUILTIN)
-#undef LED_BUILTIN
-#define LED_BUILTIN 35
+  #undef LED_BUILTIN
+  #define LED_BUILTIN 35
 #endif
 
 float moteurKp = 2.2;
 float moteurKi = 0;
 float moteurKd = 0.4;
 
-#define VOLTAGE_ADS_CHANNEL 0
+
 float voltage_coefA = 1 / 63.9f;
 float voltage_base = -40;
 float voltageOutput = 0;
 moyenneGlissante voltageOutputMoy(50);
 
-#define CURRENT_ADS_CHANNEL 1
+
 float current_coefA = 1 / 356.25f;
 float current_base = -13705;
 float currentOutput = 0;
@@ -152,6 +152,7 @@ void displayData()
     Ec.getDisplay()->print(FCF.getState());
     Ec.getDisplay()->setCursor(115, 50);
     Ec.getDisplay()->print(FCO.getState());
+
     break;
   case 1:
     Ec.getDisplay()->setCursor(0, 0);
@@ -176,7 +177,7 @@ void displayData()
     Ec.getDisplay()->println("U moyenne: " + (String)voltageOutputMoy.get() + " V");
     Ec.getDisplay()->println("U        : " + (String)voltageOutput + " V");
     Ec.getDisplay()->println("U ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL)) + " V");
-    Ec.getDisplay()->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " V");
+    Ec.getDisplay()->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " A");
     Ec.getDisplay()->println("I: " + (String)currentOutput + " A");
     break;
   default:
@@ -193,17 +194,17 @@ String LoRaMesageStatut()
   toSend += "PM:" + (String)EncoderVanne::getPos() + ",";
   toSend += "PV:" + (String)transmission::ratiOuverture(mot) + ",";
   toSend += "target:" + (String)mot.getTargetP() + ",";
-  toSend += "U:" + (String)voltageOutputMoy.get() + ",";
-  toSend += "I:" + (String)currentOutput + ",";
-  toSend += "tachy:" + (String)tachy.getRPM() + ",";
-  toSend += "UB:" + (String)VoltageBattery + ",";
+  toSend += "U:" + String(voltageOutputMoy.get(),1) + ",";
+  toSend += "I:" + String(currentOutput,1) + ",";
+  toSend += "tachy:" + String(tachy.getRPM(),1) + ",";
+  toSend += "UB:" + String(VoltageBattery,0) + ",";
   toSend += "motorState:" + (String)mot.getState() + ",";
-  toSend += "ZV:" + (String)voltage_base + ",";
-  toSend += "AV:" + (String)voltage_coefA + ",";
-  toSend += "ZC:" + (String)current_base + ",";
-  toSend += "AC:" + (String)current_coefA + ",";
+  toSend += "ZV:" + String(voltage_base,3) + ",";
+  toSend += "AV:" + String(voltage_coefA,3) + ",";
+  toSend += "ZC:" + String(current_base,3) + ",";
+  toSend += "AC:" + String(current_coefA,3) + ",";
   toSend += "MS:" + (String)mot.getSpeed() + ",";
-  toSend += "currentSyst:" + (String)currentSysteme;
+  toSend += "currentSyst:" + String(currentSysteme,0);
 
   return toSend;
 }
@@ -233,7 +234,7 @@ void LoRaMessage(LoRaPacket header, String msg)
   }
 }
 
-float calibrateADS(int channel, int sample = 20, int delaybetweensample = 5)
+float calibrateADS(int channel, int sample , int delaybetweensample )
 {
   ads.readADC_SingleEnded(channel);
 
@@ -461,7 +462,11 @@ void commandProcess(String cmd)
       cmd.replace("=", "");
       maxSpeed = cmd.toInt();
       Serial.println("Turbine MaxSpeed: " + (String)maxSpeed);
+    } else if (cmd.startsWith("!"))
+    {
+      mot.setState(MotorState::OVERSPEED);
     }
+    
     msgReponse += "Max Speed: " + (String)maxSpeed;
   }
 }
@@ -563,7 +568,8 @@ void acquisitionEntree()
   currentOutput = current_coefA * (rawCurrentADS + current_base);
 }
 
-void menuSaveCalleback(Adafruit_SSD1306 *display, bool firstTime)
+void menuSaveCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
+
 {
   if (firstTime)
   {
@@ -576,7 +582,9 @@ void menuSaveCalleback(Adafruit_SSD1306 *display, bool firstTime)
   display->display();
 }
 
-void menuSavePosMotCalleback(Adafruit_SSD1306 *display, bool firstTime)
+
+void menuSavePosMotCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
+
 {
   if (firstTime)
   {
@@ -589,7 +597,9 @@ void menuSavePosMotCalleback(Adafruit_SSD1306 *display, bool firstTime)
   display->display();
 }
 
-void menuVZCalleback(Adafruit_SSD1306 *display, bool firstTime)
+
+void menuVZCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
+
 {
   if (firstTime)
   {
@@ -602,7 +612,8 @@ void menuVZCalleback(Adafruit_SSD1306 *display, bool firstTime)
   display->display();
 }
 
-void menuCZCalleback(Adafruit_SSD1306 *display, bool firstTime)
+
+void menuCZCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
 {
   if (firstTime)
   {
@@ -615,7 +626,7 @@ void menuCZCalleback(Adafruit_SSD1306 *display, bool firstTime)
   display->display();
 }
 
-void menuWifiServerCalleback(Adafruit_SSD1306 *display, bool firstTime)
+void menuWifiServerCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
 {
   if (firstTime)
   {

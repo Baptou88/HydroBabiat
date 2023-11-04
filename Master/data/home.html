@@ -366,7 +366,7 @@
                         <div class="ms-auto mx-2">
                             <i class="bi bi-circle-fill" style="color: grey"></i>
                         </div>
-                        <div class="ms-auto" x-show="$store.Turbine.motorState == 1">
+                        <div class="ms-auto" x-show="$store.Turbine.error">
                             <i class="bi bi-exclamation-triangle mx-2" style="color: red"></i>
                         </div>
                         <div class="form-check form-switch mx-2">
@@ -423,18 +423,14 @@
                         </span>
                         V
                     </p>
-                    <p>
-                        motorState
-                        <span id="motorStateStr" x-text="$store.Turbine.motorStateStr">%motorStateStr%
-                        </span>
-                    </p>
-                    <p>motorState <span x-text="$store.Turbine.motorState"></span></p>
+                    
+                    <p>motorState <span x-text="$store.Turbine.motorState"></span> <span id="motorStateStr" x-text="$store.Turbine.motorStateStr">%motorStateStr%</p>
                     <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="button" class="btn btn-secondary computed" data-node="TURBINE" data-action="FT">
                             Fermeture Totale
                         </button>
                         <!-- <button type="button" class="btn btn-secondary">Middle</button> -->
-                        <button type="button" class="btn btn-secondary">
+                        <button type="button" class="btn btn-secondary" disabled>
                             Ouverture Totale
                         </button>
                     </div>

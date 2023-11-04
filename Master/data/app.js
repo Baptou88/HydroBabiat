@@ -194,6 +194,9 @@ document.addEventListener('alpine:init', () => {
     changeParamADS(paramName,value){
       console.log('TURBINE',`${paramName}=${value}`);
       sendAction('TURBINE',`${paramName}=${value}`)
+    },
+    Error(){
+      return this.motorState == 1 || this.motorState == 7
     }
   })
   Alpine.store('NodeTest', {

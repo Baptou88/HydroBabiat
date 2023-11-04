@@ -2,17 +2,18 @@
 #ifndef  __MOTORSTATE_H__
 #define  __MOTORSTATE_H__
 enum MotorState{
+    //rotation turbine trop Importante
+    OVERSPEED = -2,
+    OVERLOAD = -1,
+    UNKOWN,
     IDLE,
-    OVERLOAD,
     INIT_POS_MIN,
     INIT_POS_MAX,
     WAIT_INIT,
-    UNKOWN,
     FERMETURE_TOTALE,
 
-    //rotation turbine trop Importante
-    OVERSPEED,
-    AUTOTUNE
+    AUTOTUNE,
+    CLOSEANDRESTORE
 };
 
 String MotorStateToString(MotorState state);

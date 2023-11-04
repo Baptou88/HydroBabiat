@@ -186,7 +186,7 @@ void Moteur::loop(){
 
         break;
     case OVERSPEED:
-        if (!_fcf->isPressed())
+        if (_fcf->isPressed())
         {
             stopMoteur();
         } else
@@ -320,7 +320,64 @@ void Moteur::stopMoteur()
     mcpwm_set_signal_low(MCPWM_UNIT_0,MCPWM_TIMER_0,MCPWM_OPR_A);
     //mcpwm_set_duty_type(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
 }
-void Moteur::initPosMin(){
+void Moteur::closeAndRestore(bool init )
+{
+    static byte state = 0;
+    static int targetVanneToRestore = 0;
+    static unsigned long _millis = 0;
+    if (init)
+    {
+        state = 0;
+        targetVanneToRestore = _target;
+        
+    }
+    if (state == 0)
+    {
+        fermeeVanne();
+        if (_fcf->isPressed())
+        {
+            state = 1;
+        }
+        
+    }
+    if (state == 1) // attendre arret vitesse de rotation
+    {
+        if (tachy.getRPM() == 0)
+        {
+            state = 2;
+            _millis = millis();
+        }
+        
+    }
+    if (state == 2) // attendre 10 sec supplementaire
+    {
+        if (millis()> _millis + 10000)
+        {
+            state = 3;
+        }
+        
+    }
+    if (state == 3)
+    {
+        calibrateADS(VOLTAGE_ADS_CHANNEL,30,10);
+        calibrateADS(CURRENT_ADS_CHANNEL,30,10);
+        state = 4;
+    }
+    
+    if (state == 4) // restaurer l'ancien etat
+    {
+        _state = MotorState::IDLE;
+        _target = targetVanneToRestore;
+
+    }
+    
+    
+    
+    
+    
+}
+void Moteur::initPosMin()
+{
     static int state = -1;
 
     if (state == -1 && _fcf->isReleased())
