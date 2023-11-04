@@ -2,7 +2,13 @@
 #define __MENUITEM_H__
 
 #include "menunu.h"
+#ifdef USE_SH1107
+#include "Adafruit_SH110X.h"
+
+#else
 #include "Adafruit_SSD1306.h"
+
+#endif
 #include "Arduino.h"
 
 class  menunu;
@@ -21,8 +27,11 @@ public:
     virtual void select();
     virtual void right();
     virtual void left();
-
+#ifdef USE_SH1107
+    virtual void draw(Adafruit_SH1107* display) ;
+#else
     virtual void draw(Adafruit_SSD1306* display) ;
+#endif
     void sayHello();
     
 
@@ -36,7 +45,12 @@ private:
 public:
     menuItemnew(char* title);
     ~menuItemnew();
-    void draw(Adafruit_SSD1306* display)  {
+    #ifdef USE_SH1107
+    void draw(Adafruit_SH1107* display)  
+    #else
+    void draw(Adafruit_SSD1306* display)  
+    #endif
+    {
         Serial.println("fg");
     }
     void select(){
@@ -59,7 +73,11 @@ private:
 public:
     menuItemInt(char* title,int* param,int min=0,int max=100);
     ~menuItemInt();
+    #ifdef USE_SH1107
+    void draw(Adafruit_SH1107* display);
+    #else
     void draw(Adafruit_SSD1306* display);
+    #endif
     void select();
     void right();
     void left();
@@ -76,8 +94,12 @@ public:
     ~menuItemFloat();
 
     int countDigit(float num);
+#ifdef USE_SH1107
 
+    void draw(Adafruit_SH1107* display);
+#else
     void draw(Adafruit_SSD1306* display);
+#endif
     void select();
     void right();
     void left();
@@ -96,7 +118,13 @@ public:
     
     menuItembool(char* title , bool* param);
     ~menuItembool();
+    #ifdef USE_SH1107
+
+    void  draw(Adafruit_SH1107* display);
+    #else
     void  draw(Adafruit_SSD1306* display);
+
+    #endif
     void select();
     void right();
     void left(){
@@ -107,12 +135,23 @@ public:
 class menuItemCalleback: public menuItemBase
 {
 private:
+#if USE_SH1107
+    void (*calleback)(Adafruit_SH1107* display,bool firstTime);
+#else
+
     void (*calleback)(Adafruit_SSD1306* display,bool firstTime);
+#endif
     bool firstTime = true;
 public:
+#ifdef USE_SH1107
+    menuItemCalleback(char* title, void (*cb)(Adafruit_SH1107* display,bool firstTime) );
+    void draw(Adafruit_SH1107* display);
+
+#else
     menuItemCalleback(char* title, void (*cb)(Adafruit_SSD1306* display,bool firstTime) );
-    ~menuItemCalleback();
     void draw(Adafruit_SSD1306* display);
+#endif
+    ~menuItemCalleback();
     void select();
     void right(){
 
@@ -135,7 +174,11 @@ class menuItemList: public menuItemBase
     menuItemList(char* title,menunu *m);
     ~menuItemList();
     void addItem(menunu *m, menuItemBase *item);
+#ifdef USE_SH1107
+    void draw(Adafruit_SH1107* display);
+#else
     void draw(Adafruit_SSD1306* display);
+#endif
     void select();
     void right();
     void left();

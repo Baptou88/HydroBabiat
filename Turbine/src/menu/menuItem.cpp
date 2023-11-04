@@ -38,23 +38,29 @@ menuItembool::menuItembool(char* title , bool * param)
 menuItembool::~menuItembool()
 {
 }
-void  menuItembool::draw(Adafruit_SSD1306* display)  {
+#ifdef USE_SH1107
+
+void  menuItembool::draw(Adafruit_SH1107* display)  
+#else
+void  menuItembool::draw(Adafruit_SSD1306* display)  
+#endif
+{
     display->setCursor(0,0);
     display->println("Boolean");
     display->println(m_title);
-    display->drawRect(10,20,110,20,SSD1306_WHITE);
+    display->drawRect(10,20,110,20,DISPLAY_WHITE);
     
     if (*_param == true)
     {
-        display->fillRect(10,20,60,20,SSD1306_WHITE);
+        display->fillRect(10,20,60,20,DISPLAY_WHITE);
        
-        //display->setColor(SSD1306_BLACK);
+        //display->setColor(DISPLAY_BLACK);
         
-        display->setTextColor(SSD1306_BLACK);
+        display->setTextColor(DISPLAY_BLACK);
         display->setCursor(20,25);
         display->print("ON");
         
-        display->setTextColor(SSD1306_WHITE);
+        display->setTextColor(DISPLAY_WHITE);
     }else
     {
         display->setCursor(90,25);
@@ -92,8 +98,11 @@ menuItemInt::menuItemInt(char* title,int* param,int min,int max)
     m_max = max;
     m_min = min;
 }
-
+#ifdef USE_SH1107
+void menuItemInt::draw(Adafruit_SH1107* display)
+#else
 void menuItemInt::draw(Adafruit_SSD1306* display)
+#endif
 {
     display->setCursor(40,30);
     display->print(*m_param);
@@ -158,8 +167,11 @@ int menuItemFloat::countDigit(float num)
     no_of_digits=8-extrazeroes;
     return no_of_digits;
 }
-
+#ifdef USE_SH1107
+void menuItemFloat::draw(Adafruit_SH1107* display)
+#else
 void menuItemFloat::draw(Adafruit_SSD1306* display)
+#endif
 {
     display->setCursor(0,15);
     display->printf("Valeur: %f",*m_param);
@@ -286,7 +298,12 @@ void menuItemList::addItem(menunu *m,menuItemBase* item){
     
     items.add(item);
 }
-void menuItemList::draw(Adafruit_SSD1306* display){
+#ifdef USE_SH1107
+void menuItemList::draw(Adafruit_SH1107* display)
+#else
+void menuItemList::draw(Adafruit_SSD1306* display)
+#endif
+{
    if (display == NULL)
    {
 
@@ -319,12 +336,21 @@ void menuItemList::draw(Adafruit_SSD1306* display){
     
     
 }
-
-menuItemCalleback::menuItemCalleback(char* title, void (*cb)(Adafruit_SSD1306* display, bool firstTime) ){
+#ifdef USE_SH1107 
+menuItemCalleback::menuItemCalleback(char* title, void (*cb)(Adafruit_SH1107* display, bool firstTime) )
+#else
+menuItemCalleback::menuItemCalleback(char* title, void (*cb)(Adafruit_SSD1306* display, bool firstTime) )
+#endif
+{
     m_title = title;
     calleback = cb;
 }
-void menuItemCalleback::draw(Adafruit_SSD1306* display){ 
+#ifdef USE_SH1107
+void menuItemCalleback::draw(Adafruit_SH1107* display)
+#else
+void menuItemCalleback::draw(Adafruit_SSD1306* display)
+#endif
+{ 
     if (calleback!=NULL)
     {
         calleback(display, firstTime);

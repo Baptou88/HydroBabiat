@@ -1,6 +1,11 @@
 #include "menu/menunu.h"
 #include "menu/menuItem.h"
+
+#ifdef USE_SH1107
+menunu::menunu(Adafruit_SH1107* display)
+#else
 menunu::menunu(Adafruit_SSD1306* display)
+#endif
 {
     _display = display;
 }

@@ -1,4 +1,14 @@
-#include <Adafruit_SSD1306.h>
+#ifdef USE_SH1107
+    #include <Adafruit_SH110x.h>
+    #define ADAFRUIT_DISPLAY Adafruit_SH1107
+    #define DISPLAY_WHITE SH110X_WHITE
+    #define DISPLAY_BLACK SH110X_BLACK
+#else
+    #include <Adafruit_SSD1306.h>
+    #define ADAFRUIT_DISPLAY Adafruit_SSD1306
+    #define DISPLAY_WHITE SSD1306_WHITE
+    #define DISPLAY_BLACK SSD1306_BLACK
+#endif
 //#include "configuration.h"
 
 #if !defined(__Ecran_)
@@ -31,7 +41,9 @@ class Ecran
 {
 private:
     TwoWire* _iic;
-    Adafruit_SSD1306* _display;
+
+    ADAFRUIT_DISPLAY* _display;
+
     EcranState _state = EcranState_None;
     unsigned long _millis = 0;
 public:
@@ -41,7 +53,9 @@ public:
     bool begin();
     EcranState getState();
     void loop();
-    Adafruit_SSD1306* getDisplay();
+
+    ADAFRUIT_DISPLAY* getDisplay();
+
     void setSleep();
     void wakeUp();
 
