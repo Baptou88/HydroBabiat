@@ -8,7 +8,7 @@
 #include "Adafruit_ADS1X15.h"
 #include "Preferences.h"
 #include "ESPAsyncWebServer.h"
-#include <AsyncElegantOTA.h>
+#include <ElegantOTA.h>
 #include <WiFi.h>
 
 #include <menu/menunu.h>
@@ -117,6 +117,31 @@ bool ledNotif = true;
 float VoltageBattery = 0;
 
 int16_t currentSCT = 0;
+unsigned long ota_progress_millis = 0;
+
+void onOTAStart() {
+  // Log when OTA has started
+  Serial.println("OTA update started!");
+  // <Add your own code here>
+}
+
+void onOTAProgress(size_t current, size_t final) {
+  // Log every 1 second
+  if (millis() - ota_progress_millis > 1000) {
+    ota_progress_millis = millis();
+    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+  }
+}
+
+void onOTAEnd(bool success) {
+  // Log when OTA has finished
+  if (success) {
+    Serial.println("OTA update finished successfully!");
+  } else {
+    Serial.println("There was an error during OTA update!");
+  }
+  // <Add your own code here>
+}
 
 void displayData()
 {
@@ -378,7 +403,7 @@ void commandProcess(String cmd)
 
   if (cmd.startsWith("OM"))
   {
-    int om = 5000;
+    int om = 6000;
     cmd.replace("OM", "");
     if (cmd.startsWith("="))
     {
@@ -393,6 +418,12 @@ void commandProcess(String cmd)
     cmd.replace("FT", "");
     mot.setState(MotorState::FERMETURE_TOTALE);
     msgReponse += "Fermeture Totale ...";
+  }
+  if (cmd.startsWith("OT"))
+  {
+    cmd.replace("OT", "");
+    mot.setState(MotorState::OUVERTURE_TOTALE);
+    msgReponse += "Ouverture Totale ...";
   }
   if (cmd.startsWith("SavePref"))
   {
@@ -469,6 +500,12 @@ void commandProcess(String cmd)
     
     msgReponse += "Max Speed: " + (String)maxSpeed;
   }
+
+  if (cmd.startsWith("testt"))
+  {
+    mot.closeAndRestore(true);
+  }
+  
 }
 
 void initLoRa()
@@ -637,7 +674,10 @@ void menuWifiServerCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               { request->send(200, "text/plain", "Hi! I am ESP32."); });
 
-    AsyncElegantOTA.begin(&server); // Start ElegantOTA
+    ElegantOTA.begin(&server); // Start ElegantOTA
+    ElegantOTA.onStart(onOTAStart);
+    ElegantOTA.onProgress(onOTAProgress);
+    ElegantOTA.onEnd(onOTAEnd);
     server.begin();
   }
   display->setCursor(0, 0);
@@ -769,7 +809,7 @@ void setup()
   }
 
   // TODO Essayer de regler l'ADS plus finement , réglage du gain, echantillonage ...
-  // ads.setgain();
+  ads.setGain(adsGain_t::GAIN_ONE);
   ads.setDataRate(128);
   Serial.println("ADS datat rate: " + (String)ads.getDataRate());
 
@@ -808,7 +848,7 @@ void loop()
   LoRa.loop();
   Ec.loop();
   acquisitionEntree();
-
+  ElegantOTA.loop();
   if (btnPRG.frontMontant())
   {
     if (Ec.getState() == EcranState::EcranState_Sleep)

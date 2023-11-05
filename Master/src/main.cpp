@@ -336,6 +336,11 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "motorState")
       {
+        if (val.toInt()<0 && dataTurbine.motorState >0)
+        {
+          Notifi.send("motortate error");
+        }
+        dataTurbine.prevMotorState = dataTurbine.motorState;
         dataTurbine.motorState = (MotorState)val.toInt();
       }
       if (key == "ZV")

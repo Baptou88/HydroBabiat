@@ -27,7 +27,7 @@ private:
     void ouvrirVanne(int speed = 100);
     void fermeeVanne(int speed = 100);
     void stopMoteur();
-    void closeAndRestore(bool init = false);
+    
     
     MotorState _state = MotorState::WAIT_INIT;
     MotorState _prevState = MotorState::WAIT_INIT;
@@ -59,6 +59,8 @@ public:
     MotorState getState(void);
     void setState(MotorState state);
     int getSpeed();
+
+    void closeAndRestore(bool init = false);
 };
 
 

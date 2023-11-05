@@ -36,6 +36,7 @@ struct dataTurbine_t
   float AC = 0;
   float currentSyst = 0;
   MotorState motorState = MotorState::UNKOWN;
+  MotorState prevMotorState = MotorState::UNKOWN;
   String toJson(){
     String message = "\"Turbine\":{";
     message += "\"positionVanne\":" +  (String)positionVanne +",";

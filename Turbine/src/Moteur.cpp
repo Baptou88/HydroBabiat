@@ -185,6 +185,19 @@ void Moteur::loop(){
         fermeeVanne();
 
         break;
+    case OUVERTURE_TOTALE:
+        if (_fco->isPressed())
+        {
+            stopMoteur();
+            delay(10);
+            _state = MotorState::IDLE;
+            _target = _position;
+            break;
+            
+        }
+        
+        ouvrirVanne();
+        break;
     case OVERSPEED:
         if (_fcf->isPressed())
         {
@@ -329,6 +342,7 @@ void Moteur::closeAndRestore(bool init )
     {
         state = 0;
         targetVanneToRestore = _target;
+        _state = MotorState::CLOSEANDRESTORE;
         
     }
     if (state == 0)

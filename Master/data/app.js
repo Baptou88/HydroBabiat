@@ -196,7 +196,7 @@ document.addEventListener('alpine:init', () => {
       sendAction('TURBINE',`${paramName}=${value}`)
     },
     Error(){
-      return this.motorState == 1 || this.motorState == 7
+      return this.motorState < 0;
     }
   })
   Alpine.store('NodeTest', {
