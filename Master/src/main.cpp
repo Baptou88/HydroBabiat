@@ -100,7 +100,7 @@ Ecran Ec(&Wire);
 
 Timer TftTimer(2500);
 
-const char *EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power,Energie";
+const char *EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power,Energie\n";
 
 EnergieMeter Em;
 
@@ -113,7 +113,15 @@ PIDController *pidC = new PIDController();
 int modeActuel = 0;
 LList<IController *> modes = LList<IController *>();
 
+const char* AlertNivActiv = "AlertNivActiv";
+const char* AlertNivMax = "AlertNivMax";
+const char* AlertNivMin = "AlertNivMin";
+ 
+const char* LedNotif = "LedNotif";
 
+const char* bcMax = "bc.max";
+const char* bcMin = "bc.min";
+const char* bcTarget = "bc.target";
 
 const int pinAnalogTest = 6;
 
@@ -221,39 +229,79 @@ void handleTelegramMessage(int numNewMessages)
 
 bool saveDataCsV(void)
 {
-  int maxLinesToKeep = 5;
+  int maxLinesToKeep = 100;
   int currentLine = 0;
   int nbLine=0;
   File myFile;
-  if (!SPIFFS.exists("/data.csv"))
+  const char* dataCSV = "/data.csv";
+
+  if (!SPIFFS.exists(dataCSV))
   {
     Serial.println("Creation data.csv");
-    File myFile = SPIFFS.open("/data.csv", FILE_WRITE);
+    File myFile = SPIFFS.open(dataCSV, FILE_WRITE);
     myFile.print(EnteteCSV);
+    
     myFile.close();
   }
-  myFile = SPIFFS.open("/data.csv", FILE_READ);
+  myFile = SPIFFS.open(dataCSV, FILE_READ);
+  Serial.println("pos " + (String)myFile.position());
 
-  // myFile.print("\n"+String(timeClient.getEpochTime())+","+String(dataTurbine.tacky)+","+String(dataEtang.ratioNiveauEtang)+","+ String(dataTurbine.targetPositionVanne)+","+String(dataTurbine.positionVanne)+"," + String(dataTurbine.U)+"," + String(dataTurbine.I)+"," + String(dataTurbine.getPower()));
   while (myFile.available())
   {
     myFile.readStringUntil('\n');
     nbLine++;
   
   }
-  Serial.print("nb line: " + (String)nbLine);
+
+  Serial.println("nb line: " + (String)nbLine);
+  #if 1
+  if (nbLine >= maxLinesToKeep)
+  {
+
+    myFile.seek(0); // Revenir au début du fichier
+    // Créer un fichier temporaire pour stocker le reste du fichier
+    File tempFile = SPIFFS.open("/temp.csv", FILE_WRITE);
+    int currentLine = 0;
+    while (myFile.available()) {
+      switch (currentLine)
+      {
+      
+      case 0:
+        tempFile.print(myFile.readStringUntil('\n'));
+        tempFile.print("\n");
+        break;
+      case 1:
+        Serial.print("ignoré: ");
+        Serial.println(myFile.readStringUntil('\n'));
+        break;
+      default:
+        tempFile.print(myFile.readStringUntil('\n'));
+        tempFile.print("\n");
+        break;
+      }
+     
+      
+      currentLine++;
+    }
+    myFile.close();
+    tempFile.close();
+
+    SPIFFS.remove(dataCSV);
+    SPIFFS.rename("/temp.csv", dataCSV);
+  }
+  #endif
   myFile.close();
-  myFile = SPIFFS.open("/data.csv", FILE_APPEND);
-  size_t test;
+  myFile = SPIFFS.open(dataCSV, FILE_APPEND);
+
   struct tm timeinfo;
   time_t now;
   getLocalTime(&timeinfo);
   time(&now);
   
-  test = myFile.printf("\n%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f", now, dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
+  myFile.printf("%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f\n", now, dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
   myFile.close();
 
-  Serial.println("Sauvegarde : " + (String)test);
+
   return true;
 }
 
@@ -677,18 +725,18 @@ bool initPref()
 {
   if (Prefs.begin("Master", false))
   {
-    AlertNiv.active = Prefs.getBool("AlertNivActiv");
-    AlertNiv.max = Prefs.getInt("AlertNivMax");
-    AlertNiv.min = Prefs.getInt("AlertNivMin");
+    AlertNiv.active = Prefs.getBool(AlertNivActiv);
+    AlertNiv.max = Prefs.getInt(AlertNivMax);
+    AlertNiv.min = Prefs.getInt(AlertNivMin);
     modeActuel = Prefs.getInt(MODEVANNE, 0);
-    ledNotif = Prefs.getBool("LedNotif", ledNotif);
+    ledNotif = Prefs.getBool(LedNotif, ledNotif);
     if (Prefs.isKey(nodeTest.Name.c_str()))
     {
       nodeTest.active = Prefs.getBool(nodeTest.Name.c_str(), true);
     }
-    bC->niveauMax = Prefs.getInt("bc.max", bC->niveauMax);
-    bC->niveauMin = Prefs.getInt("bc.min", bC->niveauMin);
-    bC->vanneMax = Prefs.getInt("bc.target", bC->vanneMax);
+    bC->niveauMax = Prefs.getInt(bcMax, bC->niveauMax);
+    bC->niveauMin = Prefs.getInt(bcMin, bC->niveauMin);
+    bC->vanneMax = Prefs.getInt(bcTarget, bC->vanneMax);
     return true;
   }
   return false;
@@ -696,15 +744,15 @@ bool initPref()
 
 bool savePref()
 {
-  Prefs.putBool("AlertNivActiv", AlertNiv.active);
-  Prefs.putInt("AlertNivMax", AlertNiv.max);
-  Prefs.putInt("AlertNivMin", AlertNiv.min);
+  Prefs.putBool(AlertNivActiv, AlertNiv.active);
+  Prefs.putInt(AlertNivMax, AlertNiv.max);
+  Prefs.putInt(AlertNivMin, AlertNiv.min);
   Prefs.putInt(MODEVANNE, modeActuel);
-  Prefs.putInt("LedNotif", ledNotif);
+  Prefs.putInt(LedNotif, ledNotif);
 
-  Prefs.putInt("bc.max", bC->niveauMax);
-  Prefs.putInt("bc.min", bC->niveauMin);
-  Prefs.putInt("bc.target", bC->vanneMax);
+  Prefs.putInt(bcMax, bC->niveauMax);
+  Prefs.putInt(bcMin, bC->niveauMin);
+  Prefs.putInt(bcTarget, bC->vanneMax);
 
   WifiApp.monitorClients("Save Pref Ok");
   return true;
@@ -920,6 +968,21 @@ void loop()
     {
       LoRaFileUpl.beginTransmit("/testTransmitt.txt", 4);
     }
+    if (cmd.startsWith("DEL"))
+      {
+        if (SPIFFS.exists("/data.csv"))
+        {
+          if(SPIFFS.remove("/data.csv")){
+            Serial.println("data.csv removed");
+          }else
+          {
+            Serial.println("data.csv NOT removed");
+            
+          }
+          
+        }
+        
+      }
   }
 
   LoRaFileUpl.loop();
@@ -1020,7 +1083,7 @@ void loop()
   WifiApp.loop();
 
   // Sauvegarde des données
-  if (millis() > lastSaveData + 30000)
+  if (millis() > lastSaveData + 60000)
   {
     lastSaveData = millis();
 
