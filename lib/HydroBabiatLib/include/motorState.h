@@ -3,6 +3,7 @@
 #define  __MOTORSTATE_H__
 enum MotorState{
     //rotation turbine trop Importante
+    TIMEOUT = -3,
     OVERSPEED = -2,
     OVERLOAD = -1,
     UNKOWN,

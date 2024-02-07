@@ -31,6 +31,7 @@ private:
     
     MotorState _state = MotorState::WAIT_INIT;
     MotorState _prevState = MotorState::WAIT_INIT;
+    unsigned long stateTime = 0;
 
 public:
     PID PIDMoteur = PID(&_position,&_speed,&_target,0,0,0,DIRECT);

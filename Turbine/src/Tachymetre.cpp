@@ -27,12 +27,23 @@ float Tachymetre::getHz()
 void Tachymetre::setTimeout(long us){
   _timeout = us;
 }
-void Tachymetre::Tick(){
-  _micro = micros();
-  if (_micro - _previousMicro > delaiAntiRebond)
-  {
-    _dt = _micro - _previousMicro;
-    _previousMicro = _micro;
-  }
 
+void Tachymetre::setDebounceTime(long us)
+{
+  delaiAntiRebond = us;
+}
+
+long Tachymetre::getDebounceTime()
+{
+  return delaiAntiRebond;
+}
+
+void Tachymetre::Tick()
+{
+    _micro = micros();
+    if (_micro - _previousMicro > delaiAntiRebond)
+    {
+        _dt = _micro - _previousMicro;
+        _previousMicro = _micro;
+    }
 }

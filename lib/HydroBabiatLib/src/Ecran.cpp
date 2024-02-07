@@ -28,7 +28,7 @@ bool Ecran::begin()
       
     #else
     //Serial.println("RSTOLED " + String(RST_OLED));
-    if (!_display->begin(SSD1306_SWITCHCAPVCC, 0x3C))
+    if (!_display->begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS))
     {
         return false;
         

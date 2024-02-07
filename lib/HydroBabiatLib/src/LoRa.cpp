@@ -27,7 +27,7 @@ int LoRaClass::begin(){
 
 
     #ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
-        radio.setDio0Action(LoRaClass::setFlag);
+        radio.setDio0Action(LoRaClass::setFlag,RISING);
     #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
         radio.setDio1Action(LoRaClass::setFlag);
     #else

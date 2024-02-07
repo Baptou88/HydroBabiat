@@ -145,71 +145,80 @@ void onOTAEnd(bool success) {
 
 void displayData()
 {
-  Ec.getDisplay()->clearDisplay();
+  ADAFRUIT_DISPLAY* display = Ec.getDisplay();
+  display->clearDisplay();
 
+  if (mot.getState() == MotorState::WAIT_INIT)
+  {
+    display->setCursor(0,0);
+    display->println("Attente avant init");
+    display->display();
+    return;
+  }
+  
   switch (displayNum)
   {
   case 0:
-    Ec.getDisplay()->setCursor(0, 0);
-    Ec.getDisplay()->print("pos:");
-    Ec.getDisplay()->setCursor(50, 0);
-    Ec.getDisplay()->print(EncoderVanne::getPos());
+    display->setCursor(0, 0);
+    display->print("pos:");
+    display->setCursor(50, 0);
+    display->print(EncoderVanne::getPos());
 
-    Ec.getDisplay()->setCursor(0, 12);
-    Ec.getDisplay()->print("con:");
-    Ec.getDisplay()->setCursor(50, 12);
-    Ec.getDisplay()->print((String)mot._target);
+    display->setCursor(0, 12);
+    display->print("con:");
+    display->setCursor(50, 12);
+    display->print((String)mot._target);
 
-    Ec.getDisplay()->setCursor(0, 24);
-    Ec.getDisplay()->print("IM :");
-    Ec.getDisplay()->setCursor(50, 24);
-    Ec.getDisplay()->print((String)mot.IntensiteMoteur);
+    display->setCursor(0, 24);
+    display->print("IM :");
+    display->setCursor(50, 24);
+    display->print((String)mot.IntensiteMoteur);
 
-    Ec.getDisplay()->setCursor(0, 36);
-    Ec.getDisplay()->print("om :");
-    Ec.getDisplay()->setCursor(50, 36);
-    Ec.getDisplay()->print((String)mot.ouvertureMax);
+    display->setCursor(0, 36);
+    display->print("om :");
+    display->setCursor(50, 36);
+    display->print((String)mot.ouvertureMax);
 
-    Ec.getDisplay()->setCursor(20, 50);
-    Ec.getDisplay()->print(MotorStateToString(mot.getState()));
+    display->setCursor(20, 50);
+    display->print(MotorStateToString(mot.getState()));
 
-    Ec.getDisplay()->setCursor(5, 50);
-    Ec.getDisplay()->print(FCF.getState());
-    Ec.getDisplay()->setCursor(115, 50);
-    Ec.getDisplay()->print(FCO.getState());
+    display->setCursor(5, 50);
+    display->print(FCF.getState());
+    display->setCursor(115, 50);
+    display->print(FCO.getState());
 
     break;
   case 1:
-    Ec.getDisplay()->setCursor(0, 0);
-    Ec.getDisplay()->println((String)((millis() - dernierMessage) / 1000) + " s");
-    Ec.getDisplay()->println("RSSI: " + (String)(msgRSSI) + " dbm");
-    Ec.getDisplay()->println("SNR : " + (String)(msgSNR) + " db");
+    display->setCursor(0, 0);
+    display->println((String)((millis() - dernierMessage) / 1000) + " s");
+    display->println("RSSI: " + (String)(msgRSSI) + " dbm");
+    display->println("SNR : " + (String)(msgSNR) + " db");
 
     break;
   case 2:
-    Ec.getDisplay()->setCursor(0, 0);
-    Ec.getDisplay()->println("Tachy: " + (String)tachy.getRPM() + " rpm");
-    Ec.getDisplay()->println("Tachy: " + (String)tachy.getHz() + " hz");
+    display->setCursor(0, 0);
+    display->println("Tachy: " + (String)tachy.getRPM() + " rpm");
+    display->println("Tachy: " + (String)tachy.getHz() + " hz");
 
 
-    Ec.getDisplay()->println("UB: " + (String)VoltageBattery + " mV");
-    Ec.getDisplay()->println("Isysteme: " + (String)currentSysteme + " mA");
+    display->println("UB: " + (String)VoltageBattery + " mV");
+    display->println("Isysteme: " + (String)currentSysteme + " mA");
 
     break;
 
   case 3:
-    Ec.getDisplay()->setCursor(0, 0);
-    Ec.getDisplay()->println("U moyenne: " + (String)voltageOutputMoy.get() + " V");
-    Ec.getDisplay()->println("U        : " + (String)voltageOutput + " V");
-    Ec.getDisplay()->println("U ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL)) + " V");
-    Ec.getDisplay()->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " A");
-    Ec.getDisplay()->println("I: " + (String)currentOutput + " A");
+    display->setCursor(0, 0);
+    display->println("U moyenne: " + (String)voltageOutputMoy.get() + " V");
+    display->println("U        : " + (String)voltageOutput + " V");
+    display->println("U ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL)) + " V");
+    display->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " A");
+    display->println("I: " + (String)currentOutput + " A");
     break;
   default:
     break;
   }
 
-  Ec.getDisplay()->display();
+  display->display();
 }
 
 String LoRaMesageStatut()
@@ -439,6 +448,7 @@ void commandProcess(String cmd)
   if (cmd.startsWith("idle"))
   {
     mot.setState(MotorState::IDLE);
+    msgReponse += "mode idle";
   }
   if (cmd.startsWith("autotune"))
   {
@@ -501,9 +511,15 @@ void commandProcess(String cmd)
     msgReponse += "Max Speed: " + (String)maxSpeed;
   }
 
-  if (cmd.startsWith("testt"))
+  if (cmd.startsWith("tackyDebounce"))
   {
-    mot.closeAndRestore(true);
+    cmd.replace("tackyDebounce","");
+    if (cmd.startsWith("="))
+    {
+      tachy.setDebounceTime(cmd.toInt());
+    }
+    msgReponse += "tackyDebounce " + (String)tachy.getDebounceTime();
+    
   }
   
 }
@@ -554,6 +570,7 @@ bool initPreferences()
 
   maxSpeed = pref.getInt("maxSpeed", maxSpeed);
 
+  tachy.setDebounceTime( pref.getLong("tackyDebounce",1000));
   return true;
 }
 
@@ -577,6 +594,7 @@ bool savePreferences()
 
   pref.putInt("maxSpeed", maxSpeed);
 
+  pref.putLong("tackyDebounce",tachy.getDebounceTime());
   return true;
 }
 
@@ -692,15 +710,12 @@ void menuWifiServerCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
   }
 }
 
-void CallibrateAnalogSensor(int numReadings = 20)
-{
-  int sumVoltage = 0;
 
-  for (size_t i = 0; i < numReadings; i++)
-  {
-    // sum
-  }
+#ifdef PIN_TACHY
+IRAM_ATTR void tachyTick(){
+  tachy.Tick();
 }
+#endif
 // put your setup code here, to run once:
 void setup()
 {
@@ -747,13 +762,8 @@ void setup()
 
 #ifdef PIN_TACHY
   tachy.setTimeout(2E6);
-  pinMode(PIN_TACHY, INPUT_PULLDOWN);
-  attachInterrupt(
-      digitalPinToInterrupt(PIN_TACHY), []()
-      {
-    //ets_printf("Interrupt");
-    tachy.Tick(); },
-      RISING);
+  pinMode(PIN_TACHY, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(PIN_TACHY), tachyTick, FALLING);//TODO a changer par FALLING ou CHANGE???
 
 #endif
 
@@ -857,11 +867,14 @@ void loop()
     }
     else
     {
-      displayNum = (displayNum + 1) % 4;
       if (mot.getState() == MotorState::WAIT_INIT)
       {
         mot.setState(MotorState::IDLE);
+      } else
+      {
+        displayNum = (displayNum + 1) % 4;
       }
+      
     }
   }
   static unsigned long lastprgmillis = 0;
@@ -939,6 +952,7 @@ void loop()
 
   if (tachy.getRPM() > maxSpeed)
   {
+    Serial.println("ERrrror : " + (String)tachy.getRPM());
     mot.setState(MotorState::OVERSPEED);
   }
 

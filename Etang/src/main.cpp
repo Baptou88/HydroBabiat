@@ -199,7 +199,9 @@ void executeCmd(String msg)
   {
     msg.replace("RoiC=", "");
     uint8_t roic = msg.toInt();
-    Serial.println(vl53.VL53L1X_GetROICenter(&roic));
+    vl53.VL53L1X_SetROICenter(roic);
+    vl53.VL53L1X_GetROICenter(&roic);
+    msgReponse += "RoiCenter: " + (String)roic;
   }
   if (msg.startsWith("RoiX"))
   {

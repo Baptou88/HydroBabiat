@@ -105,14 +105,14 @@ void Moteur::loop(){
         // ouverture vanne
         if (IntensiteMoteur > maxItensiteMoteurOuverture)
         {
-            _state = MotorState::OVERLOAD;
+            setState(MotorState::OVERLOAD);
         }
     } else
     {
         //fermeturevanne 
         if (IntensiteMoteur > maxItensiteMoteur)
         {
-            _state = MotorState::OVERLOAD;
+            setState(MotorState::OVERLOAD);
         }
     }
     
@@ -154,10 +154,20 @@ void Moteur::loop(){
         mcpwm_set_signal_low(MCPWM_UNIT_0,MCPWM_TIMER_0,MCPWM_OPR_A);
         break;
     case INIT_POS_MIN:
+        if (millis() > stateTime + 60000)
+        {
+            setState(MotorState::TIMEOUT);
+            break;
+        } 
         initPosMin();
         
         break;
     case INIT_POS_MAX:
+        if (millis() > stateTime + 60000)
+        {
+            setState(MotorState::TIMEOUT);
+            break;
+        } 
         initPosMax();
         
         break;
@@ -199,6 +209,12 @@ void Moteur::loop(){
         ouvrirVanne();
         break;
     case OVERSPEED:
+        if (millis()>stateTime + 60000)
+        {
+            setState(MotorState::TIMEOUT);
+            break;
+        }
+    
         if (_fcf->isPressed())
         {
             stopMoteur();
@@ -211,6 +227,9 @@ void Moteur::loop(){
         break;
     case AUTOTUNE:
         autotune();
+        break;
+    case TIMEOUT:
+        stopMoteur();
         break;
     default:
         break;
@@ -307,6 +326,8 @@ MotorState Moteur::getState(void)
 }
 void Moteur::setState(MotorState state)
 {
+    _prevState = _state;
+    stateTime = millis();
     _state = state;
 }
 

@@ -36,6 +36,9 @@ String MotorStateToString(MotorState state){
     case CLOSEANDRESTORE:
         return "closeAndrestore";
         break;
+    case TIMEOUT:
+        return "TIMEOUT";
+        break;
     default:
         return "Default motorStateToString" + (String)state;
         break;

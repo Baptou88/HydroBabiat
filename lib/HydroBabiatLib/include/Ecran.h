@@ -3,11 +3,13 @@
     #define ADAFRUIT_DISPLAY Adafruit_SH1107
     #define DISPLAY_WHITE SH110X_WHITE
     #define DISPLAY_BLACK SH110X_BLACK
+    #define DISPLAY_ADDRESS 0x78
 #else
     #include <Adafruit_SSD1306.h>
     #define ADAFRUIT_DISPLAY Adafruit_SSD1306
     #define DISPLAY_WHITE SSD1306_WHITE
     #define DISPLAY_BLACK SSD1306_BLACK
+    #define DISPLAY_ADDRESS 0x3C
 #endif
 //#include "configuration.h"
 

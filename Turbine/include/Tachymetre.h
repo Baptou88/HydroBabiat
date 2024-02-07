@@ -6,11 +6,12 @@
 class Tachymetre
 {
 private:
-  volatile  long _micro = 0;
-  volatile  long _previousMicro = 0;
-  volatile  long _dt = 0;
-  volatile int ticks = 0;
-  long delaiAntiRebond=200;
+   long _micro = 0;
+   long _previousMicro = 0;
+   long _dt = 0;
+
+  /** delai en microSecond*/
+  long delaiAntiRebond = 400;
   long _timeout = 0;
 
   bool isTimeOut();
@@ -22,5 +23,8 @@ public:
 
   //Duree en microsecond a partir de laquelle la frequence de rotation est dite nulle
   void setTimeout(long us);
+
+  void setDebounceTime(long us);
+  long getDebounceTime();
 };
 #endif // __TACHYMETRE_H__

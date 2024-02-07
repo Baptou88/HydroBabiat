@@ -137,7 +137,7 @@ uint16_t MMUL = 1000;
 uint16_t MUL = 100;
 
 unsigned long lastBatteryNotification = 0;
-float voltageBatteryMin = 3.9;
+float voltageBatteryMin = 3.7;
 float voltageBattery = 0;
 
 void VextON(void)
@@ -229,7 +229,7 @@ void handleTelegramMessage(int numNewMessages)
 
 bool saveDataCsV(void)
 {
-  int maxLinesToKeep = 100;
+  int maxLinesToKeep = 200;
   int currentLine = 0;
   int nbLine=0;
   File myFile;
@@ -384,7 +384,7 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "motorState")
       {
-        if (val.toInt()<0 && dataTurbine.motorState >0)
+        if (val.toInt() < 0 && dataTurbine.motorState > 0)
         {
           Notifi.send("motortate error");
         }
@@ -969,19 +969,26 @@ void loop()
       LoRaFileUpl.beginTransmit("/testTransmitt.txt", 4);
     }
     if (cmd.startsWith("DEL"))
+    {
+      if (SPIFFS.exists("/data.csv"))
       {
-        if (SPIFFS.exists("/data.csv"))
+        if(SPIFFS.remove("/data.csv")){
+          Serial.println("data.csv removed");
+        }else
         {
-          if(SPIFFS.remove("/data.csv")){
-            Serial.println("data.csv removed");
-          }else
-          {
-            Serial.println("data.csv NOT removed");
-            
-          }
+          Serial.println("data.csv NOT removed");
           
         }
         
+      }
+      
+    }
+    if (cmd.startsWith("REMOVE"))
+      {
+        Prefs.remove("WIFI_SSID");
+        Prefs.remove("WIFI_PSSWD");
+        Serial.println("ESP RESTART");
+        ESP.restart();
       }
   }
 

@@ -105,7 +105,7 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 void WifiAppClass::monitorClients(String message)
 {
   String msg = "{\"monitor\":\" " + message + "\"}";
-  WifiApp.ws.textAll(msg);
+  //WifiApp.ws.textAll(msg); //TODO Remettre en place, juste pour tests
 }
 void WifiAppClass::toastClients(String title, String message, String type)
 {
