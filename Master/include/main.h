@@ -93,6 +93,7 @@ struct dataEtang_t
   uint16_t RoiY = 0;
   uint16_t timingBudget = 0;
   int distanceMode = 0;
+  int vl53Status = 0;
   String toJson(){
     String message = "\"Etang\":{";
     message += "\"niveauEtang\":" +  (String)niveauEtang +",";
@@ -103,6 +104,7 @@ struct dataEtang_t
     message += "\"RoiX\":" +  (String)RoiX  + ",";
     message += "\"RoiY\":" +  (String)RoiY + ",";
     message += "\"timingBudget\":" +  (String)timingBudget + ",";
+    message += "\"vl53Status\":" +  (String)vl53Status + ",";
     message += "\"distanceMode\":" +  (String)distanceMode;
 
     message += "}";

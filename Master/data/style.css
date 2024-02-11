@@ -1,0 +1,100 @@
+/* Works on Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bs-body-color) var(--bs-body-bg);
+}
+
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+    width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--bs-body-bg);
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--bs-body-color);
+    border-radius: 20px;
+    border: 3px solid var(--bs-body-bg);
+}
+
+#terminal {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    height: 400px;
+    overflow-y: scroll;
+    padding: 10px;
+}
+
+#terminal p {
+    margin: 0;
+    line-height: 1.2;
+}
+
+#terminal .command {
+    color: green;
+}
+
+#terminal .info {
+    color: blue;
+}
+
+#terminal .response {
+    color: white;
+}
+
+#terminal .error {
+    color: red;
+}
+
+#terminal .cursor {
+    display: inline-block;
+    width: 10px;
+    height: 15px;
+    /* background-color: white; */
+    animation: blink 1s step-end infinite;
+}
+
+#command-form {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+#command-form label {
+    color: white;
+    font-family: monospace;
+}
+
+#command-form input[type="text"] {
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-family: monospace;
+    font-size: inherit;
+    flex: 1;
+}
+
+#command-form button {
+    background-color: white;
+    border: none;
+    color: black;
+    font-family: monospace;
+    font-size: inherit;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+@keyframes blink {
+
+    from,
+    to {
+        visibility: hidden;
+    }
+
+    50% {
+        visibility: visible;
+    }
+}

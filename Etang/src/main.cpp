@@ -20,7 +20,8 @@ Preferences pref;
 Ecran Ec(&Wire);
 Adafruit_INA219 ina219;
 
-Adafruit_VL53L1X vl53 = Adafruit_VL53L1X(12, 13);
+// Adafruit_VL53L1X vl53 = Adafruit_VL53L1X(12, 13);
+Adafruit_VL53L1X vl53 = Adafruit_VL53L1X(-1,12);
 const int ledvl53 = 13;
 bool ledvl53state = false;
 
@@ -199,8 +200,13 @@ void executeCmd(String msg)
   {
     msg.replace("RoiC=", "");
     uint8_t roic = msg.toInt();
-    vl53.VL53L1X_SetROICenter(roic);
-    vl53.VL53L1X_GetROICenter(&roic);
+    Serial.printf("false %i true %i\n",false,true);
+    Serial.println("1 "+(String)vl53.stopRanging());
+    vl53.clearInterrupt();
+    
+    Serial.println("2 "+(String)vl53.VL53L1X_SetROICenter(roic));
+    Serial.println("3 "+(String)vl53.VL53L1X_GetROICenter(&roic));
+    Serial.println("4 "+(String)vl53.startRanging());
     msgReponse += "RoiCenter: " + (String)roic;
   }
   if (msg.startsWith("RoiX"))
@@ -295,6 +301,7 @@ void loadPref()
   niveauEtangTropPlein = pref.getInt("levelTp", niveauEtangTropPlein);
   ledNotif = pref.getBool("ledNotif");
 
+
   ledvl53state = pref.getBool("LedVL53", false);
 
   Serial.println("load pref !");
@@ -310,10 +317,12 @@ void SauvegardePref()
   pref.putUInt("timingBudget", vl53.getTimingBudget());
   uint16_t distanceMode;
   vl53.VL53L1X_GetDistanceMode(&distanceMode);
-  pref.putInt("distanceMode", distanceMode);
-  Serial.println("save Prek ok");
-
+  pref.putShort("distanceMode", distanceMode);
+  uint16_t RoiXY;
+  vl53.VL53L1X_GetROI_XY(&RoiXY,&RoiXY);
+  pref.putShort("RoiXY",RoiXY),
   pref.putBool("LedVL53", ledvl53state);
+  Serial.println("save Prek ok");
 }
 
 float ratioEtang()
@@ -323,6 +332,10 @@ float ratioEtang()
 
 void displayNiveauEtang()
 {
+  Ec.getDisplay()->setCursor(0,0);
+  uint8_t rs;
+  vl53.VL53L1X_GetRangeStatus(&rs);
+  Ec.getDisplay()->println("rangeStatus "+(String)rs);
   Ec.getDisplay()->drawRect(114, 10, 14, 54, SSD1306_WHITE);
   int16_t posy = 14 + (1 - ratioEtang()) * 54;
   Ec.getDisplay()->drawLine(114, posy, 124, posy, SSD1306_WHITE);
@@ -436,10 +449,11 @@ void setup()
   Ec.getDisplay()->println("Ok Init VL53 ");
   Ec.getDisplay()->display();
 
-  vl53.setTimingBudget(pref.getUInt("timingBudget", 100));
-  vl53.VL53L1X_SetDistanceMode(pref.getUInt("distanceMode", 2));
+  vl53.VL53L1X_SetDistanceMode(pref.getShort("distanceMode", 2));
   // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
-  // vl53.setTimingBudget(100);
+  vl53.setTimingBudget(pref.getUInt("timingBudget", 100));
+  uint16_t RoiXY = pref.getShort("RoiXY",8);
+  vl53.VL53L1X_SetROI(RoiXY,RoiXY);
   Serial.print(F("Timing budget (ms): "));
   Serial.println(vl53.getTimingBudget());
 
@@ -571,6 +585,7 @@ void loop()
     }
     // Serial.println("Distance: " +(String) distance);
   }
+  vl53.clearInterrupt();
 
   if (tMsgReponse != 0 && millis() > tMsgReponse)
   {

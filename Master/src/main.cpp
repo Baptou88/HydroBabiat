@@ -473,6 +473,11 @@ void LoRaMessage(LoRaPacket header, String msg)
       {
         dataEtang.distanceMode = val.toInt();
       }
+      if (key == "status")
+      {
+        dataEtang.vl53Status = val.toInt();
+      }
+      
 
       AlertNiv.updateNiveau(dataEtang.ratioNiveauEtang);
     }

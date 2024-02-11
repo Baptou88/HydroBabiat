@@ -128,6 +128,7 @@ document.addEventListener('alpine:init', () => {
     RoiY: 0,
     distanceMode: 0,
     timingBudget: 0,
+    vl53Status: -1,
     status: {},
     spad:[[128,136,144,152,160,168,176,184, 192,200,208,216,224,232,240,248],
             [129,137,145,153,161,169,177,185, 193,201,209,217,225,233,241,249],
@@ -145,7 +146,7 @@ document.addEventListener('alpine:init', () => {
             [122,114,106, 98, 90, 82, 74, 66, 58, 50, 42, 34, 26, 18, 10, 2],
             [121,113,105, 97, 89, 81, 73, 65, 57, 49, 41, 33, 25, 17, 9, 1],
             [120,112,104, 96, 88, 80, 72, 64, 56, 48, 40, 32, 24, 16, 8, 0]],
-
+    timingBudgets: [15,20,33,50,100,200,500],
     fromJson(data) {
       this.niveauRempli = data["niveauEtangRempli"]
       this.niveauVide = data["niveauEtangVide"]
@@ -156,6 +157,7 @@ document.addEventListener('alpine:init', () => {
       this.RoiY = data["RoiY"]
       this.distanceMode = data["distanceMode"]
       this.timingBudget = data["timingBudget"]
+      this.vl53Status = data["vl53Status"]
     },
     ratioNiveauEtangToString() {
       return this.ratioNiveauEtang + "%"
@@ -168,6 +170,18 @@ document.addEventListener('alpine:init', () => {
       Alpine.store('Etang').niveauVide = e.target.value;
       sendAction('ETANG', 'setNiveauEmpty=' + e.target.value)
     },
+    sendRoiC(val){
+      Alpine.store('Etang').RoiCenter = val
+      sendAction('ETANG','RoiC=' + val)
+    },
+    sendTB(val) {
+      Alpine.store('Etang').timingBudget = val
+      sendAction('ETANG',"TimingBudget=" +val)
+    },
+    sendDM(val) {
+      Alpine.store('Etang').timingBudget = val
+      sendAction('ETANG',"DistanceMode=" +val)
+    },
     Up(){
       let oldPos = this.findPos()
       if (oldPos[0]<=0) {
@@ -175,47 +189,47 @@ document.addEventListener('alpine:init', () => {
       }
       let newPos = [oldPos[0]-1,oldPos[1]]
      
-      this.selection = this.spad[newPos[0]][newPos[1]]
-  },
-  Down(){
-      let oldPos = this.findPos()
-      if (oldPos[0]>=15) {
-          return
-      }
-      let newPos = [oldPos[0]+1,oldPos[1]]
-     
-      this.selection = this.spad[newPos[0]][newPos[1]]
-  },
-  Right(){
-      let oldPos = this.findPos()
-      if (oldPos[1]>=15) {
-          return
-      }
-      let newPos = [oldPos[0],oldPos[1]+1]
-     
-      this.selection = this.spad[newPos[0]][newPos[1]]
-  },
-  Left(){
-      let oldPos = this.findPos()
-      if (oldPos[1]<=0) {
-          return
-      }
-      let newPos = [oldPos[0],oldPos[1]-1]
-     
-      this.selection = this.spad[newPos[0]][newPos[1]]
-  },
-  findPos(){
+      this.RoiCenter = this.spad[newPos[0]][newPos[1]]
+    },
+    Down(){
+        let oldPos = this.findPos()
+        if (oldPos[0]>=15) {
+            return
+        }
+        let newPos = [oldPos[0]+1,oldPos[1]]
+      
+        this.RoiCenter = this.spad[newPos[0]][newPos[1]]
+    },
+    Right(){
+        let oldPos = this.findPos()
+        if (oldPos[1]>=15) {
+            return
+        }
+        let newPos = [oldPos[0],oldPos[1]+1]
+      
+        this.RoiCenter = this.spad[newPos[0]][newPos[1]]
+    },
+    Left(){
+        let oldPos = this.findPos()
+        if (oldPos[1]<=0) {
+            return
+        }
+        let newPos = [oldPos[0],oldPos[1]-1]
+      
+        this.RoiCenter = this.spad[newPos[0]][newPos[1]]
+    },
+    findPos(){
       for (let i = 0; i < this.spad.length; i++) {
           const element = this.spad[i];
           let index = element.indexOf(this.selection)
           if (index !== -1) {
-
               return [i,index]
           }
       }
       return [-1,-1]
-  }
+    }
   })
+
   Alpine.store('Turbine', {
     positionVanne: 0,
     positionVanneTarget: 0,
@@ -272,7 +286,30 @@ document.addEventListener('alpine:init', () => {
   })
 })
 
-
+function updateSpadArray() {
+  let table = document.getElementById("spad");
+  table.addEventListener('click', function(e) {
+    let td = e.target;
+    if (td.tagName !== 'TD') return;
+    let row = td.parentElement;
+    let rowIndex = Array.from(table.rows).indexOf(row);
+    let cellIndex = Array.from(row.cells).indexOf(td);
+    let adjacentCells = [
+      [rowIndex - 1, cellIndex - 1], // top-left
+      [rowIndex - 1, cellIndex],     // top
+      [rowIndex - 1, cellIndex + 1], // top-right
+      [rowIndex, cellIndex - 1],     // left
+      [rowIndex, cellIndex + 1],     // right
+      [rowIndex + 1, cellIndex - 1], // bottom-left
+      [rowIndex + 1, cellIndex],     // bottom
+      [rowIndex + 1, cellIndex + 1]  // bottom-right
+    ];
+    for (let [r, c] of adjacentCells) {
+      let cell = table.rows[r]?.cells[c];
+      if (cell) cell.classList.add('table-success');
+    }
+  });
+}
 document.addEventListener('DOMContentLoaded',  function () {
   modes = document.querySelector("#modes")
   modes_li = modes.querySelectorAll("li")

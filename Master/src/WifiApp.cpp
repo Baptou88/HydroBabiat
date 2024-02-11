@@ -706,6 +706,7 @@ bool WifiAppClass::begin()
   SPIFFS_provide_file("/fileSystem.js");
   SPIFFS_provide_file("/Programmateur.js");
 
+  SPIFFS_provide_file("/style.css");
 
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
