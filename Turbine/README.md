@@ -10,3 +10,6 @@
 -
 
 SSD1306 GND - VCC - SCL - SDA
+
+
+[sol motor controllers](https://www.solomotorcontrollers.com/)

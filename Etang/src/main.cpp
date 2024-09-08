@@ -42,7 +42,7 @@ int niveauEtangTropPlein = 0;
 int16_t NiveauEtang = 0;
 
 int numDisplay = 0;
-int maxDisplay = 2;
+int maxDisplay = 3;
 
 String msgReponse = "";
 unsigned long tMsgReponse = 0;
@@ -69,15 +69,27 @@ String LoRaMesageStatut()
   uint8_t roiCenter;
   vl53.VL53L1X_GetROICenter(&roiCenter);
   retour += "RoiC:" + (String)roiCenter + ",";
-  uint16_t roix;
-  uint16_t roiy;
+  uint16_t roix, roiy, imp;
   vl53.VL53L1X_GetROI_XY(&roix, &roiy);
   retour += "RoiXY:" + (String)roix + "|" + (String)roiy + ",";
+  vl53.VL53L1X_GetInterMeasurementInMs(&imp);
+  retour += "imp:" + (String)imp;
   uint16_t distanceMode;
   vl53.VL53L1X_GetDistanceMode(&distanceMode);
   retour += "distanceMode:" + (String)distanceMode +",";
 
   return retour;
+}
+
+void updateTimingBuget(uint16_t newTb){
+  uint16_t imp;
+  vl53.VL53L1X_GetInterMeasurementInMs(&imp);
+  if (imp < newTb)
+  {
+    vl53.VL53L1X_SetInterMeasurementInMs(newTb);
+  }
+  vl53.VL53L1X_SetTimingBudgetInMs(newTb);
+  
 }
 
 void executeCmd(String msg)
@@ -146,7 +158,7 @@ void executeCmd(String msg)
   if (msg.startsWith("TimingBudget="))
   {
     msg.replace("TimingBudget=", "");
-    Serial.println(vl53.setTimingBudget(msg.toInt()));
+    updateTimingBuget(msg.toInt());
     msgReponse += "TimingBudget " + (String)vl53.getTimingBudget();
   }
   if (msg.startsWith("DistanceMode"))
@@ -333,9 +345,6 @@ float ratioEtang()
 void displayNiveauEtang()
 {
   Ec.getDisplay()->setCursor(0,0);
-  uint8_t rs;
-  vl53.VL53L1X_GetRangeStatus(&rs);
-  Ec.getDisplay()->println("rangeStatus "+(String)rs);
   Ec.getDisplay()->drawRect(114, 10, 14, 54, SSD1306_WHITE);
   int16_t posy = 14 + (1 - ratioEtang()) * 54;
   Ec.getDisplay()->drawLine(114, posy, 124, posy, SSD1306_WHITE);
@@ -373,6 +382,18 @@ void displayData(void)
   case 1:
     displayNiveauEtang();
 
+    break;
+  case 2:
+    Ec.getDisplay()->setCursor(0,0);
+    uint8_t rs;
+    vl53.VL53L1X_GetRangeStatus(&rs);
+    Ec.getDisplay()->println("rangeStatus  "+(String)rs);
+    
+    uint16_t tb, imp;
+    tb = vl53.getTimingBudget();
+    Ec.getDisplay()->println("timingBudget "+(String)tb);
+    vl53.VL53L1X_GetInterMeasurementInMs(&imp);
+    Ec.getDisplay()->println("interMesure  "+(String)imp);
     break;
   default:
     break;
@@ -451,7 +472,7 @@ void setup()
 
   vl53.VL53L1X_SetDistanceMode(pref.getShort("distanceMode", 2));
   // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
-  vl53.setTimingBudget(pref.getUInt("timingBudget", 100));
+  updateTimingBuget(pref.getUInt("timingBudget", 100));
   uint16_t RoiXY = pref.getShort("RoiXY",8);
   vl53.VL53L1X_SetROI(RoiXY,RoiXY);
   Serial.print(F("Timing budget (ms): "));
@@ -555,7 +576,6 @@ void loop()
 
   if (btnPRG.frontDesceandant())
   {
-    Serial.println("fd");
     if (Ec.getState() == EcranState::EcranState_Sleep)
     {
       Ec.wakeUp();
@@ -563,7 +583,6 @@ void loop()
     else
     {
       numDisplay = (numDisplay + 1) % maxDisplay;
-      Serial.println(numDisplay);
     }
   }
 

@@ -76,7 +76,7 @@
                                 <li><a class="dropdown-item" href="#Etang">Etang</a></li>
                                 <li><a class="dropdown-item" href="#Turbine">Turbine</a></li>
                                 <li>
-                                    <a class="dropdown-item" href="#NodeTest">nodeTest</a>
+                                    <a class="dropdown-item" href="#NodeTest">Radiateurs</a>
                                 </li>
                             </ul>
                         </li>
@@ -274,7 +274,7 @@
                     </div>
                 </div>
                 <div class="card-body" id="Turbine">
-                    <p>
+                    <p class="text-muted">
                         RSSI:
                         <span id="TurbineRSSI" x-text="$store.Turbine.status.RSSI"></span>
                         dBm - SNR:
@@ -404,7 +404,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <p data-bs-toggle="tooltip" data-bs-placement="top"
+                    <p class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top"
                         title="Recorded Signal Strength Indicator in dBm">
                         Etang RSSI:
                         <span id="EtangRSSI" x-text="$store.Etang.status.RSSI"></span> dBm
@@ -480,7 +480,7 @@
             </div>
         </div>
         <div class="col-sm">
-            <div class="card mb-2" id="NodeTest">
+            <div class="card mb-2" id="Radiateurs">
                 <div class="card-header">
                     <div class="d-flex">
                         Test
@@ -493,31 +493,31 @@
                             </button>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="NodeTestActive"
-                                x-bind:checked="$store.NodeTest.status.Active"
-                                onclick="websocket.send('NodeTest.Active=' + (this.checked?1:0))" />
+                            <input class="form-check-input" type="checkbox" role="switch" id="RadiateursActive"
+                                x-bind:checked="$store.Radiateurs.status.Active"
+                                onclick="websocket.send('Radiateurs.Active=' + (this.checked?1:0))" />
                             <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox
                                 input</label>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    <p>
+                    <p class="text-muted">
                         RSSI:
-                        <span id="NodeTestRSSI" x-text="$store.NodeTest.status.RSSI"></span>
+                        <span id="RadiateursRSSI" x-text="$store.Radiateurs.status.RSSI"></span>
                         dBm - SNR:
-                        <span id="NodeTestSNR" x-text="$store.NodeTest.status.SNR"></span>
+                        <span id="RadiateursSNR" x-text="$store.Radiateurs.status.SNR"></span>
                         dB
                     </p>
                     <p>
                         Dernière MAJ:
-                        <span class="nodeTimer" id="NodeTestDernierMessage"
-                            x-text="$store.NodeTest.status.DernierMessage">-1</span>
+                        <span class="nodeTimer" id="RadiateursDernierMessage"
+                            x-text="$store.Radiateurs.status.DernierMessage">-1</span>
                         s
                     </p>
                     <p>
                         temp
-                        <span id="temp" x-text="$store.NodeTest.temp">%temp% </span> °C
+                        <span id="temp" x-text="$store.Radiateurs.temp">%temp% </span> °C
                     </p>
 
                     <button type="button" class="btn btn-secondary computed" data-node="NODETEST" data-action="blink">

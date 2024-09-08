@@ -74,7 +74,7 @@ void WifiAppClass::notifyClients()
   message += dataEtang.toJson() + ",";
   message += "\"etangStatus\":{" + (String)EtangStatus.toJson() + "},";
   message += dataNodeTest.toJson() + ",";
-  message += "\"nodeTestStatus\":{" + (String)nodeTest.toJson() + "}";
+  message += "\"nodeTestStatus\":{" + (String)RadiateurStatus.toJson() + "}";
 
   message += "}}";
 
@@ -95,7 +95,7 @@ void WifiAppClass::notifyClient(uint32_t clientId)
   message += dataEtang.toJson() + ",";
   message += "\"etangStatus\":{" + (String)EtangStatus.toJson() + "},";
   message += dataNodeTest.toJson() + ",";
-  message += "\"nodeTestStatus\":{" + (String)nodeTest.toJson() + "}";
+  message += "\"nodeTestStatus\":{" + (String)RadiateurStatus.toJson() + "}";
 
   message += "}}";
 
@@ -407,16 +407,16 @@ bool WifiAppClass::begin()
     String SSID = Prefs.getString("WIFI_SSID", "");
     String PSSWD = Prefs.getString("WIFI_PSSWD", "");
 
-    IPAddress local_IP(192, 168, 1, 10);
-    IPAddress gateway(192, 168, 1, 1);
-    IPAddress subnet(255, 255, 255, 0);
-    IPAddress primaryDNS(8, 8, 8, 8); // optional
-    IPAddress secondaryDNS(8, 8, 4, 4); // optional
+    // IPAddress local_IP(192, 168, 1, 10);
+    // IPAddress gateway(192, 168, 1, 1);
+    // IPAddress subnet(255, 255, 255, 0);
+    // IPAddress primaryDNS(8, 8, 8, 8); // optional
+    // IPAddress secondaryDNS(8, 8, 4, 4); // optional
 
-    // Configures static IP address
-    if (!WiFi.config(local_IP, gateway, subnet,primaryDNS)) {
-      Serial.println("STA Failed to configure");
-    }
+    // // Configures static IP address
+    // if (!WiFi.config(local_IP, gateway, subnet,primaryDNS)) {
+    //   Serial.println("STA Failed to configure");
+    // }
     WiFi.setHostname("Esp32S3_HydroBabiat");
     WiFi.begin(SSID.c_str(), PSSWD.c_str());
 
@@ -1127,9 +1127,9 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       if (dataStr.startsWith("Active="))
       {
         dataStr.replace("Active=", "");
-        nodeTest.active = dataStr.toInt();
-        Serial.println(nodeTest.active);
-        Prefs.putBool(nodeTest.Name.c_str(), nodeTest.active); // TODO logic à deplacer
+        RadiateurStatus.active = dataStr.toInt();
+        Serial.println(RadiateurStatus.active);
+        Prefs.putBool(RadiateurStatus.Name.c_str(), RadiateurStatus.active); // TODO logic à deplacer
       }
     }
     else if (dataStr.startsWith("DeepSleepServer"))

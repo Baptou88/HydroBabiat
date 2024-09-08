@@ -10,6 +10,7 @@
 #include <WiFi.h>
 #include <Update.h>
 
+#define PIN_RAD1
 struct fileDescription_t
 {
     String fileName;
@@ -111,6 +112,8 @@ String LoRaMesageStatut(){
   Serial.println("DemandeStatut");
   String toSend = "";
   toSend += "temp:" + (String) bmp.readTemperature() + ",";
+  toSend += "rad1:" + (String) rad1 + ","; // TODO change variable
+  toSend += "rad2:" + (String) rad2 + ","; // TODO change variable
   return toSend;
 }
 void displaySpiffs(){

@@ -277,11 +277,15 @@ document.addEventListener('alpine:init', () => {
       return this.motorState < 0 || this.tensionBatterie < 10;
     }
   })
-  Alpine.store('NodeTest', {
+  Alpine.store('Radiateurs', {
     temp: 0,
+    Rad1: false,
+    Rad2: false,
     status: {},
     fromJson(data) {
       this.temp = data["temp"]
+      this.Rad1 = data["rad1"]
+      this.Rad2 = data["rad2"]
     }
   })
 })

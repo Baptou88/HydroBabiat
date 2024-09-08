@@ -158,64 +158,70 @@ void displayData()
   
   switch (displayNum)
   {
-  case 0:
-    display->setCursor(0, 0);
-    display->print("pos:");
-    display->setCursor(50, 0);
-    display->print(EncoderVanne::getPos());
+    case 0:
+      display->setCursor(0, 0);
+      display->print("pos:");
+      display->setCursor(50, 0);
+      display->print(EncoderVanne::getPos());
 
-    display->setCursor(0, 12);
-    display->print("con:");
-    display->setCursor(50, 12);
-    display->print((String)mot._target);
+      display->setCursor(0, 12);
+      display->print("con:");
+      display->setCursor(50, 12);
+      display->print((String)mot._target);
 
-    display->setCursor(0, 24);
-    display->print("IM :");
-    display->setCursor(50, 24);
-    display->print((String)mot.IntensiteMoteur);
+      display->setCursor(0, 24);
+      display->print("IM :");
+      display->setCursor(50, 24);
+      display->print((String)mot.IntensiteMoteur);
 
-    display->setCursor(0, 36);
-    display->print("om :");
-    display->setCursor(50, 36);
-    display->print((String)mot.ouvertureMax);
+      display->setCursor(0, 36);
+      display->print("om :");
+      display->setCursor(50, 36);
+      display->print((String)mot.ouvertureMax);
 
-    display->setCursor(20, 50);
-    display->print(MotorStateToString(mot.getState()));
+      display->setCursor(20, 50);
+      display->print(MotorStateToString(mot.getState()));
 
-    display->setCursor(5, 50);
-    display->print(FCF.getState());
-    display->setCursor(115, 50);
-    display->print(FCO.getState());
+      display->setCursor(5, 50);
+      display->print(FCF.getState());
+      display->setCursor(115, 50);
+      display->print(FCO.getState());
 
-    break;
-  case 1:
-    display->setCursor(0, 0);
-    display->println((String)((millis() - dernierMessage) / 1000) + " s");
-    display->println("RSSI: " + (String)(msgRSSI) + " dbm");
-    display->println("SNR : " + (String)(msgSNR) + " db");
+      break;
+    case 1:
+      display->setCursor(0, 0);
+      display->println((String)((millis() - dernierMessage) / 1000) + " s");
+      display->println("RSSI: " + (String)(msgRSSI) + " dbm");
+      display->println("SNR : " + (String)(msgSNR) + " db");
 
-    break;
-  case 2:
-    display->setCursor(0, 0);
-    display->println("Tachy: " + (String)tachy.getRPM() + " rpm");
-    display->println("Tachy: " + (String)tachy.getHz() + " hz");
+      break;
+    case 2:
+      display->setCursor(0, 0);
+      display->println("Tachy: " + (String)tachy.getRPM() + " rpm");
+      display->println("Tachy: " + (String)tachy.getHz() + " hz");
 
 
-    display->println("UB: " + (String)VoltageBattery + " mV");
-    display->println("Isysteme: " + (String)currentSysteme + " mA");
+      display->println("UB: " + (String)VoltageBattery + " mV");
+      display->println("Isysteme: " + (String)currentSysteme + " mA");
 
-    break;
+      break;
 
-  case 3:
-    display->setCursor(0, 0);
-    display->println("U moyenne: " + (String)voltageOutputMoy.get() + " V");
-    display->println("U        : " + (String)voltageOutput + " V");
-    display->println("U ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL)) + " V");
-    display->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " A");
-    display->println("I: " + (String)currentOutput + " A");
-    break;
-  default:
-    break;
+    case 3:
+      display->setCursor(0, 0);
+      display->println("U moyenne: " + (String)voltageOutputMoy.get() + " V");
+      display->println("U        : " + (String)voltageOutput + " V");
+      display->println("U ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL)) + " V");
+      display->println("I ads    : " + (String)ads.computeVolts(ads.readADC_SingleEnded(CURRENT_ADS_CHANNEL)) + " A");
+      display->println("I: " + (String)currentOutput + " A");
+      break;
+    case 4:
+      display->setCursor(0, 0);
+      display->println("CLK: " + (String) encodeurCLK.frontDesceandant() + " " + (String) encodeurCLK.frontDesceandant()+ " " + (String)encodeurCLK.getState());
+      display->println("DT : " + (String) encodeurDT.frontDesceandant() + " " + (String) encodeurDT.frontDesceandant()+ " " + (String)encodeurDT.getState());
+      
+      break;
+    default:
+      break;
   }
 
   display->display();
@@ -721,7 +727,9 @@ void setup()
 {
 
   Serial.begin(115200);
+  Serial.println("Wire begin");
   Wire.begin(SDA_OLED, SCL_OLED);
+  Serial.println("Wire begin");
 
   FCO.begin();
   FCF.begin();
@@ -872,7 +880,7 @@ void loop()
         mot.setState(MotorState::IDLE);
       } else
       {
-        displayNum = (displayNum + 1) % 4;
+        displayNum = (displayNum + 1) % 5;
       }
       
     }
@@ -939,6 +947,9 @@ void loop()
     double positionMoteur;
     positionMoteur = mot._position;
     pref.putDouble("posMot", positionMoteur);
+
+    //WiFi.disconnect(true);
+    //LoRa.getRadio().sleep(false);
     esp_sleep_enable_timer_wakeup(timeDeepSleeping);
 
     esp_deep_sleep_start();

@@ -49,6 +49,10 @@
 #define LEDNOTIF 35
 #define PINTONE 5
 
+// Battery voltage measurement
+#define VBAT_CTRL GPIO_NUM_37
+#define VBAT_ADC  GPIO_NUM_1
+
 #ifdef USE_TFT
 SPIClass spitft;
 #define TFT_CS 26
@@ -84,8 +88,8 @@ nodeStatus_t TurbineStatus;
 dataEtang_t dataEtang;
 nodeStatus_t EtangStatus;
 
-dataNodeTest_t dataNodeTest;
-nodeStatus_t nodeTest;
+dataRadiateur_t dataNodeTest;
+nodeStatus_t RadiateurStatus;
 
 LList<nodeStatus_t *> listNodes = LList<nodeStatus_t *>();
 int lastNode = -1;
@@ -147,12 +151,43 @@ void VextON(void)
 }
 float readBatLevel()
 {
-  pinMode(37, OUTPUT);
-  digitalWrite(37, LOW);
+  pinMode(VBAT_CTRL, OUTPUT);
+  digitalWrite(VBAT_CTRL, LOW);
+  
   delay(10); // let GPIO stabilize
-  int analogValue = analogRead(1);
+  int analogValue = analogRead(VBAT_ADC);
   float voltage = 0.00403532794741887 * analogValue;
   return voltage;
+}
+int battery_percent(float vbat = -1){
+  const float max_voltage = 4.26;
+  const float min_voltage = 3.04;
+  const uint8_t scaled_voltage[100] = {
+  254, 242, 230, 227, 223, 219, 215, 213, 210, 207,
+  206, 202, 202, 200, 200, 199, 198, 198, 196, 196,
+  195, 195, 194, 192, 191, 188, 187, 185, 185, 185,
+  183, 182, 180, 179, 178, 175, 175, 174, 172, 171,
+  170, 169, 168, 166, 166, 165, 165, 164, 161, 161,
+  159, 158, 158, 157, 156, 155, 151, 148, 147, 145,
+  143, 142, 140, 140, 136, 132, 130, 130, 129, 126,
+  125, 124, 121, 120, 118, 116, 115, 114, 112, 112,
+  110, 110, 108, 106, 106, 104, 102, 101, 99, 97,
+  94, 90, 81, 80, 76, 73, 66, 52, 32, 7,
+};
+  if (vbat == -1)
+  {
+    vbat = readBatLevel();
+  }
+  for (int n = 0; n < sizeof(scaled_voltage); n++)
+  {
+    float step = (max_voltage - min_voltage)/256;
+    if (vbat > min_voltage + (step * scaled_voltage[n])) {
+      return 100 - n;
+    }
+  }
+  return 0;
+  
+  
 }
 
 String timeElapsedToString(unsigned long timeS)
@@ -482,11 +517,11 @@ void LoRaMessage(LoRaPacket header, String msg)
       AlertNiv.updateNiveau(dataEtang.ratioNiveauEtang);
     }
   }
-  else if (header.Emetteur == 0x04)
+  else if (header.Emetteur == RADIATEURS)
   {
-    nodeTest.RSSI = header.RSSI;
-    nodeTest.dernierMessage = millis();
-    nodeTest.SNR = header.SNR;
+    RadiateurStatus.RSSI = header.RSSI;
+    RadiateurStatus.dernierMessage = millis();
+    RadiateurStatus.SNR = header.SNR;
     String key;
     String val;
 
@@ -503,6 +538,14 @@ void LoRaMessage(LoRaPacket header, String msg)
       if (key == "temp")
       {
         dataNodeTest.temp = val.toFloat();
+      }
+      if (key == "rad1")
+      {
+        dataNodeTest.Rad1 = val.toFloat();
+      }
+      if (key == "rad2")
+      {
+        dataNodeTest.Rad2 = val.toFloat();
       }
     }
   }
@@ -641,9 +684,9 @@ void displayData()
     }
 
     Ec.getDisplay()->println("Battery: " + (String)voltageBattery + " / " + (String)voltageBatteryMin);
-
-    Ec.getDisplay()->printf("Spiffs: %i / %i\n", SPIFFS.usedBytes(), SPIFFS.totalBytes());
-    Ec.getDisplay()->printf("Spiffs: %f %\n", (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) * 100);
+    Ec.getDisplay()->println("Battery % "+(String)battery_percent());
+    //Ec.getDisplay()->printf("Spiffs: %i / %i\n", SPIFFS.usedBytes(), SPIFFS.totalBytes());
+    //Ec.getDisplay()->printf("Spiffs: %f %\n", (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) * 100);
 
     // Ec.getDisplay()->println(WifiApp.server.);
 
@@ -718,12 +761,12 @@ void initNodes()
   TurbineStatus.addr = TURBINE;
   TurbineStatus.Name = "Turbine";
 
-  nodeTest.addr = NODETEST;
-  nodeTest.Name = "NodeTest";
+  RadiateurStatus.addr = RADIATEURS;
+  RadiateurStatus.Name = "Radiateurs";
 
   listNodes.add(&EtangStatus);
   listNodes.add(&TurbineStatus);
-  listNodes.add(&nodeTest);
+  listNodes.add(&RadiateurStatus);
 }
 
 bool initPref()
@@ -735,9 +778,9 @@ bool initPref()
     AlertNiv.min = Prefs.getInt(AlertNivMin);
     modeActuel = Prefs.getInt(MODEVANNE, 0);
     ledNotif = Prefs.getBool(LedNotif, ledNotif);
-    if (Prefs.isKey(nodeTest.Name.c_str()))
+    if (Prefs.isKey(RadiateurStatus.Name.c_str()))
     {
-      nodeTest.active = Prefs.getBool(nodeTest.Name.c_str(), true);
+      RadiateurStatus.active = Prefs.getBool(RadiateurStatus.Name.c_str(), true);
     }
     bC->niveauMax = Prefs.getInt(bcMax, bC->niveauMax);
     bC->niveauMin = Prefs.getInt(bcMin, bC->niveauMin);
@@ -1026,9 +1069,9 @@ void loop()
       {
         LoRa.sendData(TURBINE, LoRaMessageCode::Data, action);
       }
-      else if (node == "NODETEST")
+      else if (node == "RADIATEURS")
       {
-        LoRa.sendData(NODETEST, LoRaMessageCode::Data, action);
+        LoRa.sendData(RADIATEURS, LoRaMessageCode::Data, action);
       }
     }
   }

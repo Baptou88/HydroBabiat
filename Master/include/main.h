@@ -112,13 +112,18 @@ struct dataEtang_t
   }
 };
 
-struct dataNodeTest_t
+struct dataRadiateur_t
 {
   float temp = 0;
   
+  bool Rad1 = false;
+  bool Rad2 = false;
+
   String toJson(){
-    String message = "\"NodeTest\":{";
-    message += "\"temp\":" +  (String)temp ;
+    String message = "\"Radiateur\":{";
+    message += "\"temp\":" +  (String)temp +",";
+    message += "\"rad1\":" +  (String)Rad1 +",";
+    message += "\"rad2\":" +  (String)Rad2 ;
     message += "}";
     return message;
   }
@@ -132,8 +137,8 @@ extern nodeStatus_t TurbineStatus;
 extern dataEtang_t dataEtang;
 extern nodeStatus_t EtangStatus;
 
-extern nodeStatus_t nodeTest;
-extern dataNodeTest_t dataNodeTest;
+extern nodeStatus_t RadiateurStatus;
+extern dataRadiateur_t dataNodeTest;
 
 
 
