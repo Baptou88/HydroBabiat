@@ -28,6 +28,7 @@ public:
     bool saveTask();
     ProgrammatedTask* getTask(int taskNumber);
     void loop();
+    JsonDocument toJson();
 
     static String templateProcessor(const String var);
 };

@@ -4,6 +4,7 @@
 
 void commandProcess(String cmd);
 bool savePreferences();
+void printPreferences();
 
 float calibrateADS(int channel, int sample = 20, int delaybetweensample = 5);
 

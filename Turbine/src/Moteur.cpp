@@ -326,6 +326,11 @@ MotorState Moteur::getState(void)
 }
 void Moteur::setState(MotorState state)
 {
+    if (state == MotorState::OVERSPEED || state == MotorState::FERMETURE_TOTALE)
+    {
+        this->_target = 0;
+    }
+    
     _prevState = _state;
     stateTime = millis();
     _state = state;

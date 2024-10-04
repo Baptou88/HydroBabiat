@@ -20,7 +20,7 @@
 #define PIN_FC_F 47
 
 //Tachymètre
-#define PIN_TACHY 21
+#define PIN_TACHY 3
 
 
 //Tension de sortie

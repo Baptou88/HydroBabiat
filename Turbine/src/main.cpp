@@ -58,6 +58,7 @@ Preferences pref;
 Tachymetre tachy;
 /// @brief vitesse max de la turbine
 int maxSpeed = 300;
+float rpm = 0;
 
 enum displayMode_e
 {
@@ -197,7 +198,7 @@ void displayData()
       break;
     case 2:
       display->setCursor(0, 0);
-      display->println("Tachy: " + (String)tachy.getRPM() + " rpm");
+      display->println("Tachy: " + (String)rpm + " rpm");
       display->println("Tachy: " + (String)tachy.getHz() + " hz");
 
 
@@ -236,7 +237,7 @@ String LoRaMesageStatut()
   toSend += "target:" + (String)mot.getTargetP() + ",";
   toSend += "U:" + String(voltageOutputMoy.get(),1) + ",";
   toSend += "I:" + String(currentOutput,1) + ",";
-  toSend += "tachy:" + String(tachy.getRPM(),1) + ",";
+  toSend += "tachy:" + String(rpm,1) + ",";
   toSend += "UB:" + String(VoltageBattery,0) + ",";
   toSend += "motorState:" + (String)mot.getState() + ",";
   toSend += "ZV:" + String(voltage_base,3) + ",";
@@ -522,11 +523,17 @@ void commandProcess(String cmd)
     cmd.replace("tackyDebounce","");
     if (cmd.startsWith("="))
     {
+      cmd.replace("=", "");
       tachy.setDebounceTime(cmd.toInt());
     }
     msgReponse += "tackyDebounce " + (String)tachy.getDebounceTime();
     
   }
+  if (cmd.startsWith("printPreferences"))
+  {
+    printPreferences();
+  }
+  
   
 }
 
@@ -603,6 +610,25 @@ bool savePreferences()
   pref.putLong("tackyDebounce",tachy.getDebounceTime());
   return true;
 }
+void printPreferences()
+{
+
+  Serial.println("print pref :");
+  Serial.println("CpuFreq " + (String) pref.getInt("CpuFreq"));
+  Serial.println("ouvertureMax " + (String) pref.getInt("ouvertureMax"));
+  Serial.println("moteurKp " + (String) pref.getFloat("moteurKp"));
+  Serial.println("moteurKi " + (String) pref.getFloat("moteurKi"));
+  Serial.println("moteurKd " + (String) pref.getFloat("moteurKd"));
+  Serial.println("ledNotif " + (String) pref.getBool("ledNotif"));
+  Serial.println("voltage_coefA " + (String) pref.getFloat("voltage_coefA"));
+  Serial.println("voltage_base " + (String) pref.getFloat("voltage_base"));
+  Serial.println("current_coefA " + (String) pref.getFloat("current_coefA"));
+  Serial.println("current_base " + (String) pref.getFloat("current_base"));
+  Serial.println("MaxIMot " + (String) pref.getFloat("MaxIMot"));
+  Serial.println("maxSpeed " + (String) pref.getInt("maxSpeed"));
+  Serial.println("tackyDebounce " + (String) pref.getLong("tackyDebounce"));
+  
+}
 
 void acquisitionEntree()
 {
@@ -612,7 +638,8 @@ void acquisitionEntree()
   encodeurCLK.loop();
   encodeurDT.loop();
   encodeurSW.loop();
-
+  rpm = tachy.getRPM();
+  
   // currentSCT = ads.readADC_Differential_2_3()*0.0625f*30;
   mot.updateIntensiteMoteur(ina260.readCurrent());
   // VoltageOutput.loop();
@@ -620,7 +647,7 @@ void acquisitionEntree()
   VoltageBattery = ina260.readBusVoltage();
   currentSysteme = ina219.getCurrent_mA();
 
-  ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL);
+  //ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL);
   rawTensionADS = ads.readADC_SingleEnded(VOLTAGE_ADS_CHANNEL);
   // Serial.println("rawtensionAds " + (String))
   voltageOutput = voltage_coefA * (rawTensionADS + voltage_base);
@@ -719,17 +746,18 @@ void menuWifiServerCalleback(ADAFRUIT_DISPLAY *display, bool firstTime)
 
 #ifdef PIN_TACHY
 IRAM_ATTR void tachyTick(){
-  tachy.Tick();
+  tachy.tick();
 }
 #endif
+
 // put your setup code here, to run once:
 void setup()
 {
 
   Serial.begin(115200);
-  Serial.println("Wire begin");
+
   Wire.begin(SDA_OLED, SCL_OLED);
-  Serial.println("Wire begin");
+
 
   FCO.begin();
   FCF.begin();
@@ -955,16 +983,18 @@ void loop()
     esp_deep_sleep_start();
   }
 
+// gestion reboot
   if (shouldReboot != 0 && millis() > shouldReboot)
   {
     shouldReboot = 0;
     ESP.restart();
   }
 
-  if (tachy.getRPM() > maxSpeed)
+ 
+  if (rpm > maxSpeed && rpm < 20000)
   {
-    Serial.println("ERrrror : " + (String)tachy.getRPM());
-    mot.setState(MotorState::OVERSPEED);
+    Serial.println("ERrrror : " + (String)rpm + " rpm");
+    //mot.setState(MotorState::OVERSPEED);
   }
 
   if (millis() > messageReponse && messageReponse != 0)

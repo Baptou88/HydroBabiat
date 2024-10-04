@@ -418,13 +418,13 @@
                         s
                     </p>
                     <div class="progress" role="progressbar" aria-label="Example with label">
-                        <div class="progress-bar" :style="{width: $store.Etang.ratioNiveauEtangToString()}"
-                            x-text="$store.Etang.ratioNiveauEtangToString()"></div>
+                        <div class="progress-bar" :style="{width: $store.Etang.niveauEtangPToString()}"
+                            x-text="$store.Etang.niveauEtangPToString()"></div>
                     </div>
                     <p>Niveau Etang: <span id="niveauEtang" x-text="$store.Etang.niveauEtang">%niveauEtang%</span> mm</p>
                     <p>
                         Niveau Etang:
-                        <strong><span id="ratioNiveauEtang" x-text="$store.Etang.ratioNiveauEtang">%ratioNiveauEtang%
+                        <strong><span id="niveauEtangP" x-text="$store.Etang.niveauEtangP">%niveauEtangP%
                             </span>%%</strong>
                     </p>
                     <p>Vl53 Status <span  x-text="$store.Etang.vl53Status"></span></p>
@@ -494,8 +494,8 @@
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" role="switch" id="RadiateursActive"
-                                x-bind:checked="$store.Radiateurs.status.Active"
-                                onclick="websocket.send('Radiateurs.Active=' + (this.checked?1:0))" />
+                                x-bind:checked="$store.Radiateur.status.Active"
+                                onclick="websocket.send('Radiateur.Active=' + (this.checked?1:0))" />
                             <label class="form-check-label" for="flexSwitchCheckDefault" hidden>Default switch checkbox
                                 input</label>
                         </div>
@@ -504,20 +504,20 @@
                 <div class="card-body">
                     <p class="text-muted">
                         RSSI:
-                        <span id="RadiateursRSSI" x-text="$store.Radiateurs.status.RSSI"></span>
+                        <span id="RadiateursRSSI" x-text="$store.Radiateur.status.RSSI"></span>
                         dBm - SNR:
-                        <span id="RadiateursSNR" x-text="$store.Radiateurs.status.SNR"></span>
+                        <span id="RadiateursSNR" x-text="$store.Radiateur.status.SNR"></span>
                         dB
                     </p>
                     <p>
                         Dernière MAJ:
                         <span class="nodeTimer" id="RadiateursDernierMessage"
-                            x-text="$store.Radiateurs.status.DernierMessage">-1</span>
+                            x-text="$store.Radiateur.status.DernierMessage">-1</span>
                         s
                     </p>
                     <p>
                         temp
-                        <span id="temp" x-text="$store.Radiateurs.temp">%temp% </span> °C
+                        <span id="temp" x-text="$store.Radiateur.temp">%temp% </span> °C
                     </p>
 
                     <button type="button" class="btn btn-secondary computed" data-node="NODETEST" data-action="blink">

@@ -105,7 +105,7 @@ void ProgrammatedTasksClass::addTask(ProgrammatedTask *task)
 
 bool ProgrammatedTasksClass::saveTask()
 {
-  File file = SPIFFS.open("/Programmated", "w+");
+  File file = SPIFFS.open("/Programmated", "w");
 
   for (size_t i = 0; i < ProgTasks.ListTasks->size(); i++)
   {
@@ -128,7 +128,7 @@ void ProgrammatedTasksClass::loop()
   if (millis() > previouscheck + 60000)
   {
     previouscheck = millis();
-
+    bool needSave = false;
     for (size_t i = 0; i < ListTasks->size(); i++)
     {
       ProgrammatedTask *tache = ListTasks->get(i);
@@ -147,6 +147,7 @@ void ProgrammatedTasksClass::loop()
           if (tache->execOnce)
           {
             tache->deactivate();
+            needSave = true;
           }
           
           bufferActionToSend += "TURBINE:TargetVanne=" + (String)tache->targetVanne + ";";
@@ -167,14 +168,30 @@ void ProgrammatedTasksClass::loop()
         }
       }
     }
+    if (needSave)
+    {
+      saveTask();
+    }
+    
   }
+}
+
+JsonDocument ProgrammatedTasksClass::toJson()
+{
+  JsonDocument doc;
+  for (size_t i = 0; i < ListTasks->size(); i++)
+  {
+    JsonArray data = doc["task"].to<JsonArray>();
+    data.add(ListTasks->get(i)->toJson());
+  }
+  
+  return doc;
 }
 
 ProgrammatedTask *ProgrammatedTasksClass::getTask(int taskNumber)
 {
 
   return ListTasks->get(taskNumber);
-  return nullptr;
 }
 
 String ProgrammatedTasksClass::templateProcessor(const String var)

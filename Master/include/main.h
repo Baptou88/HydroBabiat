@@ -87,7 +87,7 @@ struct dataEtang_t
   float niveauEtangRempli = 0;
   float niveauEtangVide = 0;
   float niveauEtangTroPlein = 0;
-  float ratioNiveauEtang = 0;
+  float niveauEtangP = 0;
   uint8_t RoiCenter = 0;
   uint16_t RoiX = 0;
   uint16_t RoiY = 0;
@@ -97,7 +97,7 @@ struct dataEtang_t
   String toJson(){
     String message = "\"Etang\":{";
     message += "\"niveauEtang\":" +  (String)niveauEtang +",";
-    message += "\"ratioNiveauEtang\":" +  (String)ratioNiveauEtang + ",";
+    message += "\"niveauEtangP\":" +  (String)niveauEtangP + ",";
     message += "\"niveauEtangRempli\":" +  (String)niveauEtangRempli + ",";
     message += "\"niveauEtangVide\":" +  (String)niveauEtangVide + ",";
     message += "\"RoiCenter\":" +  (String)RoiCenter +"," ;

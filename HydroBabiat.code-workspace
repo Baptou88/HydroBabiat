@@ -19,6 +19,14 @@
 		{
 			"name": "nodeTest",
 			"path": "nodeTest"
+		},
+		{
+			"name": "EInkPaper test",
+			"path": "../../PlatformIO/Projects/EInkPaper test"
+		},
+		{
+			"name": "pinTachy",
+			"path": "../../PlatformIO/Projects/pinTachy"
 		}
 	],
 	"settings": {

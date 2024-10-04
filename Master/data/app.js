@@ -121,7 +121,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('Etang', {
     niveauRempli: 0,
     niveauVide: 0,
-    ratioNiveauEtang: 0,
+    niveauEtangP: 0,
     niveauEtang: 0,
     RoiCenter: 0,
     RoiX: 0,
@@ -150,7 +150,7 @@ document.addEventListener('alpine:init', () => {
     fromJson(data) {
       this.niveauRempli = data["niveauEtangRempli"]
       this.niveauVide = data["niveauEtangVide"]
-      this.ratioNiveauEtang = data["ratioNiveauEtang"]
+      this.niveauEtangP = data["niveauEtangP"]
       this.niveauEtang = data["niveauEtang"]
       this.RoiCenter = data["RoiCenter"]
       this.RoiX = data["RoiX"]
@@ -159,8 +159,8 @@ document.addEventListener('alpine:init', () => {
       this.timingBudget = data["timingBudget"]
       this.vl53Status = data["vl53Status"]
     },
-    ratioNiveauEtangToString() {
-      return this.ratioNiveauEtang + "%"
+    niveauEtangPToString() {
+      return this.niveauEtangP + "%"
     },
     sendRempli(e) {
       Alpine.store('Etang').niveauRempli = e.target.value;
@@ -277,7 +277,7 @@ document.addEventListener('alpine:init', () => {
       return this.motorState < 0 || this.tensionBatterie < 10;
     }
   })
-  Alpine.store('Radiateurs', {
+  Alpine.store('Radiateur', {
     temp: 0,
     Rad1: false,
     Rad2: false,
@@ -613,7 +613,7 @@ function wsData(d) {
       if (element == "Etang") {
         Alpine.store('Etang').fromJson(d[element])
         //chartNiveau.series[2].addPoint([dt, d[element]], true, false, true);
-        chartNiveau.series[0].addPoint([dt, d[element].ratioNiveauEtang], true, false, true);
+        chartNiveau.series[0].addPoint([dt, d[element].niveauEtangP], true, false, true);
       }
       if (element == "Turbine") {
         Alpine.store('Turbine').fromJson(d[element])
@@ -621,8 +621,8 @@ function wsData(d) {
         chartTurbine.series[1].addPoint([dt, d[element].PositionVanneTarget], true, false, true);
         chartTurbine.series[0].addPoint([dt, Math.round(d[element].positionVanne)], true, false, true);
       }
-      if (element == "NodeTest") {
-        Alpine.store('NodeTest').fromJson(d[element])
+      if (element == "Radiateur") {
+        Alpine.store('Radiateur').fromJson(d[element])
       }
       if (element == "turbineStatus") {
         Alpine.store('Turbine').status = d[element]
@@ -631,7 +631,7 @@ function wsData(d) {
         Alpine.store('Etang').status = d[element]
       }
       if (element == "nodeTestStatus") {
-        Alpine.store('NodeTest').status = d[element]
+        Alpine.store('Radiateur').status = d[element]
       }
 
     }

@@ -6,9 +6,9 @@
 class Tachymetre
 {
 private:
-   long _micro = 0;
-   long _previousMicro = 0;
-   long _dt = 0;
+  unsigned long _micro = 0;
+  unsigned long _previousMicro = 0;
+  unsigned long _dt = 0;
 
   /** delai en microSecond*/
   long delaiAntiRebond = 400;
@@ -17,7 +17,7 @@ private:
   bool isTimeOut();
 public:
   Tachymetre();
-  void Tick();
+  void tick();
   float getRPM();
   float getHz();
 

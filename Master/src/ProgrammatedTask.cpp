@@ -1,4 +1,5 @@
 #include <ProgrammatedTask.h>
+#include <ArduinoJson.h>
 
 bool ProgrammatedTask::isActive(){
     return _active;
@@ -9,7 +10,26 @@ String  ProgrammatedTask::getHours(){
 String  ProgrammatedTask::getMinutes(){
     return m < 10 ? "0" + String(m) : String(m);
 }
-void ProgrammatedTask::execute(){
+JsonDocument ProgrammatedTask::toJson()
+{
+    JsonDocument doc;
+
+    doc["name"] = this->name;
+    doc["h"] = this->h;
+    doc["m"] = this->m;
+    doc["execOnce"] = this->execOnce;
+    doc["deepSleep"] = this->deepsleep;
+    doc["targetVanne"] = this->targetVanne;
+    doc["active"] = this->_active;
+    
+    doc.shrinkToFit();
+
+    return doc;
+    
+    
+}
+void ProgrammatedTask::execute()
+{
     Serial.println("Tache executé");
 }
 ProgrammatedTask::ProgrammatedTask(byte heures,byte minutes, String Name)

@@ -49,9 +49,9 @@ private:
     static void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 
     #ifdef ASYNC_TCP_SSL_ENABLED
-    AsyncWebServer server= AsyncWebServer(5555);
+    AsyncWebServer server = AsyncWebServer(5555);
     #else
-    AsyncWebServer server= AsyncWebServer(80);
+    AsyncWebServer server = AsyncWebServer(80);
     #endif
     AsyncWebSocket ws = AsyncWebSocket("/ws");
     void SPIFFS_provide_file(const char* filename);

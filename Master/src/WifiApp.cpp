@@ -136,9 +136,9 @@ String WifiAppClass::templateProcessor(const String &var)
   {
     return (String)dataEtang.niveauEtang;
   }
-  if (var == "ratioNiveauEtang")
+  if (var == "niveauEtangP")
   {
-    return (String)(dataEtang.ratioNiveauEtang);
+    return (String)(dataEtang.niveauEtangP);
   }
   if (var == "niveauEtangRempli")
   {
@@ -598,14 +598,28 @@ bool WifiAppClass::begin()
             {
     String Response = "{";
     Response += "\"niveauEtang\":" + (String)dataEtang.niveauEtang + ",";
-    Response += "\"niveauEtangP\":" + (String)dataEtang.ratioNiveauEtang;
+    Response += "\"niveauEtangP\":" + (String)dataEtang.niveauEtangP;
     Response += "}";
     request->send(200, "application/json", Response); });
 
   server.on("/dataTurbine", HTTP_GET, [](AsyncWebServerRequest *request)
             {
     String Response = "{";
-    Response +=  (String)dataTurbine.toJson();
+    //Response +=  (String)dataTurbine.toJson();
+    Response += "\"positionVanne\":" +  (String)dataTurbine.positionVanne +",";
+    Response += "\"PositionVanneTarget\":" +  (String)dataTurbine.targetPositionVanne +",";
+    Response += "\"tacky\":" +  (String)dataTurbine.tacky +",";
+    Response += "\"tension\":" +  (String)dataTurbine.U + ",";
+    Response += "\"tensionBatterie\":" +  (String)dataTurbine.UB + ",";
+    Response += "\"motorStateStr\":\"" +  (String)MotorStateToString(dataTurbine.motorState) + "\",";
+    Response += "\"motorState\":" +  (String)dataTurbine.motorState + ",";
+    Response += "\"power\":" +  (String)dataTurbine.getPower() + ",";
+    Response += "\"ZV\":" +  (String)dataTurbine.ZV + ",";
+    Response += "\"AV\":" +  (String)dataTurbine.AV + ",";
+    Response += "\"ZC\":" +  (String)dataTurbine.ZC + ",";
+    Response += "\"AC\":" +  (String)dataTurbine.AC + ",";
+    Response += "\"CurrentSyst\":" +  (String)dataTurbine.currentSyst + ",";
+    Response += "\"intensite\":" +  (String)dataTurbine.I;
     Response += "}";
     request->send(200, "application/json", Response); });
 
@@ -624,7 +638,12 @@ bool WifiAppClass::begin()
 
   server.on("/programmateur", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/programmateur.html", "text/html", false, ProgTasks.templateProcessor); });
-
+  server.on("/programmateurJson",HTTP_GET,[](AsyncWebServerRequest *req){
+    ProgTasks.toJson();
+    AsyncJsonResponse * response = new AsyncJsonResponse();
+    //JsonObject& root = response->getRoot();
+    req->send(200,"not implemented","not implemented");
+  });
   server.on("/updateprogrammateur", HTTP_POST, [](AsyncWebServerRequest *request)
             {
 		
@@ -1120,10 +1139,10 @@ void WifiAppClass::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       }
     }
 
-    else if (dataStr.startsWith("NodeTest."))
+    else if (dataStr.startsWith("Radiateur."))
     {
       Serial.println(dataStr);
-      dataStr.replace("NodeTest.", "");
+      dataStr.replace("Radiateur.", "");
       if (dataStr.startsWith("Active="))
       {
         dataStr.replace("Active=", "");

@@ -12,7 +12,9 @@ float Tachymetre::getRPM(){
   if (isTimeOut()) {
     return 0;
   }  
-  return 60*1E6/_dt;
+  float rpm = 60*1E6/_dt;
+  //Serial.println("[RPM] " + String(rpm,2)+ "   [dt] " + (String(_dt)));
+  return rpm;
 }
 
 float Tachymetre::getHz()
@@ -38,12 +40,16 @@ long Tachymetre::getDebounceTime()
   return delaiAntiRebond;
 }
 
-void Tachymetre::Tick()
+void Tachymetre::tick()
 {
-    _micro = micros();
-    if (_micro - _previousMicro > delaiAntiRebond)
-    {
-        _dt = _micro - _previousMicro;
-        _previousMicro = _micro;
-    }
+  _micro = micros();
+  if (_micro - _previousMicro > delaiAntiRebond)
+  {
+    _dt = _micro - _previousMicro;
+    _previousMicro = _micro;
+  } else
+  {
+    ets_printf("Debonce %lu   %lu \n ", _micro-_previousMicro,delaiAntiRebond);
+  }
+  
 }

@@ -333,7 +333,7 @@ bool saveDataCsV(void)
   getLocalTime(&timeinfo);
   time(&now);
   
-  myFile.printf("%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f\n", now, dataTurbine.tacky, dataEtang.ratioNiveauEtang, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
+  myFile.printf("%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f\n", now, dataTurbine.tacky, dataEtang.niveauEtangP, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
   myFile.close();
 
 
@@ -489,7 +489,7 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       if (key == "ratio")
       {
-        dataEtang.ratioNiveauEtang = (val.toFloat()) * 100; // TODO
+        dataEtang.niveauEtangP = (val.toFloat()) * 100; // TODO
       }
       if (key == "timingBudget")
       {
@@ -514,7 +514,7 @@ void LoRaMessage(LoRaPacket header, String msg)
       }
       
 
-      AlertNiv.updateNiveau(dataEtang.ratioNiveauEtang);
+      AlertNiv.updateNiveau(dataEtang.niveauEtangP);
     }
   }
   else if (header.Emetteur == RADIATEURS)
@@ -537,6 +537,7 @@ void LoRaMessage(LoRaPacket header, String msg)
 
       if (key == "temp")
       {
+        Serial.println("key: " + (String)key + " val:" + (String)val.toFloat());
         dataNodeTest.temp = val.toFloat();
       }
       if (key == "rad1")
@@ -653,7 +654,7 @@ void displayData()
     break;
   case 1:
     Ec.getDisplay()->setCursor(0, 0);
-    Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.ratioNiveauEtang) + " %");
+    Ec.getDisplay()->println("Niveau: " + (String)(dataEtang.niveauEtangP) + " %");
     Ec.getDisplay()->println("Vanne: " + (String)(dataTurbine.positionVanne) + " %");
     Ec.getDisplay()->println("Cible Vanne: " + (String)(dataTurbine.targetPositionVanne) + " %");
     struct tm timeinfo;
@@ -663,7 +664,7 @@ void displayData()
     }
     
 
-    Ec.drawBVProgressBar(114, 4, 5, 50, (dataEtang.ratioNiveauEtang));
+    Ec.drawBVProgressBar(114, 4, 5, 50, (dataEtang.niveauEtangP));
 
     int posxTargetVanne;
     posxTargetVanne = 4 + 106 * pidC->vanne / 100;
@@ -1047,7 +1048,7 @@ void loop()
 
   // modes.get(modeActuel)->niveau = map(analogRead(pinAnalogTest),0,4095,0,100);
 
-  modes.get(modeActuel)->niveau = dataEtang.ratioNiveauEtang;
+  modes.get(modeActuel)->niveau = dataEtang.niveauEtangP;
   modes.get(modeActuel)->loop();
 
   if (bufferActionToSend != "")
