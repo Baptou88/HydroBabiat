@@ -9,6 +9,7 @@ Notifier::~Notifier()
 }
 bool Notifier::begin()
 {
+  #if false
     telegramClient.setCACert(telegram_cert);
     TelegramBot.setTelegramToken(BOTtoken);
     TelegramBot.setUpdateTime(4000);
@@ -16,10 +17,15 @@ bool Notifier::begin()
     Notifi.NotifyIndividuel = Prefs.getBool("Notif",true);
     Notifi.NotifyGroup = Prefs.getBool("NotifGroup",true);
     return TelegramBot.begin();
+    #else
+      return true;
+    #endif
 }
 
 void Notifier::loop()
 {
+  
+  #if false
     if (!checkMessage)
     {
         return;
@@ -75,6 +81,7 @@ void Notifier::loop()
     
   
   }
+  #endif
     
 }
 
@@ -90,21 +97,29 @@ bool Notifier::send(String Message)
 
 bool Notifier::sendTo(String Message)
 {
+  #if false
     if (NotifyIndividuel)
     {
-        TelegramBot.sendTo(CHAT_ID,Message);
+      TelegramBot.sendTo(CHAT_ID,Message);
     }
     return false;
+    #else 
+    return true;
+  #endif
 }
 
 bool Notifier::sendToChannel(String Message)
 {
+  #if false
     if (NotifyGroup)
     {
-        TelegramBot.sendToChannel(GROUP_ID,Message,false);
+      TelegramBot.sendToChannel(GROUP_ID,Message,false);
         
     }
     return false;
+    #else 
+    return true;
+  #endif
 }
 
 Notifier Notifi;

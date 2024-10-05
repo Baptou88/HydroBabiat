@@ -78,7 +78,7 @@ void WifiAppClass::notifyClients()
 
   message += "}}";
 
-  WifiApp.ws.textAll(String(message));
+  WifiApp.ws_Sendall(String(message));
 }
 void WifiAppClass::notifyClient(uint32_t clientId)
 {
@@ -99,7 +99,7 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 
   message += "}}";
 
-  WifiApp.ws.text(clientId, message);
+  WifiApp.ws_Send(clientId, message);
 }
 
 void WifiAppClass::monitorClients(String message)
@@ -110,16 +110,17 @@ void WifiAppClass::monitorClients(String message)
 void WifiAppClass::toastClients(String title, String message, String type)
 {
   String msg = "";
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
 
-  JsonObject toast = doc.createNestedObject("toast");
+  //JsonObject toast = doc.createNestedObject("toast");
+  JsonObject toast = doc["toast"].to<JsonObject>();
   toast["title"] = title;
   toast["desc"] = message;
   toast["type"] = type;
   Serial.print(msg);
   serializeJson(doc, msg);
 
-  WifiApp.ws.textAll(msg);
+  WifiApp.ws_Sendall(msg);
 }
 
 String WifiAppClass::templateProcessor(const String &var)
@@ -327,6 +328,20 @@ bool WifiAppClass::sendInternalServerError(AsyncWebServerRequest *request)
   return false;
 }
 
+void WifiAppClass::ws_Sendall(String msg)
+{
+  #if WS_ENABLED
+  WifiApp.ws->textAll(msg);
+  #endif //WS_ENABLED
+}
+
+void WifiAppClass::ws_Send(uint32_t client_id, String msg)
+{
+  #if WS_ENABLED
+  WifiApp.ws->text(client_id,msg);
+  #endif //WS_ENABLED
+}
+
 void WifiAppClass::onNotFound(AsyncWebServerRequest *request)
 {
   String retour;
@@ -365,7 +380,7 @@ void WifiAppClass::onNotFound(AsyncWebServerRequest *request)
   int i;
   for (i = 0; i < headers; i++)
   {
-    AsyncWebHeader *h = request->getHeader(i);
+    const AsyncWebHeader *h = request->getHeader(i);
     retour += "_HEADER[" + (String)h->name().c_str() + "]: " + h->value().c_str() + "\n";
   }
 
@@ -374,7 +389,7 @@ void WifiAppClass::onNotFound(AsyncWebServerRequest *request)
   int params = request->params();
   for (i = 0; i < params; i++)
   {
-    AsyncWebParameter *p = request->getParam(i);
+    const AsyncWebParameter *p = request->getParam(i);
     if (p->isFile())
     {
       retour += "_FILE[" + (String)p->name().c_str() + "]: " + p->value().c_str() + ", size: " + p->size() + " \n";
@@ -530,7 +545,7 @@ bool WifiAppClass::begin()
               case HTTP_POST:
                 for (int i = 0; i < params; i++)
                 {
-                  AsyncWebParameter *p = request->getParam(i);
+                  const AsyncWebParameter *p = request->getParam(i);
                   if (p->isFile())
                   { // p->isPost() is also true
                     Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
@@ -582,7 +597,7 @@ bool WifiAppClass::begin()
       
     if(request->hasParam("modeNum")){
       
-      AsyncWebParameter* p = request->getParam("modeNum");
+      const AsyncWebParameter* p = request->getParam("modeNum");
       Serial.println("mode num : "+ (String) p->value().toInt());
       Notifi.send("Changement de Mode");
 
@@ -650,7 +665,7 @@ bool WifiAppClass::begin()
 		
 		int params = request->params();
 		for(int i=0;i<params;i++){
-			AsyncWebParameter* p = request->getParam(i);
+			const AsyncWebParameter* p = request->getParam(i);
 			if(p->isFile()){ //p->isPost() is also true
 				Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
 			} else if(p->isPost()){
@@ -737,7 +752,7 @@ bool WifiAppClass::begin()
         int params = request->params();
         for (int i = 0; i < params; i++)
         {
-          AsyncWebParameter *p = request->getParam(i);
+          const AsyncWebParameter *p = request->getParam(i);
           if (p->isFile())
           { // p->isPost() is also true
             Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
@@ -853,7 +868,7 @@ bool WifiAppClass::begin()
               int params = request->params();
               for (int i = 0; i < params; i++)
               {
-                AsyncWebParameter *p = request->getParam(i);
+                const AsyncWebParameter *p = request->getParam(i);
                 if (p->isFile())
                 { // p->isPost() is also true
                   Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
@@ -946,9 +961,10 @@ bool WifiAppClass::begin()
       return 0; },
                           NULL);
 #endif
-
-  ws.onEvent(WifiApp.onEvent);
-  server.addHandler(&ws);
+  #if WS_ENABLED
+  ws->onEvent(WifiApp.onEvent);
+  server.addHandler(ws);
+  #endif //WS_ENABLED
 
   server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
 
@@ -962,10 +978,13 @@ bool WifiAppClass::begin()
 
 bool WifiAppClass::close()
 {
-  ws.closeAll();
+  #if WS_ENABLED
+  ws->closeAll();
   Serial.println("ws closed !");
   // server.removeHandler(&ws);
   Serial.println("handler removed !");
+
+  #endif //WS_ENABLED
   server.end();
   Serial.println("server closed !");
   return false;
@@ -1182,8 +1201,9 @@ void WifiAppClass::loop()
     {
       /* code */
     }
-
-    ws.cleanupClients();
+    #if WS_ENABLED
+    ws->cleanupClients();
+    #endif //WS_ENABLED
   }
   else if (WiFi.getMode() == WiFiMode_t::WIFI_MODE_APSTA)
   {

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "Main.h"
 #if !defined(__PROGRAMMATEDTASK_H__)
 #define __PROGRAMMATEDTASK_H__

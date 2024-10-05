@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <AsyncTelegram2.h>
-#include <WiFiClientSecure.h>
+// #include <AsyncTelegram2.h>
+//#include <WiFiClientSecure.h>
 #include <TelegramCredentials.h>
 
 #include "main.h"
@@ -14,8 +14,8 @@
     class Notifier
     {
     private:
-        WiFiClientSecure telegramClient;
-        AsyncTelegram2 TelegramBot = AsyncTelegram2(telegramClient);
+        //WiFiClientSecure telegramClient;
+        // AsyncTelegram2 TelegramBot = AsyncTelegram2(telegramClient);
 
     public:
         Notifier();

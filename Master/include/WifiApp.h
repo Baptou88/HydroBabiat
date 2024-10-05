@@ -11,7 +11,7 @@
 #include <SPIFFS.h>
 #include <configVariables.h>
 #include "main.h"
-#include "AsyncTelegram2.h"
+// #include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
 #include "ProgrammatedTasks.h"
 #include "LoRaFileUploader.h"
@@ -23,6 +23,8 @@
 #include <LList.h>
 #include "AlertNiveau.h"
 
+
+#define WS_ENABLED false
 
 extern DNSServer dnsserver;
 
@@ -53,7 +55,9 @@ private:
     #else
     AsyncWebServer server = AsyncWebServer(80);
     #endif
-    AsyncWebSocket ws = AsyncWebSocket("/ws");
+    #if WS_ENABLED
+    AsyncWebSocket* ws = new AsyncWebSocket("/ws");
+    #endif
     void SPIFFS_provide_file(const char* filename);
 public:
     WifiAppClass(/* args */);
@@ -75,6 +79,9 @@ public:
     static String templateProcessorUser(const String& var);
 
     static bool sendInternalServerError(AsyncWebServerRequest *request);
+
+    void ws_Sendall(String msg);
+    void ws_Send(uint32_t client_id,String msg);
 
     /// @brief main loop
     void loop();
