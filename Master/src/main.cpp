@@ -12,7 +12,7 @@
 #include <FS.h>
 #include <TelegramCredentials.h>
 
-#include <WifiApp.h>
+//#include <WifiApp.h>
 #include <Adafruit_SSD1306.h>
 
 #ifdef USE_TFT
@@ -226,7 +226,9 @@ void arduinoOtaSetup(void)
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
       Serial.println("Start updating " + type);
       OtaUpdate = true;
-      WifiApp.monitorClients("OTA UPDATE: " + type); })
+      
+      //WifiApp.monitorClients("OTA UPDATE: " + type); 
+      })
       .onEnd([]()
              {
       Serial.println("\nEnd");
@@ -253,7 +255,11 @@ void arduinoOtaSetup(void)
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
       else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
       else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed"); });
+      else if (error == OTA_END_ERROR) Serial.println("End Failed"); 
+      
+      }
+      );
+      
 
   ArduinoOTA.begin();
 }
@@ -355,10 +361,10 @@ void LoRaMessage(LoRaPacket header, String msg)
     return;
     break;
   case LoRaMessageCode::DataReponse:
-    // WifiApp.monitorClients(msg);
+    // // WifiApp.monitorClients(msg);
     // delay(100);
     Serial.println("par la");
-    WifiApp.toastClients("DataReponse", msg, "success");
+    // WifiApp.toastClients("DataReponse", msg, "success");
     break;
   default:
     break;
@@ -551,7 +557,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     }
   }
 
-  WifiApp.notifyClients();
+  // WifiApp.notifyClients();
 }
 
 void LoRaNoReply(lastSend_t *packet)
@@ -564,7 +570,7 @@ void LoRaNoReply(lastSend_t *packet)
   }
   if (packet->code == LoRaMessageCode::Data)
   {
-    WifiApp.toastClients("Not Send", packet->msg, "error");
+    // WifiApp.toastClients("Not Send", packet->msg, "error");
   }
 }
 
@@ -689,7 +695,7 @@ void displayData()
     //Ec.getDisplay()->printf("Spiffs: %i / %i\n", SPIFFS.usedBytes(), SPIFFS.totalBytes());
     //Ec.getDisplay()->printf("Spiffs: %f %\n", (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) * 100);
 
-    // Ec.getDisplay()->println(WifiApp.server.);
+    // Ec.getDisplay()->println(// WifiApp.server.);
 
     break;
   case 3:
@@ -803,7 +809,7 @@ bool savePref()
   Prefs.putInt(bcMin, bC->niveauMin);
   Prefs.putInt(bcTarget, bC->vanneMax);
 
-  WifiApp.monitorClients("Save Pref Ok");
+  // WifiApp.monitorClients("Save Pref Ok");
   return true;
 }
 
@@ -953,6 +959,7 @@ void setup()
   Ec.getDisplay()->println("Starting Wifi APP");
   Ec.getDisplay()->display();
 
+  #if false
   while (!WifiApp.begin())
   {
     if (Serial.available() > 0)
@@ -971,6 +978,7 @@ void setup()
     Ec.getDisplay()->display();
     delay(1000);
   }
+  #endif
 
   Ec.getDisplay()->println("Starting Wifi APP Success");
   Ec.getDisplay()->display();
@@ -1111,7 +1119,7 @@ void loop()
       // i = (i++%3)+2;
       if (listNodes.get(lastNode)->active)
       {
-        WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+        // WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
         // Serial.println("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
         // lastNode++;
         lastNode = lastNode % listNodes.size();
@@ -1123,7 +1131,7 @@ void loop()
 
   // if (timerEnvoiWS.isOver())
   // {
-  //   WifiApp.notifyClients();
+  //   // WifiApp.notifyClients();
   // }
 
 #ifdef USE_TFT
@@ -1136,7 +1144,7 @@ void loop()
   }
 #endif
 
-  WifiApp.loop();
+  // WifiApp.loop();
 
   // Sauvegarde des données
   if (millis() > lastSaveData + 60000)
@@ -1218,7 +1226,7 @@ void loop()
   {
     startDeepSleep = 0;
 
-    WifiApp.close();
+    // WifiApp.close();
 
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_14, 1);
     // esp_sleep_enable_ext1_wakeup(0x400,ESP_EXT1_WAKEUP_ANY_HIGH);

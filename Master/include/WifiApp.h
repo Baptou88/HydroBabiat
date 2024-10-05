@@ -11,7 +11,7 @@
 #include <SPIFFS.h>
 #include <configVariables.h>
 #include "main.h"
-// #include "AsyncTelegram2.h"
+#include "AsyncTelegram2.h"
 #include "TelegramCredentials.h"
 #include "ProgrammatedTasks.h"
 #include "LoRaFileUploader.h"
@@ -24,7 +24,7 @@
 #include "AlertNiveau.h"
 
 
-#define WS_ENABLED false
+#define WS_ENABLED true
 
 extern DNSServer dnsserver;
 
@@ -53,11 +53,13 @@ private:
     #ifdef ASYNC_TCP_SSL_ENABLED
     AsyncWebServer server = AsyncWebServer(5555);
     #else
-    AsyncWebServer server = AsyncWebServer(80);
+    AsyncWebServer* server = new AsyncWebServer(80);
     #endif
+
     #if WS_ENABLED
     AsyncWebSocket* ws = new AsyncWebSocket("/ws");
     #endif
+    
     void SPIFFS_provide_file(const char* filename);
 public:
     WifiAppClass(/* args */);

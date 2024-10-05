@@ -9,7 +9,7 @@ Notifier::~Notifier()
 }
 bool Notifier::begin()
 {
-  #if false
+  #if true
     telegramClient.setCACert(telegram_cert);
     TelegramBot.setTelegramToken(BOTtoken);
     TelegramBot.setUpdateTime(4000);
@@ -25,7 +25,7 @@ bool Notifier::begin()
 void Notifier::loop()
 {
   
-  #if false
+  #if true
     if (!checkMessage)
     {
         return;
@@ -97,7 +97,7 @@ bool Notifier::send(String Message)
 
 bool Notifier::sendTo(String Message)
 {
-  #if false
+  #if true
     if (NotifyIndividuel)
     {
       TelegramBot.sendTo(CHAT_ID,Message);
@@ -110,7 +110,7 @@ bool Notifier::sendTo(String Message)
 
 bool Notifier::sendToChannel(String Message)
 {
-  #if false
+  #if true
     if (NotifyGroup)
     {
       TelegramBot.sendToChannel(GROUP_ID,Message,false);
