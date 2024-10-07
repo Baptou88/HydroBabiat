@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <ProgrammatedTask.h>
 #include <LList.h>
 #include <SPIFFS.h>

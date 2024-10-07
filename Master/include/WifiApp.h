@@ -8,6 +8,8 @@
 #include <DNSServer.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
+#include <AsyncJson.h>
 #include <SPIFFS.h>
 #include <configVariables.h>
 #include "main.h"
@@ -23,6 +25,8 @@
 #include <LList.h>
 #include "AlertNiveau.h"
 
+
+#define WS_ENABLED true
 
 extern DNSServer dnsserver;
 
@@ -51,9 +55,13 @@ private:
     #ifdef ASYNC_TCP_SSL_ENABLED
     AsyncWebServer server = AsyncWebServer(5555);
     #else
-    AsyncWebServer server = AsyncWebServer(80);
+    AsyncWebServer* server = new AsyncWebServer(80);
     #endif
-    AsyncWebSocket ws = AsyncWebSocket("/ws");
+
+    #if WS_ENABLED
+    AsyncWebSocket* ws = new AsyncWebSocket("/ws");
+    #endif
+
     void SPIFFS_provide_file(const char* filename);
 public:
     WifiAppClass(/* args */);
@@ -75,6 +83,9 @@ public:
     static String templateProcessorUser(const String& var);
 
     static bool sendInternalServerError(AsyncWebServerRequest *request);
+
+    void ws_Sendall(String msg);
+    void ws_Send(uint32_t client_id,String msg);
 
     /// @brief main loop
     void loop();

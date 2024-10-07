@@ -226,7 +226,9 @@ void arduinoOtaSetup(void)
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
       Serial.println("Start updating " + type);
       OtaUpdate = true;
-      WifiApp.monitorClients("OTA UPDATE: " + type); })
+      
+      WifiApp.monitorClients("OTA UPDATE: " + type); 
+      })
       .onEnd([]()
              {
       Serial.println("\nEnd");
@@ -253,7 +255,11 @@ void arduinoOtaSetup(void)
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
       else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
       else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed"); });
+      else if (error == OTA_END_ERROR) Serial.println("End Failed"); 
+      
+      }
+      );
+      
 
   ArduinoOTA.begin();
 }
@@ -355,7 +361,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     return;
     break;
   case LoRaMessageCode::DataReponse:
-    // WifiApp.monitorClients(msg);
+    WifiApp.monitorClients(msg);
     // delay(100);
     Serial.println("par la");
     WifiApp.toastClients("DataReponse", msg, "success");
@@ -689,7 +695,7 @@ void displayData()
     //Ec.getDisplay()->printf("Spiffs: %i / %i\n", SPIFFS.usedBytes(), SPIFFS.totalBytes());
     //Ec.getDisplay()->printf("Spiffs: %f %\n", (SPIFFS.usedBytes() / float(SPIFFS.totalBytes())) * 100);
 
-    // Ec.getDisplay()->println(WifiApp.server.);
+    // Ec.getDisplay()->println(// WifiApp.server.);
 
     break;
   case 3:
@@ -953,6 +959,7 @@ void setup()
   Ec.getDisplay()->println("Starting Wifi APP");
   Ec.getDisplay()->display();
 
+  #if true
   while (!WifiApp.begin())
   {
     if (Serial.available() > 0)
@@ -971,6 +978,7 @@ void setup()
     Ec.getDisplay()->display();
     delay(1000);
   }
+  #endif
 
   Ec.getDisplay()->println("Starting Wifi APP Success");
   Ec.getDisplay()->display();
@@ -1111,7 +1119,7 @@ void loop()
       // i = (i++%3)+2;
       if (listNodes.get(lastNode)->active)
       {
-        WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
+        // WifiApp.monitorClients("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
         // Serial.println("Demande statut lora à " + (String)listNodes.get(lastNode)->Name);
         // lastNode++;
         lastNode = lastNode % listNodes.size();
@@ -1121,10 +1129,10 @@ void loop()
     }
   }
 
-  // if (timerEnvoiWS.isOver())
-  // {
-  //   WifiApp.notifyClients();
-  // }
+  if (timerEnvoiWS.isOver())
+  {
+    WifiApp.notifyClients();
+  }
 
 #ifdef USE_TFT
   if (TftTimer.isOver())
