@@ -10,19 +10,22 @@ String  ProgrammatedTask::getHours(){
 String  ProgrammatedTask::getMinutes(){
     return m < 10 ? "0" + String(m) : String(m);
 }
+String ProgrammatedTask::getTime()
+{
+    return String((h < 10 ? "0" + String(h) : String(h)) + ":" +( m < 10 ? "0" + String(m) : String(m)));
+}
 JsonDocument ProgrammatedTask::toJson()
 {
     JsonDocument doc;
 
     doc["name"] = this->name;
-    doc["h"] = this->h;
-    doc["m"] = this->m;
     doc["execOnce"] = this->execOnce;
     doc["deepSleep"] = this->deepsleep;
     doc["targetVanne"] = this->targetVanne;
     doc["active"] = this->_active;
+    doc["time"] = this->h + ":" + this->m;
     
-    doc.shrinkToFit();
+    //doc.shrinkToFit();
 
     return doc;
     

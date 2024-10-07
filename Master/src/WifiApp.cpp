@@ -108,18 +108,19 @@ void WifiAppClass::monitorClients(String message)
 }
 void WifiAppClass::toastClients(String title, String message, String type)
 {
-  // String msg = "";
-  // JsonDocument doc;
 
-  // //JsonObject toast = doc.createNestedObject("toast");
-  // JsonObject toast = doc["toast"].to<JsonObject>();
-  // toast["title"] = title;
-  // toast["desc"] = message;
-  // toast["type"] = type;
-  // Serial.print(msg);
-  // serializeJson(doc, msg);
+  String msg = "";
+  JsonDocument doc;
 
-  // WifiApp.ws_Sendall(msg);
+  JsonObject toast = doc["toast"].to<JsonObject>();
+  toast["title"] = title;
+  toast["desc"] = message;
+  toast["type"] = type;
+
+  serializeJson(doc, msg);
+
+  WifiApp.ws.textAll(msg);
+
 }
 
 String WifiAppClass::templateProcessor(const String &var)
