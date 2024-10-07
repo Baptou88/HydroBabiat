@@ -58,6 +58,15 @@ bool ProgrammatedTasksClass::initTask()
         {
           m = part2.toInt();
         }
+        if (part1 == "time")
+        {
+          String partH = part2.substring(0, part2.indexOf(":"));
+          String partM = part2.substring(part2.indexOf(":")+1);
+          h=partH.toInt();
+          m=partM.toInt();
+          Serial.printf("h: %i   m: %m \n",h,m);
+        }
+        
         if (part1 == "activate")
         {
           activ = part2.toInt();
@@ -112,8 +121,9 @@ bool ProgrammatedTasksClass::saveTask()
     ProgrammatedTask *test = ProgTasks.ListTasks->get(i);
 
     file.print("name=" + String(test->name) + ";");
-    file.print("h=" + String(test->h) + ";");
-    file.print("m=" + String(test->m) + ";");
+    //file.print("h=" + String(test->h) + ";");
+    //file.print("m=" + String(test->m) + ";");
+    file.print("time=" + String(test->h) + ":" + String(test->m) + ";");
     file.print("activate=" + String(test->isActive()) + ";");
     file.print("execOnce=" + String(test->execOnce) + ";");
     file.print("targetVanne=" + String(test->targetVanne) + ";");
@@ -225,7 +235,7 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
       retour += "<div class=\"input-group mb-3\">\n";
       retour += "<label class=\"input-group-text\" for=\"appt\">Heure Declanchement</label>\n";
       //retour += "<label for=\"appt\">Heure du déclanchement:</label>\n";
-      retour += "<input type=\"time\" id=\"appt\" class=\"form-control\" name=\"appt\"  value= \"\%ProgrammatedTasks" + String(i) + ":getHours\%" + ":" + "\%ProgrammatedTasks" + String(i) + ":getMinutes\%" + "\"  required>\n";
+      retour += "<input type=\"time\" id=\"appt\" class=\"form-control\" name=\"appt\"  value= \"\%ProgrammatedTasks" + String(i) + ":getTime\%" "\"  required>\n";
       retour += "</div>\n";
       retour += "<label for=\"customRange1\" class=\"form-label\">Example range</label>";
       retour += "<input type=\"range\" value=\"\%ProgrammatedTasks" + String(i) + ":targetVanne\%" + "\" name=\"targetVanne\" class=\"form-range\" id=\"customRange1\">";
@@ -261,13 +271,9 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
     int separateur = temp.indexOf(":");
     int num_tache = temp.substring(0, separateur).toInt();
     String methode = temp.substring(separateur + 1, 64);
-    if (methode == "getHours")
+    if (methode == "getTime")
     {
-      return ProgTasks.ListTasks->get(num_tache)->getHours();
-    }
-    if (methode == "getMinutes")
-    {
-      return ProgTasks.ListTasks->get(num_tache)->getMinutes();
+      return ProgTasks.ListTasks->get(num_tache)->getTime();
     }
     if (methode == "isActive")
     {

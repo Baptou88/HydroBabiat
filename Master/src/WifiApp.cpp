@@ -110,13 +110,13 @@ void WifiAppClass::monitorClients(String message)
 void WifiAppClass::toastClients(String title, String message, String type)
 {
   String msg = "";
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
 
-  JsonObject toast = doc.createNestedObject("toast");
+  JsonObject toast = doc["toast"].to<JsonObject>();
   toast["title"] = title;
   toast["desc"] = message;
   toast["type"] = type;
-  Serial.print(msg);
+
   serializeJson(doc, msg);
 
   WifiApp.ws.textAll(msg);

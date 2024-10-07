@@ -744,7 +744,7 @@ void displayData()
     {
       ProgrammatedTask *tache = ProgTasks.ListTasks->get(i);
       Ec.getDisplay()->println("[" + (String)(String)(tache->isActive() ? "x" : " ") + "] " + (String)tache->name);
-      Ec.getDisplay()->println((String)tache->getHours() + " " + (String)tache->getMinutes() + "  Ouverture: " + (String)tache->targetVanne);
+      Ec.getDisplay()->println((String)tache->getTime() + "  Ouverture: " + (String)tache->targetVanne);
     }
 
     break;

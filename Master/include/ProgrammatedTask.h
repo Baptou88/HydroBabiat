@@ -1,5 +1,7 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "Main.h"
+
 #if !defined(__PROGRAMMATEDTASK_H__)
 #define __PROGRAMMATEDTASK_H__
 class ProgrammatedTask
@@ -15,8 +17,11 @@ public:
     void deactivate();
     void execute();
     bool isActive();
+    [[deprecated("Replaced by getTime, which has an improved interface")]]
     String getHours();
+    [[deprecated("Replaced by getTime, which has an improved interface")]]
     String getMinutes();
+    String getTime();
     JsonDocument toJson();
     bool execOnce = true;
     String name;
