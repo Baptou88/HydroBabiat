@@ -178,13 +178,14 @@ void ProgrammatedTasksClass::loop()
 
 JsonDocument ProgrammatedTasksClass::toJson()
 {
+
   JsonDocument doc;
+  JsonArray array = doc.to<JsonArray>();
+
   for (size_t i = 0; i < ListTasks->size(); i++)
   {
-    JsonArray data = doc["task"].to<JsonArray>();
-    data.add(ListTasks->get(i)->toJson());
+    array.add(ListTasks->get(i)->toJson());
   }
-  
   return doc;
 }
 

@@ -8,6 +8,8 @@
 #include <DNSServer.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
+#include <AsyncJson.h>
 #include <SPIFFS.h>
 #include <configVariables.h>
 #include "main.h"
@@ -59,7 +61,7 @@ private:
     #if WS_ENABLED
     AsyncWebSocket* ws = new AsyncWebSocket("/ws");
     #endif
-    
+
     void SPIFFS_provide_file(const char* filename);
 public:
     WifiAppClass(/* args */);

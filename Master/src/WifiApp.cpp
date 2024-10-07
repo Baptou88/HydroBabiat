@@ -104,22 +104,22 @@ void WifiAppClass::notifyClient(uint32_t clientId)
 void WifiAppClass::monitorClients(String message)
 {
   String msg = "{\"monitor\":\" " + message + "\"}";
-  //WifiApp.ws.textAll(msg); //TODO Remettre en place, juste pour tests
+  WifiApp.ws->textAll(msg); 
 }
 void WifiAppClass::toastClients(String title, String message, String type)
 {
-  // String msg = "";
-  // JsonDocument doc;
+  String msg = "";
+  JsonDocument doc;
 
-  // //JsonObject toast = doc.createNestedObject("toast");
-  // JsonObject toast = doc["toast"].to<JsonObject>();
-  // toast["title"] = title;
-  // toast["desc"] = message;
-  // toast["type"] = type;
-  // Serial.print(msg);
-  // serializeJson(doc, msg);
+  //JsonObject toast = doc.createNestedObject("toast");
+  JsonObject toast = doc["toast"].to<JsonObject>();
+  toast["title"] = title;
+  toast["desc"] = message;
+  toast["type"] = type;
+  Serial.print(msg);
+  serializeJson(doc, msg);
 
-  // WifiApp.ws_Sendall(msg);
+  WifiApp.ws_Sendall(msg);
 }
 
 String WifiAppClass::templateProcessor(const String &var)
@@ -654,10 +654,16 @@ bool WifiAppClass::begin()
   server->on("/programmateur", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/programmateur.html", "text/html", false, ProgTasks.templateProcessor); });
   server->on("/programmateurJson",HTTP_GET,[](AsyncWebServerRequest *req){
-    ProgTasks.toJson();
-    //AsyncJsonResponse * response = new AsyncJsonResponse();
-    //JsonObject& root = response->getRoot();
-    req->send(200,"not implemented","not implemented");
+    
+    AsyncJsonResponse * response = new AsyncJsonResponse();
+
+    JsonObject root = response->getRoot().to<JsonObject>();
+    
+    root["tasks"] = ProgTasks.toJson();
+
+    response->setLength();
+    req->send(response);
+    
   });
   server->on("/updateprogrammateur", HTTP_POST, [](AsyncWebServerRequest *request)
             {

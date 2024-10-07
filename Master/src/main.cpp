@@ -12,7 +12,7 @@
 #include <FS.h>
 #include <TelegramCredentials.h>
 
-//#include <WifiApp.h>
+#include <WifiApp.h>
 #include <Adafruit_SSD1306.h>
 
 #ifdef USE_TFT
@@ -227,7 +227,7 @@ void arduinoOtaSetup(void)
       Serial.println("Start updating " + type);
       OtaUpdate = true;
       
-      //WifiApp.monitorClients("OTA UPDATE: " + type); 
+      WifiApp.monitorClients("OTA UPDATE: " + type); 
       })
       .onEnd([]()
              {
@@ -361,10 +361,10 @@ void LoRaMessage(LoRaPacket header, String msg)
     return;
     break;
   case LoRaMessageCode::DataReponse:
-    // // WifiApp.monitorClients(msg);
+    WifiApp.monitorClients(msg);
     // delay(100);
     Serial.println("par la");
-    // WifiApp.toastClients("DataReponse", msg, "success");
+    WifiApp.toastClients("DataReponse", msg, "success");
     break;
   default:
     break;
@@ -557,7 +557,7 @@ void LoRaMessage(LoRaPacket header, String msg)
     }
   }
 
-  // WifiApp.notifyClients();
+  WifiApp.notifyClients();
 }
 
 void LoRaNoReply(lastSend_t *packet)
@@ -570,7 +570,7 @@ void LoRaNoReply(lastSend_t *packet)
   }
   if (packet->code == LoRaMessageCode::Data)
   {
-    // WifiApp.toastClients("Not Send", packet->msg, "error");
+    WifiApp.toastClients("Not Send", packet->msg, "error");
   }
 }
 
@@ -809,7 +809,7 @@ bool savePref()
   Prefs.putInt(bcMin, bC->niveauMin);
   Prefs.putInt(bcTarget, bC->vanneMax);
 
-  // WifiApp.monitorClients("Save Pref Ok");
+  WifiApp.monitorClients("Save Pref Ok");
   return true;
 }
 
@@ -959,7 +959,7 @@ void setup()
   Ec.getDisplay()->println("Starting Wifi APP");
   Ec.getDisplay()->display();
 
-  #if false
+  #if true
   while (!WifiApp.begin())
   {
     if (Serial.available() > 0)
@@ -1129,10 +1129,10 @@ void loop()
     }
   }
 
-  // if (timerEnvoiWS.isOver())
-  // {
-  //   // WifiApp.notifyClients();
-  // }
+  if (timerEnvoiWS.isOver())
+  {
+    WifiApp.notifyClients();
+  }
 
 #ifdef USE_TFT
   if (TftTimer.isOver())
@@ -1144,7 +1144,7 @@ void loop()
   }
 #endif
 
-  // WifiApp.loop();
+  WifiApp.loop();
 
   // Sauvegarde des données
   if (millis() > lastSaveData + 60000)
@@ -1226,7 +1226,7 @@ void loop()
   {
     startDeepSleep = 0;
 
-    // WifiApp.close();
+    WifiApp.close();
 
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_14, 1);
     // esp_sleep_enable_ext1_wakeup(0x400,ESP_EXT1_WAKEUP_ANY_HIGH);
