@@ -23,7 +23,7 @@ JsonDocument ProgrammatedTask::toJson()
     doc["deepSleep"] = this->deepsleep;
     doc["targetVanne"] = this->targetVanne;
     doc["active"] = this->_active;
-    doc["time"] = this->h + ":" + this->m;
+    doc["time"] = (String)this->h + ":" + (String)this->m;
     
     //doc.shrinkToFit();
 

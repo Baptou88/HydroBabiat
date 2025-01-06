@@ -1,0 +1,41 @@
+name: PlatformIO CI
+
+on: [push]
+
+jobs:
+    build:
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+                example: [Master/src/main.cpp]
+
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/cache@v4
+              with:
+                path: |
+                    ~/.cache/pip
+                    ~/.platformio/.cache
+                key: ${{ runner.os }}-pio
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.11'
+
+            - name: Install PlatformIO Core
+              run:  pip install --upgrade platformio
+
+            - name: Run PlatformIO
+              run:  pio ci --board=heltec_wifi_lora_32_V3 
+              env:
+                
+                PLATFORMIO_CI_SRC: ${{ matrix.example }}
+            # - name: Build firmware
+            #   run: platformio run -e esp32dev
+
+            # - name: Upload firmware
+            #   run: platformio run -e esp32dev --target upload

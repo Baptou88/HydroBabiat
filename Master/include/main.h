@@ -8,6 +8,8 @@
 #include "motorState.h"
 #include "Notifier.h"
 #include "time.h" 
+#include "ArduinoJson.h"
+
 #define TZ_Europe_Paris	PSTR("CET-1CEST,M3.5.0,M10.5.0/3")
 
 // Preference
@@ -56,6 +58,27 @@ struct dataTurbine_t
     message += "}";
     return message;
   }
+  JsonObject toJsonObject(){
+    JsonObject doc;
+    JsonObject data = doc["Turbine"].as<JsonObject>();
+
+    data["positionVanne"] = positionVanne;
+    data["positionVanneTarget"] = targetPositionVanne;
+    data["tacky"] = tacky;
+    data["tension"] = U;
+    data["tensionBatterie"] = UB;
+    data["motorStateStr"] = MotorStateToString(motorState);
+    data["motorState"] = motorState;
+    data["power"] = getPower();
+    data["ZV"] = ZV;
+    data["AV"] = AV;
+    data["ZC"] = ZC;
+    data["AC"] = AC;
+    data["CurrentSyst"] = currentSyst;
+    data["intensite"] = I;
+
+    return doc;
+  }
   float getPower(){
     //Serial.println("u " + (String)U + " I " + (String) I + (String)(U*I));
     return U*I;
@@ -79,6 +102,17 @@ struct nodeStatus_t
 
     return message;
   }
+  JsonObject toJsonObject(){
+    JsonObject doc;
+
+    doc["RSSI"] = RSSI;
+    doc["SNR"] = SNR;
+    doc["Active"] = active;
+    doc["DernierMessage"] = dernierMessage;
+
+    return doc;
+  }
+
 };
 
 struct dataEtang_t
@@ -110,6 +144,23 @@ struct dataEtang_t
     message += "}";
     return message;
   }
+  JsonObject toJsonObject(){
+    JsonObject doc;
+    JsonObject data = doc["Etang"].as<JsonObject>();
+
+    data["niveauEtang"] = niveauEtang;
+    data["niveauEtangP"] = niveauEtangP;
+    data["niveauEtangRempli"] = niveauEtangRempli;
+    data["niveauEtangVide"] = niveauEtangVide;
+    data["RoiCenter"] = RoiCenter;
+    data["RoiX"] = RoiX;
+    data["RoiY"] = RoiY;
+    data["timingBudget"] = timingBudget;
+    data["vl53Status"] = vl53Status;
+    data["distanceMode"] = distanceMode;
+
+    return doc;
+  }
 };
 
 struct dataRadiateur_t
@@ -127,6 +178,17 @@ struct dataRadiateur_t
     message += "}";
     return message;
   }
+  JsonObject toJsonObject(){
+    JsonObject doc;
+    JsonObject data = doc["Radiateur"].as<JsonObject>();
+
+    data["temp"] = temp;
+    data["Rad1"] = Rad1;
+    data["Rad2"] = Rad2;
+
+    return doc;
+  }
+
 };
 
 extern String bufferActionToSend;

@@ -13,7 +13,7 @@ enum MotorState{
     WAIT_INIT,
     FERMETURE_TOTALE,
     OUVERTURE_TOTALE,
-
+    STOP,
     AUTOTUNE,
     CLOSEANDRESTORE
 };

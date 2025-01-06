@@ -234,9 +234,9 @@ String ProgrammatedTasksClass::templateProcessor(const String var)
       retour += "<input type=\"number\" class=\"form-control\" name=\"id\" id=\"exampleFormControlInput1\" placeholder=\"id\" value=\"" + (String)i + "\" hidden>\n";
       retour += "</div>\n";
       retour += "<div class=\"input-group mb-3\">\n";
-      retour += "<label class=\"input-group-text\" for=\"appt\">Heure Declanchement</label>\n";
-      //retour += "<label for=\"appt\">Heure du déclanchement:</label>\n";
-      retour += "<input type=\"time\" id=\"appt\" class=\"form-control\" name=\"appt\"  value= \"\%ProgrammatedTasks" + String(i) + ":getTime\%" "\"  required>\n";
+      retour += "<label class=\"input-group-text\" for=\"time\">Heure Declanchement</label>\n";
+      //retour += "<label for=\"time\">Heure du déclanchement:</label>\n";
+      retour += "<input type=\"time\" id=\"time\" class=\"form-control\" name=\"time\"  value= \"\%ProgrammatedTasks" + String(i) + ":getTime\%" "\"  required>\n";
       retour += "</div>\n";
       retour += "<label for=\"customRange1\" class=\"form-label\">Example range</label>";
       retour += "<input type=\"range\" value=\"\%ProgrammatedTasks" + String(i) + ":targetVanne\%" + "\" name=\"targetVanne\" class=\"form-range\" id=\"customRange1\">";

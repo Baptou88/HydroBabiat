@@ -231,6 +231,17 @@ void Moteur::loop(){
     case TIMEOUT:
         stopMoteur();
         break;
+
+    case STOP:
+        stopMoteur();
+        if (stateTime + 1000 > millis())    // 1s
+        {
+          _target = _position;
+          setState(MotorState::IDLE);  
+        }
+        
+        break;  
+
     default:
         break;
     }
@@ -324,6 +335,7 @@ MotorState Moteur::getState(void)
 {
     return _state;
 }
+
 void Moteur::setState(MotorState state)
 {
     if (state == MotorState::OVERSPEED || state == MotorState::FERMETURE_TOTALE)

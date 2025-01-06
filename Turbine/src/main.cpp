@@ -533,6 +533,12 @@ void commandProcess(String cmd)
   {
     printPreferences();
   }
+  if (cmd.startsWith("stop"))
+  {
+    mot.setState(MotorState::STOP);
+    msgReponse += "STOP";
+  }
+  
   
   
 }

@@ -19,7 +19,7 @@ function update(el) {
   var deepsleep = elParent.querySelector("#appte")
   deepsleep.disabled= !el.checked
 
-  var declenchement = elParent.querySelector("#appt")
+  var declenchement = elParent.querySelector("#time")
   declenchement.disabled= !el.checked
   //rangetargetVanne.style.disabled = el.checked
 }

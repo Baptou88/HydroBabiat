@@ -104,7 +104,7 @@ Ecran Ec(&Wire);
 
 Timer TftTimer(2500);
 
-const char *EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Power,Energie\n";
+const char *EnteteCSV = "Date,Tachy,Niveau,CibleVanne,OuvertureVanne,Tension,Intensite,Energie\n";
 
 EnergieMeter Em;
 
@@ -270,7 +270,7 @@ void handleTelegramMessage(int numNewMessages)
 
 bool saveDataCsV(void)
 {
-  int maxLinesToKeep = 200;
+  int maxLinesToKeep = 300;
   int currentLine = 0;
   int nbLine=0;
   File myFile;
@@ -278,14 +278,14 @@ bool saveDataCsV(void)
 
   if (!SPIFFS.exists(dataCSV))
   {
-    Serial.println("Creation data.csv");
+
     File myFile = SPIFFS.open(dataCSV, FILE_WRITE);
     myFile.print(EnteteCSV);
     
     myFile.close();
   }
   myFile = SPIFFS.open(dataCSV, FILE_READ);
-  Serial.println("pos " + (String)myFile.position());
+
 
   while (myFile.available())
   {
@@ -294,7 +294,7 @@ bool saveDataCsV(void)
   
   }
 
-  Serial.println("nb line: " + (String)nbLine);
+
   #if 1
   if (nbLine >= maxLinesToKeep)
   {
@@ -307,13 +307,13 @@ bool saveDataCsV(void)
       switch (currentLine)
       {
       
-      case 0:
+      case 0: 
         tempFile.print(myFile.readStringUntil('\n'));
         tempFile.print("\n");
         break;
       case 1:
-        Serial.print("ignoré: ");
-        Serial.println(myFile.readStringUntil('\n'));
+        //Serial.print("ignoré: ");
+        //Serial.println(myFile.readStringUntil('\n'));
         break;
       default:
         tempFile.print(myFile.readStringUntil('\n'));
@@ -336,9 +336,15 @@ bool saveDataCsV(void)
 
   struct tm timeinfo;
   time_t now;
-  getLocalTime(&timeinfo);
-  time(&now);
+
+  if (!getLocalTime(&timeinfo))
+  {
+    return false;
+  } 
   
+  
+  time(&now);
+
   myFile.printf("%u,%.1f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f\n", now, dataTurbine.tacky, dataEtang.niveauEtangP, dataTurbine.targetPositionVanne, dataTurbine.positionVanne, dataTurbine.U, dataTurbine.I, Em.getEnergie());
   myFile.close();
 
@@ -992,6 +998,16 @@ void setup()
   }
 
   configTzTime(TZ_Europe_Paris,"pool.ntp.org");
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+  {
+    Serial.println("Failed to obtain time");
+  } else
+  {
+    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+  }
+  
+  
   // lireTacheProgrammer();
   ProgTasks.begin();
   ProgTasks.initTask();
@@ -1129,10 +1145,11 @@ void loop()
     }
   }
 
-  if (timerEnvoiWS.isOver())
-  {
-    WifiApp.notifyClients();
-  }
+  // if (timerEnvoiWS.isOver(true))
+  // {
+  //   Serial.println(String(millis()) + " " + String(__FILE__) + " " + String(__LINE__) + " Envoi WS");
+  //   WifiApp.notifyClients();
+  // }
 
 #ifdef USE_TFT
   if (TftTimer.isOver())

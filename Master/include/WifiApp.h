@@ -87,6 +87,8 @@ public:
     void ws_Sendall(String msg);
     void ws_Send(uint32_t client_id,String msg);
 
+    static String getData();
+
     /// @brief main loop
     void loop();
 };

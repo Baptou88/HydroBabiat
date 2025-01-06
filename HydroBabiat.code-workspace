@@ -27,6 +27,9 @@
 		{
 			"name": "pinTachy",
 			"path": "../../PlatformIO/Projects/pinTachy"
+		},
+		{
+			"path": ".github"
 		}
 	],
 	"settings": {

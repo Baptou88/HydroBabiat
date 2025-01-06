@@ -511,8 +511,9 @@ document.addEventListener('DOMContentLoaded',  function () {
           });
 
         }
+        
         // the rest of the lines contain data with their name in the first position  
-        else {
+        else if (line.trim() !== '') {
           // var seriesNiveau = {
           //   data: []
           // }
