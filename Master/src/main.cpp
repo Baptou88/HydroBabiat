@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <configuration.h>
+#include "configuration.h"
 #include <configGeneral.h>
 #include <configVariables.h>
 
