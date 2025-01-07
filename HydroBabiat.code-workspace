@@ -1,6 +1,10 @@
 {
 	"folders": [
 		{
+			"name": ".github",
+			"path": ".github"
+		},
+		{
 			"name": "Master",
 			"path": "Master"
 		},
@@ -29,7 +33,7 @@
 			"path": "../../PlatformIO/Projects/pinTachy"
 		},
 		{
-			"path": ".github"
+			"path": "lib"
 		}
 	],
 	"settings": {
