@@ -15,7 +15,7 @@ int LoRaClass::begin(){
 
 #ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
     radio = new Module(SS, 26, RST_LoRa, 33);
-#elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
+#elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V3)
     radio = new Module(LoRa_SS, 14, LoRa_RST, 13);
 #else
     #error UnImplemented
@@ -28,7 +28,7 @@ int LoRaClass::begin(){
 
     #ifdef ARDUINO_HELTEC_WIFI_LORA_32_V2
         radio.setDio0Action(LoRaClass::setFlag,RISING);
-    #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
+    #elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V3)
         radio.setDio1Action(LoRaClass::setFlag);
     #else
         #error UnImplemented

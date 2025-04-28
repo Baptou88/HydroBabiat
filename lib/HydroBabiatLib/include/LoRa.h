@@ -32,7 +32,7 @@
     #define LoRa_MISO MISO
     #define SXClass SX1276
     
-#elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3)
+#elif defined(ARDUINO_HELTEC_WIFI_LORA_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V3)
     #define LoRa_SS 8
     #define LoRa_SCK 9
     #define LoRa_MOSI 10

@@ -1188,6 +1188,7 @@ void loop()
     Serial.print(F("[SX1262] Uploading patch ... "));
     int state;
     state = LoRa.getRadio().uploadPatch(sx126x_patch_scan, sizeof(sx126x_patch_scan));
+    
     if (state == RADIOLIB_ERR_NONE)
     {
       Serial.println(F("success!"));
