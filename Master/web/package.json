@@ -1,0 +1,21 @@
+{
+  "name": "hydrobabiat-web",
+  "version": "1.0.0",
+  "description": "HydroBabiat Web Interface with Preact",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && node postBuild.js"
+  },
+  "dependencies": {
+    "preact": "^10.19.0",
+    "preact-router": "^4.1.2"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.7.0",
+    "vite": "^5.0.0",
+    "ws": "^8.18.0"
+  }
+}

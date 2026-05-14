@@ -735,12 +735,8 @@ bool WifiAppClass::begin()
   server->on("/data.csv", HTTP_GET, [](AsyncWebServerRequest *request)
              { request->send(SPIFFS, "/data.csv", "text/csv"); });
 
-  SPIFFS_provide_file("/app.js");
-  SPIFFS_provide_file("/theme.js");
-  SPIFFS_provide_file("/fileSystem.js");
-  SPIFFS_provide_file("/Programmateur.js");
-
-  SPIFFS_provide_file("/style.css");
+  SPIFFS_provide_file("/main.js");
+  SPIFFS_provide_file("/main.css");
 
   SPIFFS_provide_file("/icons/Basic.svg");
   SPIFFS_provide_file("/icons/PID.svg");
