@@ -578,6 +578,18 @@ function onClose(event) {
   setTimeout(initWebSocket, 5000);
 
 }
+
+function addPointIfSeriesExists(chart, index, point) {
+  if (!chart || !Array.isArray(chart.series)) {
+    return;
+  }
+
+  const serie = chart.series[index];
+  if (serie && typeof serie.addPoint === 'function') {
+    serie.addPoint(point, true, false, true);
+  }
+}
+
 function wsData(d) {
   var keys = Object.keys(d)
   try {
@@ -614,13 +626,13 @@ function wsData(d) {
       if (element == "Etang") {
         Alpine.store('Etang').fromJson(d[element])
         //chartNiveau.series[2].addPoint([dt, d[element]], true, false, true);
-        chartNiveau.series[0].addPoint([dt, d[element].niveauEtangP], true, false, true);
+        addPointIfSeriesExists(chartNiveau, 0, [dt, d[element].niveauEtangP]);
       }
       if (element == "Turbine") {
         Alpine.store('Turbine').fromJson(d[element])
-        chartTurbine.series[2].addPoint([dt, d[element].tacky], true, false, true);
-        chartTurbine.series[1].addPoint([dt, d[element].PositionVanneTarget], true, false, true);
-        chartTurbine.series[0].addPoint([dt, Math.round(d[element].positionVanne)], true, false, true);
+        addPointIfSeriesExists(chartTurbine, 2, [dt, d[element].tacky]);
+        addPointIfSeriesExists(chartTurbine, 1, [dt, d[element].PositionVanneTarget]);
+        addPointIfSeriesExists(chartTurbine, 0, [dt, Math.round(d[element].positionVanne)]);
       }
       if (element == "Radiateur") {
         Alpine.store('Radiateur').fromJson(d[element])
